@@ -204,7 +204,7 @@ export default function CareerWorkspace() {
                         <option value="new">新建简历</option>
                         {state.resumes.map((r) => (
                           <option key={r.id} value={r.id}>
-                            {r.title}
+                            {r.title.replace(/ · (基础版|定向版)$/, '')}
                             {r.is_master ? ' · 基础版' : r.parent_id ? ' · 定向版' : ''}
                           </option>
                         ))}

@@ -40,7 +40,11 @@ async def run(args: Any) -> None:
                     )
                     + ";"
                 )
-        Path(args.path).write_text("\n\n".join(statements) + "\n", encoding="utf-8")
+        ddl = "\n\n".join(statements)
+        Path(args.path).write_text(
+            "\n".join(line.rstrip() for line in ddl.splitlines()) + "\n",
+            encoding="utf-8",
+        )
     elif args.command == "export-demo":
         directory = Path(args.path)
         directory.mkdir(parents=True, exist_ok=True)

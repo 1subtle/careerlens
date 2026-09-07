@@ -1,6 +1,6 @@
 # CareerLens 构建计划
 
-> 版本：2026-09-07。适用条件：4—5 人团队，2026 年 9 月 12 日 12:00 前提交。当前目录只有需求与方案文档，尚未建立应用工程；本文是待执行计划，所有功能与测试指标均未宣称已完成。
+> 版本：2026-09-07。适用条件：4—5 人团队，2026 年 9 月 12 日 12:00 前提交。现已建立应用工程并完成本地首版。运行入口见 [README](README.md)，实际接口见 [架构与接口](docs/架构与接口.md)，验收状态见 [验证记录](docs/验证记录.md)。本文保留阶段目标，以下计划指标不自动等同于实测结果。
 >
 > 需求依据：[T5 实训要求整理](/Users/nresearch/Desktop/careerlens/T5_AI简历诊断与岗位匹配系统_实训要求整理.md)。产品及算法决策：[整体构建思路](/Users/nresearch/Desktop/careerlens/CareerLens_整体构建思路.md)。
 
@@ -35,14 +35,9 @@
 
 前后端版本依据固定提交中的[后端依赖](https://github.com/srbhr/Resume-Matcher/blob/0932418cf694de227fd5ca030ddbc0d1f40b1bef/apps/backend/pyproject.toml)、[前端依赖](https://github.com/srbhr/Resume-Matcher/blob/0932418cf694de227fd5ca030ddbc0d1f40b1bef/apps/frontend/package.json)；SQLite 决策依据[实际数据层](https://github.com/srbhr/Resume-Matcher/blob/0932418cf694de227fd5ca030ddbc0d1f40b1bef/apps/backend/app/database.py)。
 
-以下是 **M0 开始时执行的命令，当前尚未执行**。先检查 `app/` 不存在或为空，再初始化：
+工程已经在根目录初始化为一个 Git 仓库，并将固定提交导入 `app/`。采用源码导入，便于将需求文档、自主代码和上游基线一起管理；`app/` 内没有嵌套 `.git`。基线导入提交为 `6fd8b18`。
 
-```bash
-git clone --no-checkout https://github.com/srbhr/Resume-Matcher.git app
-git -C app checkout -b careerlens 0932418cf694de227fd5ca030ddbc0d1f40b1bef
-```
-
-启动前保留 `uv.lock`、`package-lock.json`，按上游环境示例配置模型。优先使用锁定依赖安装，实际启动命令和必要修复写入运行说明。
+已保存实际生成的 `uv.lock` 与前端 `package-lock.json`。上游忽略了 Python 锁文件，本工程将其显式纳入版本管理。当前启动方式与环境见 [README](README.md)，无需重新克隆上游。
 
 ### 2.2 上游复用与改造位置
 
@@ -95,11 +90,11 @@ M0 计划控制在半天内。基线不通过时先修复具体阻塞，并从�
 
 | 表 | 主要字段 | 规则 |
 | --- | --- | --- |
-| `resume_snapshots` | `id`、`resume_id`、`content_hash`、`data`、`evidence`、`facts`、`created_at` | 保存结构化内容、原文证据和用户补充事实；快照内容不可覆盖 |
-| `match_records` | `id`、`snapshot_id`、`job_id`、`job_snapshot`、`job_hash`、`rule_version`、`model_meta`、`details`、`score`、`created_at` | 每条明细对应要求、证据、状态、权重与贡献；修改判断产生新记录；无有效要求时 `score=null` |
-| `rewrite_records` | `id`、`match_id`、`section_id`、`suggestions`、`facts`、`status`、`result_resume_id`、`created_at` | 保存草稿、事实引用与采纳结果；同一采纳请求不能重复生成版本 |
+| `resume_snapshots` | `id`、`resume_id`、`content_hash`、`data`、`evidence`、`created_at` | 保存结构化内容和原文证据；补充事实放在对应改写记录中，快照内容不可覆盖 |
+| `match_records` | `id`、`snapshot_id`、`job_id`、`job_snapshot`、`job_hash`、`rule_version`、`details`、`conditions`、`score`、`created_at` | 每条明细对应要求、证据、状态、权重与贡献；修改判断产生新记录；无有效要求时 `score=null` |
+| `rewrite_records` | `id`、`match_id`、`section_id`、`payload`、`facts`、`status`、`result_resume_id`、`created_at` | 保存草稿、事实引用与采纳结果；同一采纳请求不能重复生成版本 |
 
-`jobs` 的现有元数据保存岗位类别、城市、薪资上下限、币种、周期、发布日期、采集日期、来源链接、来源类型、标准化要求和文本哈希。岗位库独立于某一简历维护，匹配关系由 `match_records` 建立；反复分析同一 JD 不重复计入市场样本。
+`jobs` 的现有元数据保存岗位类别、城市、薪资原文、发布日期、采集日期、来源链接、来源类型和标准化要求。薪资数值、币种与周期读取时解析，岗位哈希保存在对应匹配记录中。岗位库独立于某一简历维护，匹配关系由 `match_records` 建立；反复分析同一 JD 不重复计入市场样本。
 
 要求与证据先存为有稳定 ID 的 JSON 数组，暂不另建技能图谱、独立技能关系表或聊天消息表。新增关系设置外键、必要索引与清理规则；移除用户简历时一并处理相应快照、匹配、改写及原始上传文件，不能仅删除页面入口。
 
@@ -113,36 +108,24 @@ erDiagram
 
 此图表示拟新增业务关系；完整课程 ER 图还需展示实际保留的上游表与本轮新增外键，不把上游仅以字符串保存的关联误画成已有数据库约束。
 
-### 3.3 证据契约
+### 3.3 已固定的证据契约
 
-每条证据至少包含 `id`、`section_id`、`source_text`、`source_hash`、`source_type` 和定位信息。定位采用对应快照中的段落 ID；若保存字符偏移，前后端统一偏移定义。用户补充事实单独标记 `source_type=user` 和确认时间，不与原始简历原文混淆。
+证据项包含 `id`、`section_id`、`title`、`text`、`kind`、`path` 和 `source_hash`。`path` 定位冻结结构化简历中的字段。补充事实单独保存在 `rewrite_records.facts` 和 `payload.sources`，通过 `type=user` 标记来源，记录创建时间随改写记录保存。
 
-每条岗位要求至少包含 `id`、`source_text`、`name`、`kind`、`priority` 和确认状态。重要程度由 JD 原文支持，可由用户校对；没有声明“必须”的普通要求保持普通标签。
+岗位要求包含 `id`、`name`、`source_text` 和 `priority`。普通要求权重 2，优先项权重 1；引用必须逐字出现在 JD 原文中。匹配明细复制要求字段，并加入 `evidence_ids`、`status`、`weight`、`value`、`contribution` 和 `reason`；用户核对结果生成独立诊断记录。
 
-匹配明细包含 `requirement_id`、`evidence_ids`、`status`、`weight`、`value`、`contribution` 和 `reason`。输出引用必须能在保存的快照中定位。评分按整体方案中的公式计算，最后统一四舍五入；总分必须等于未取整明细贡献之和。
+### 3.4 已实现的接口范围
 
-### 3.4 接口清单
+新增业务统一放在 `/api/v1/career`，避免覆盖上游同名路由。具体方法、请求字段和响应见 [架构与接口](docs/架构与接口.md)，也可直接打开运行中的 FastAPI `/docs`。
 
-以下为统一 `/api/v1` 前缀下的目标契约；已有接口优先保留，新接口在 M1 前固定请求与响应结构。
+- 简历：`/resumes`、`/resumes/parse`、`/resumes/file`、`/resumes/{id}`。
+- 岗位：`/jobs`、`/jobs/parse`、`/jobs/{id}`。
+- 诊断：`/matches`、`/matches/{id}`、`/matches/{id}/review`。
+- 建议：`/rewrites`、`/rewrites/{id}/apply`、`/rewrites/{id}/reject`。
+- 统计：`POST /market/summary`、`POST /market/analyze`。
+- 工作区与示例：`GET /state`、`POST /demo`。
 
-| 接口 | 用途 | 处理方式 |
-| --- | --- | --- |
-| `POST /resumes` | 从结构化表单创建简历 | 新增；不要求调用模型 |
-| `POST /resumes/from-text` | 粘贴文本并自动解析 | 新增；保留原文并返回待校对草稿 |
-| `POST /resumes/upload` | 文件导入 | 复用并验证 |
-| `GET /resumes`、`PATCH /resumes/{id}` | 读取与编辑 | 沿用上游实际参数契约 |
-| `GET /resumes/{id}/pdf` | 中文 PDF 导出 | 复用 |
-| `POST /jobs/upload`、`GET /jobs/{id}` | JD 输入与读取 | 扩展元数据及解析状态 |
-| `GET /jobs`、`PATCH /jobs/{id}` | 岗位列表与要求校对 | 新增 |
-| `POST /matches` | 固定简历和 JD 快照后计算匹配 | 新增；输入 `resume_id`、`job_id` |
-| `GET /matches/{id}` | 重现同一次分析 | 新增；不重新调用模型 |
-| `POST /matches/{id}/review` | 确认或纠正证据关系 | 新增；生成新的匹配记录，保留旧记录 |
-| `POST /rewrites` | 单段 STAR 草稿与补充问题 | 新增；输入 `match_id`、`section_id`、已确认事实 |
-| `POST /rewrites/{id}/apply` | 采纳建议并生成定向版本 | 新增；验证源快照和目标 JD 未发生冲突 |
-| `GET /market/summary` | 筛选后的真实聚合统计 | 新增；统计过程不依赖模型 |
-| `POST /market/analyze` | 问题转筛选条件、调用统计、形成解读 | 新增；只允许固定统计函数 |
-
-文本和文件输入限制长度、大小与类型，空文本和不可解析文件返回明确错误。模型输出通过 Pydantic 校验；非法 JSON 可在限定范围内修复重试一次，失败后返回可重试状态。已有有效记录和用户输入必须保留。
+PDF 沿用 `/api/v1/resumes/{id}/pdf`，模型配置沿用 `/api/v1/config/*`。文件最大 5 MB，文本最大 30,000 字符；失败时保留已保存记录与当前输入。
 
 ## 4. 分阶段实施
 
@@ -324,12 +307,12 @@ AI 过程记录建议一行一个具体案例：日期、阶段、任务、AI �
 ### 8.4 完成定义
 
 - [ ] 竞品体验、5 份真实 JD、3 份学生简历及 Gap 分析齐全。
-- [ ] 空白创建、粘贴解析、结构化编辑和 JD 校对可用。
-- [ ] 优化前即可查看分数、证据、条件与差距，并逐项复算。
+- [x] 空白创建、粘贴解析、结构化编辑和 JD 校对可用。
+- [x] 优化前即可查看分数、证据、条件与差距，并逐项复算。
 - [ ] STAR 与 JD 定向建议有事实引用，可补充、拒绝、采纳。
-- [ ] 原版与定向版独立保存，同一 JD 下可比较并导出中文 PDF。
-- [ ] Level 3 三类图表与分析工作流的实际完成情况有明确记录。
-- [ ] 模型异常和重复采纳不会丢失或覆盖有效结果。
+- [x] 原版与定向版独立保存，同一 JD 下可比较并导出中文 PDF。
+- [x] Level 3 三类图表和规则说明已验证；真实数据与 AI 解读验收列为待完成。
+- [x] 模拟模型异常、版本冲突和重复采纳通过自动化验证。
 - [ ] 从交付包可以初始化数据库并复现主流程。
 - [ ] 视频时长、编码、命名，以及个人报告电子版与纸质版符合要求。
-- [ ] 开源复用边界、实际测试结果和 AI 全流程使用记录可核验。
+- [x] 开源复用边界、实际测试结果和 AI 全流程使用记录可核验。

@@ -73,13 +73,14 @@ COPY --from=frontend-builder /usr/local/bin/node /usr/local/bin/node
 # ============================================
 # Backend Setup
 # ============================================
-COPY apps/backend/pyproject.toml /app/backend/
+COPY apps/backend/pyproject.toml apps/backend/uv.lock /app/backend/
 COPY apps/backend/app /app/backend/app
 
 WORKDIR /app/backend
 
 # Install Python dependencies
-RUN pip install .
+RUN pip install uv==0.12.10 && uv sync --frozen --no-dev
+ENV PATH="/app/backend/.venv/bin:${PATH}"
 
 # ============================================
 # Frontend Setup

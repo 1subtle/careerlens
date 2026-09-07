@@ -1,0 +1,134 @@
+[
+  {
+    "title": "数据分析实习生",
+    "category": "数据分析",
+    "city": "上海",
+    "salary_text": "180-220元/天",
+    "text": "使用 Python 清洗数据；掌握 SQL；使用 Excel 制作分析表；熟悉 Tableau 优先。本科及以上。每周到岗 3 天，实习 3 个月。",
+    "company": "虚构示例机构 01",
+    "source_type": "synthetic",
+    "source_url": "",
+    "published_at": null
+  },
+  {
+    "title": "商业分析实习生",
+    "category": "数据分析",
+    "city": "北京",
+    "salary_text": "200-250元/天",
+    "text": "使用 SQL 分析业务数据；掌握 Excel 和数据可视化；熟悉 Python 优先。本科及以上。",
+    "company": "虚构示例机构 02",
+    "source_type": "synthetic",
+    "source_url": "",
+    "published_at": null
+  },
+  {
+    "title": "数据运营助理",
+    "category": "数据分析",
+    "city": "上海",
+    "salary_text": "7-10K/月",
+    "text": "负责数据分析与数据清洗；掌握 SQL 和 Excel；使用 Power BI 优先。",
+    "company": "虚构示例机构 03",
+    "source_type": "synthetic",
+    "source_url": "",
+    "published_at": null
+  },
+  {
+    "title": "数据分析助理",
+    "category": "数据分析",
+    "city": "杭州",
+    "salary_text": "8-12K/月·13薪",
+    "text": "使用 Python、Pandas 与 SQL 完成数据分析；熟悉统计分析。",
+    "company": "虚构示例机构 04",
+    "source_type": "synthetic",
+    "source_url": "",
+    "published_at": null
+  },
+  {
+    "title": "前端开发实习生",
+    "category": "前端开发",
+    "city": "上海",
+    "salary_text": "180-250元/天",
+    "text": "使用 React 与 TypeScript 开发页面；掌握 HTML、CSS 和 Git。",
+    "company": "虚构示例机构 05",
+    "source_type": "synthetic",
+    "source_url": "",
+    "published_at": null
+  },
+  {
+    "title": "Web 开发实习生",
+    "category": "前端开发",
+    "city": "杭州",
+    "salary_text": "150-200元/天",
+    "text": "使用 Vue 与 JavaScript 实现页面；熟悉 HTML、CSS；有 Node.js 经验优先。",
+    "company": "虚构示例机构 06",
+    "source_type": "synthetic",
+    "source_url": "",
+    "published_at": null
+  },
+  {
+    "title": "初级前端工程师",
+    "category": "前端开发",
+    "city": "北京",
+    "salary_text": "10-16K/月",
+    "text": "使用 React、TypeScript 和 CSS 构建应用；掌握 Git；熟悉 Figma 优先。",
+    "company": "虚构示例机构 07",
+    "source_type": "synthetic",
+    "source_url": "",
+    "published_at": null
+  },
+  {
+    "title": "产品实习生",
+    "category": "产品设计",
+    "city": "上海",
+    "salary_text": "150-200元/天",
+    "text": "负责需求分析和用户研究；使用 Figma 完成原型设计；具备沟通协作能力。",
+    "company": "虚构示例机构 08",
+    "source_type": "synthetic",
+    "source_url": "",
+    "published_at": null
+  },
+  {
+    "title": "产品助理",
+    "category": "产品设计",
+    "city": "北京",
+    "salary_text": "8-12K/月",
+    "text": "完成需求分析与产品设计；掌握 Excel；具有项目管理经验优先。",
+    "company": "虚构示例机构 09",
+    "source_type": "synthetic",
+    "source_url": "",
+    "published_at": null
+  },
+  {
+    "title": "用户研究实习生",
+    "category": "产品设计",
+    "city": "杭州",
+    "salary_text": "面议",
+    "text": "负责用户研究；完成数据分析与统计分析；使用 Excel；具备沟通能力。",
+    "company": "虚构示例机构 10",
+    "source_type": "synthetic",
+    "source_url": "",
+    "published_at": null
+  },
+  {
+    "title": "海外分析练习岗位",
+    "category": "数据分析",
+    "city": "远程",
+    "salary_text": "$2000-3000/月",
+    "text": "使用 SQL 和 Tableau 分析业务；掌握 Python。",
+    "company": "虚构示例机构 11",
+    "source_type": "synthetic",
+    "source_url": "",
+    "published_at": null
+  },
+  {
+    "title": "产品设计校招",
+    "category": "产品设计",
+    "city": "上海",
+    "salary_text": "12-18万元/年",
+    "text": "使用 Figma 完成原型设计；负责产品设计和用户研究。",
+    "company": "虚构示例机构 12",
+    "source_type": "synthetic",
+    "source_url": "",
+    "published_at": null
+  }
+]

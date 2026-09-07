@@ -170,7 +170,7 @@ export function ResumePanel({
           </p>
           <div className={s.section}>
             <p>
-              <strong>{data.personalProjects?.length ?? 0}</strong> 项项目经历
+              <strong>{data.personalProjects?.length ?? 0}</strong> 段项目经历
             </p>
             <p>
               <strong>{data.workExperience?.length ?? 0}</strong> 段工作 / 实习

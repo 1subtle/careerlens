@@ -1,0 +1,17 @@
+services:
+  careerlens:
+    build:
+      context: ./app
+    image: careerlens:local
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      FRONTEND_BASE_URL: http://127.0.0.1:3000
+      LOG_LEVEL: INFO
+      LOG_LLM: WARNING
+    volumes:
+      - careerlens-data:/app/backend/data
+    restart: unless-stopped
+
+volumes:
+  careerlens-data:
