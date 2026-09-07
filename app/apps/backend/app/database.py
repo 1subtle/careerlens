@@ -472,6 +472,12 @@ class Database:
             await session.execute(
                 delete(TailoringPreview).where(TailoringPreview.source_id == resume_id)
             )
+            await session.execute(
+                delete(Improvement).where(
+                    (Improvement.original_resume_id == resume_id)
+                    | (Improvement.tailored_resume_id == resume_id)
+                )
+            )
             await session.delete(row)
             await session.commit()
             return True

@@ -23,6 +23,7 @@ from app.database import DatabaseBusyError, db
 from app.pdf import close_pdf_renderer, init_pdf_renderer
 from app.routers import (
     applications_router,
+    career_router,
     config_router,
     enrichment_router,
     health_router,
@@ -80,8 +81,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(
-    title="Resume Matcher API",
-    description="AI-powered resume tailoring for job descriptions",
+    title="CareerLens API",
+    description="Evidence-based resume diagnosis and job matching",
     version=__version__,
     lifespan=lifespan,
 )
@@ -106,6 +107,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(career_router, prefix="/api/v1")
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(config_router, prefix="/api/v1")
 app.include_router(resumes_router, prefix="/api/v1")
@@ -119,7 +121,7 @@ app.include_router(resume_wizard_router, prefix="/api/v1")
 async def root():
     """Root endpoint."""
     return {
-        "name": "Resume Matcher API",
+        "name": "CareerLens API",
         "version": __version__,
         "docs": "/docs",
     }

@@ -9,7 +9,7 @@ never sees ORM objects — preserving the TinyDB-era contracts.
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, Index, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy import JSON, Boolean, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -160,3 +160,45 @@ class ApiKey(Base):
     provider: Mapped[str] = mapped_column(String, primary_key=True)
     ciphertext: Mapped[str] = mapped_column(Text)
     updated_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
+
+
+class ResumeSnapshot(Base):
+    """Immutable input to a CareerLens analysis."""
+
+    __tablename__ = "resume_snapshots"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    resume_id: Mapped[str] = mapped_column(ForeignKey("resumes.resume_id", ondelete="CASCADE"), index=True)
+    content_hash: Mapped[str] = mapped_column(String)
+    data: Mapped[dict] = mapped_column(JSON)
+    evidence: Mapped[list] = mapped_column(JSON)
+    created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
+
+
+class MatchRecord(Base):
+    """A reproducible, requirement-level assessment."""
+
+    __tablename__ = "match_records"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    snapshot_id: Mapped[str] = mapped_column(ForeignKey("resume_snapshots.id", ondelete="CASCADE"), index=True)
+    job_id: Mapped[str] = mapped_column(ForeignKey("jobs.job_id", ondelete="CASCADE"), index=True)
+    job_snapshot: Mapped[dict] = mapped_column(JSON)
+    job_hash: Mapped[str] = mapped_column(String)
+    details: Mapped[list] = mapped_column(JSON)
+    conditions: Mapped[list] = mapped_column(JSON)
+    score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    rule_version: Mapped[str] = mapped_column(String)
+    created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
+
+
+class RewriteRecord(Base):
+    """A reviewed suggestion; applying it is an atomic, idempotent operation."""
+
+    __tablename__ = "rewrite_records"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    match_id: Mapped[str] = mapped_column(ForeignKey("match_records.id", ondelete="CASCADE"), index=True)
+    section_id: Mapped[str] = mapped_column(String)
+    facts: Mapped[list] = mapped_column(JSON)
+    payload: Mapped[dict] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String, default="draft")
+    result_resume_id: Mapped[str | None] = mapped_column(ForeignKey("resumes.resume_id", ondelete="SET NULL"), nullable=True)
+    created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
