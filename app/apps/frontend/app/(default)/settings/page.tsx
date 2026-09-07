@@ -698,7 +698,7 @@ export default function SettingsPage() {
               {t('settings.subtitle')}
             </p>
           </div>
-          <Link href="/dashboard">
+          <Link href="/">
             <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4" />
               {t('common.back')}

@@ -49,15 +49,15 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: 'Resume Matcher',
-  description: 'Build your resume with Resume Matcher',
-  applicationName: 'Resume Matcher',
+  title: 'CareerLens · AI 简历诊断与岗位匹配',
+  description: '从真实经历出发，查看岗位要求、匹配证据与定向优化建议。',
+  applicationName: 'CareerLens',
   keywords: ['resume', 'matcher', 'job', 'application'],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-US" className="h-full" suppressHydrationWarning>
+    <html lang="zh-CN" className="h-full" suppressHydrationWarning>
       <body
         className={`${geist.variable} ${spaceGrotesk.variable} ${notoSansSC.variable} ${notoSansKR.variable} ${notoSansJP.variable} antialiased bg-background text-ink-soft min-h-full`}
       >

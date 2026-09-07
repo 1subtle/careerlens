@@ -1,5 +1,5 @@
-import Hero from '@/components/home/hero';
+import CareerWorkspace from '@/components/career/workspace';
 
 export default function Home() {
-  return <Hero />;
+  return <CareerWorkspace />;
 }
