@@ -1,0 +1,145 @@
+'use client';
+
+import { Button } from '@/components/ui/button';
+import { Check, X, Briefcase, FolderKanban } from 'lucide-react';
+import type { EnhancedDescription, EnhancementItemError } from '@/lib/api/enrichment';
+import { useTranslations } from '@/lib/i18n';
+
+interface PreviewStepProps {
+  enhancements: EnhancedDescription[];
+  errors?: EnhancementItemError[];
+  onApply: () => void;
+  onCancel: () => void;
+}
+
+export function PreviewStep({ enhancements, errors = [], onApply, onCancel }: PreviewStepProps) {
+  const { t } = useTranslations();
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold mb-2">{t('enrichment.preview.title')}</h2>
+        <p className="text-ink-soft font-mono text-sm">{t('enrichment.preview.description')}</p>
+      </div>
+
+      {errors.length > 0 && (
+        <div role="alert" className="bg-orange-100 border-2 border-orange-600 p-4 mb-4">
+          <p className="font-mono uppercase text-sm font-bold text-orange-600 mb-1">
+            {t('enrichment.preview.partialFailure')}
+          </p>
+          <p className="text-sm mb-2">{t('enrichment.preview.partialFailureDescription')}</p>
+          <ul className="list-disc pl-5 text-sm">
+            {errors.map((error, index) => (
+              <li key={`${error.item_type}:${error.item_id}:${index}`}>
+                <span className="font-semibold">{error.title}</span>
+                <span className="block font-sans text-sm">{error.message}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Enhancements list */}
+      <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+        {enhancements.map((enhancement) => (
+          <EnhancementCard key={enhancement.item_id} enhancement={enhancement} />
+        ))}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center justify-between pt-6 border-t border-paper-tint mt-6">
+        <Button variant="outline" onClick={onCancel} className="gap-2">
+          <X className="w-4 h-4" />
+          {t('common.cancel')}
+        </Button>
+        <Button onClick={onApply} className="gap-2">
+          <Check className="w-4 h-4" />
+          {t('enrichment.preview.applyButton')}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+interface EnhancementCardProps {
+  enhancement: EnhancedDescription;
+}
+
+function EnhancementCard({ enhancement }: EnhancementCardProps) {
+  const { t } = useTranslations();
+  const itemTypeLabel =
+    enhancement.item_type === 'experience'
+      ? t('enrichment.itemType.experience')
+      : t('enrichment.itemType.project');
+
+  return (
+    <div className="border-2 border-black bg-white shadow-sw-default">
+      {/* Card header */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-black bg-paper-tint">
+        {enhancement.item_type === 'experience' ? (
+          <Briefcase className="w-4 h-4" />
+        ) : (
+          <FolderKanban className="w-4 h-4" />
+        )}
+        <span className="font-mono text-sm font-bold uppercase">{itemTypeLabel}</span>
+        <span className="text-ink-soft">|</span>
+        <span className="font-semibold">{enhancement.title}</span>
+      </div>
+
+      {/* Content preview */}
+      <div className="p-4">
+        <div className="space-y-4">
+          {/* Existing bullets - keeping */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-mono font-bold uppercase text-ink-soft">
+                {t('enrichment.preview.keepingLabel')}
+              </span>
+              <span className="text-xs text-steel-grey">
+                {t('enrichment.preview.existingCount', {
+                  count: enhancement.original_description.length,
+                })}
+              </span>
+            </div>
+            <ul className="space-y-2">
+              {enhancement.original_description.map((bullet, i) => (
+                <li key={i} className="text-sm text-ink-soft pl-4">
+                  {bullet}
+                </li>
+              ))}
+              {enhancement.original_description.length === 0 && (
+                <li className="text-sm text-steel-grey italic">
+                  {t('enrichment.preview.noExistingDescription')}
+                </li>
+              )}
+            </ul>
+          </div>
+
+          {/* New bullets - adding */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-mono font-bold uppercase text-green-600">
+                {t('enrichment.preview.addingLabel')}
+              </span>
+              <span className="text-xs text-green-600">
+                {t('enrichment.preview.newCount', {
+                  count: enhancement.enhanced_description.length,
+                })}
+              </span>
+            </div>
+            <ul className="space-y-2">
+              {enhancement.enhanced_description.map((bullet, i) => (
+                <li
+                  key={i}
+                  className="text-sm text-ink-soft pl-4 bg-green-50 py-1 pr-2 border border-green-500"
+                >
+                  {bullet}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

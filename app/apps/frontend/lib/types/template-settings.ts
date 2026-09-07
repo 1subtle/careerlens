@@ -1,0 +1,314 @@
+/**
+ * Resume Template Settings
+ *
+ * Defines the structure for template selection and formatting controls.
+ * These settings affect both the live preview and PDF generation.
+ */
+
+export type TemplateType =
+  | 'swiss-single'
+  | 'swiss-two-column'
+  | 'modern'
+  | 'modern-two-column'
+  | 'latex'
+  | 'clean'
+  | 'vivid';
+
+export type PageSize = 'A4' | 'LETTER';
+
+export type AccentColor = 'blue' | 'green' | 'orange' | 'red';
+
+export type SpacingLevel = 1 | 2 | 3 | 4 | 5;
+
+export type HeaderFontFamily = 'serif' | 'sans-serif' | 'mono';
+export type BodyFontFamily = 'serif' | 'sans-serif' | 'mono';
+
+export interface MarginSettings {
+  top: number; // 5-25mm
+  bottom: number;
+  left: number;
+  right: number;
+}
+
+export interface SpacingSettings {
+  section: SpacingLevel; // Gap between major sections
+  item: SpacingLevel; // Gap between items within sections
+  lineHeight: SpacingLevel; // Text line height
+}
+
+export interface FontSizeSettings {
+  base: SpacingLevel; // Overall text scale
+  headerScale: SpacingLevel; // Header size multiplier
+  headerFont: HeaderFontFamily; // Header font family
+  bodyFont: BodyFontFamily; // Body text font family
+}
+
+export interface TemplateSettings {
+  template: TemplateType;
+  pageSize: PageSize;
+  margins: MarginSettings;
+  spacing: SpacingSettings;
+  fontSize: FontSizeSettings;
+  compactMode: boolean; // Apply tighter spacing across the board
+  showContactIcons: boolean; // Show icons next to contact info
+  accentColor: AccentColor; // Accent color for Modern template
+}
+
+/**
+ * Default template settings
+ */
+export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
+  template: 'swiss-single',
+  pageSize: 'A4',
+  margins: { top: 10, bottom: 10, left: 10, right: 10 },
+  spacing: { section: 3, item: 2, lineHeight: 3 },
+  fontSize: { base: 3, headerScale: 3, headerFont: 'serif', bodyFont: 'sans-serif' },
+  compactMode: false,
+  showContactIcons: false,
+  accentColor: 'blue',
+};
+
+/**
+ * Page size dimensions for display
+ */
+export const PAGE_SIZE_INFO: Record<PageSize, { name: string; dimensions: string }> = {
+  A4: { name: 'A4', dimensions: '210 × 297 mm' },
+  LETTER: { name: 'US Letter', dimensions: '8.5 × 11 in' },
+};
+
+/**
+ * CSS Variable mappings for spacing levels
+ */
+export const SECTION_SPACING_MAP: Record<SpacingLevel, string> = {
+  1: '0.375rem', // 6px
+  2: '0.625rem', // 10px
+  3: '1rem', // 16px - default
+  4: '1.25rem', // 20px
+  5: '1.5rem', // 24px
+};
+
+export const ITEM_SPACING_MAP: Record<SpacingLevel, string> = {
+  1: '0.125rem', // 2px
+  2: '0.25rem', // 4px - default
+  3: '0.5rem', // 8px
+  4: '0.75rem', // 12px
+  5: '1rem', // 16px
+};
+
+export const LINE_HEIGHT_MAP: Record<SpacingLevel, number> = {
+  1: 1.15, // tight
+  2: 1.25,
+  3: 1.35, // default
+  4: 1.45,
+  5: 1.55, // loose
+};
+
+export const FONT_SIZE_MAP: Record<SpacingLevel, string> = {
+  1: '11px',
+  2: '12px',
+  3: '14px', // default
+  4: '15px',
+  5: '16px',
+};
+
+export const HEADER_SCALE_MAP: Record<SpacingLevel, number> = {
+  1: 1.5,
+  2: 1.75,
+  3: 2, // default
+  4: 2.25,
+  5: 2.5,
+};
+
+// Section header scale (SUMMARY, EXPERIENCE, etc.) - slightly smaller than name
+export const SECTION_HEADER_SCALE_MAP: Record<SpacingLevel, number> = {
+  1: 1.0,
+  2: 1.1,
+  3: 1.2, // default
+  4: 1.3,
+  5: 1.4,
+};
+
+/**
+ * CJK fallback ordering, per content locale.
+ *
+ * Noto Sans SC, KR and JP all cover Han ideographs, and SC additionally covers
+ * ~93% of kana — so whichever face is listed first wins for any shared
+ * codepoint. A single static order cannot be right for every locale:
+ *
+ *   - SC first  → correct Chinese, but Japanese kana renders in SC forms
+ *   - JP first  → correct Japanese, but Chinese Han renders in JP forms
+ *   - Hangul    → only KR covers it meaningfully (SC covers 0.7%, i.e. tofu)
+ *
+ * so the stack is ordered by the locale the document is actually rendered in.
+ */
+const CJK_FONT_STACKS: Record<string, string[]> = {
+  zh: ['--font-noto-sans-sc', '--font-noto-sans-jp', '--font-noto-sans-kr'],
+  ja: ['--font-noto-sans-jp', '--font-noto-sans-kr', '--font-noto-sans-sc'],
+  ko: ['--font-noto-sans-kr', '--font-noto-sans-jp', '--font-noto-sans-sc'],
+};
+
+const DEFAULT_CJK_STACK = CJK_FONT_STACKS.zh;
+
+const cjkVars = (locale?: string): string => {
+  const key = (locale ?? '').toLowerCase().split('-')[0];
+  const stack = CJK_FONT_STACKS[key] ?? DEFAULT_CJK_STACK;
+  return stack.map((v) => `var(${v})`).join(', ');
+};
+
+// Header font family mapping. Exported as functions of the locale; the eager
+// maps below preserve the previous default-ordering API for existing callers.
+export const buildHeaderFontMap = (locale?: string): Record<HeaderFontFamily, string> => ({
+  serif: `ui-serif, Georgia, Cambria, "Times New Roman", ${cjkVars(locale)}, Times, serif`,
+  'sans-serif': `ui-sans-serif, system-ui, ${cjkVars(locale)}, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"`,
+  mono: `ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, ${cjkVars(locale)}, monospace`,
+});
+
+export const buildBodyFontMap = (locale?: string): Record<BodyFontFamily, string> =>
+  buildHeaderFontMap(locale);
+
+export const HEADER_FONT_MAP: Record<HeaderFontFamily, string> = buildHeaderFontMap();
+export const BODY_FONT_MAP: Record<BodyFontFamily, string> = buildBodyFontMap();
+
+/**
+ * Accent color mapping for Modern template
+ */
+export const ACCENT_COLOR_MAP: Record<
+  AccentColor,
+  { primary: string; light: string; name: string }
+> = {
+  blue: { primary: '#1D4ED8', light: '#DBEAFE', name: 'Blue' },
+  green: { primary: '#15803D', light: '#DCFCE7', name: 'Green' },
+  orange: { primary: '#EA580C', light: '#FED7AA', name: 'Orange' },
+  red: { primary: '#DC2626', light: '#FEE2E2', name: 'Red' },
+};
+
+// Compact mode multiplier (applied to spacing values only, NOT line-height)
+export const COMPACT_MULTIPLIER = 0.6;
+
+// Line height gets a gentler reduction in compact mode
+export const COMPACT_LINE_HEIGHT_MULTIPLIER = 0.92;
+
+/**
+ * Convert TemplateSettings to CSS custom properties
+ */
+export function settingsToCssVars(
+  settings?: TemplateSettings,
+  locale?: string
+): React.CSSProperties {
+  const s = settings || DEFAULT_TEMPLATE_SETTINGS;
+  const compact = s.compactMode ? COMPACT_MULTIPLIER : 1;
+
+  // Margins remain literal; compact mode only affects spacing/line-height.
+  const marginTop = s.margins.top;
+  const marginBottom = s.margins.bottom;
+  const marginLeft = s.margins.left;
+  const marginRight = s.margins.right;
+
+  // Get accent colors for Modern template
+  const accentColors = ACCENT_COLOR_MAP[s.accentColor];
+
+  return {
+    '--section-gap': s.compactMode
+      ? `calc(${SECTION_SPACING_MAP[s.spacing.section]} * ${compact})`
+      : SECTION_SPACING_MAP[s.spacing.section],
+    '--item-gap': s.compactMode
+      ? `calc(${ITEM_SPACING_MAP[s.spacing.item]} * ${compact})`
+      : ITEM_SPACING_MAP[s.spacing.item],
+    // Line-height uses a gentler multiplier to avoid text overlap
+    '--line-height': s.compactMode
+      ? LINE_HEIGHT_MAP[s.spacing.lineHeight] * COMPACT_LINE_HEIGHT_MULTIPLIER
+      : LINE_HEIGHT_MAP[s.spacing.lineHeight],
+    '--font-size-base': FONT_SIZE_MAP[s.fontSize.base],
+    '--header-scale': HEADER_SCALE_MAP[s.fontSize.headerScale],
+    '--section-header-scale': SECTION_HEADER_SCALE_MAP[s.fontSize.headerScale],
+    '--header-font': buildHeaderFontMap(locale)[s.fontSize.headerFont],
+    '--body-font': buildBodyFontMap(locale)[s.fontSize.bodyFont],
+    '--margin-top': `${marginTop}mm`,
+    '--margin-bottom': `${marginBottom}mm`,
+    '--margin-left': `${marginLeft}mm`,
+    '--margin-right': `${marginRight}mm`,
+    // Accent colors for Modern template
+    '--resume-accent-primary': accentColors.primary,
+    '--resume-accent-light': accentColors.light,
+  } as React.CSSProperties;
+}
+
+/**
+ * Template metadata for UI display
+ */
+export interface TemplateInfo {
+  id: TemplateType;
+  name: string;
+  description: string;
+}
+
+export const TEMPLATE_OPTIONS: TemplateInfo[] = [
+  {
+    id: 'swiss-single',
+    name: 'Single Column',
+    description: 'Traditional full-width layout with maximum content density',
+  },
+  {
+    id: 'swiss-two-column',
+    name: 'Two Column',
+    description: 'Experience-focused main column with sidebar for skills',
+  },
+  {
+    id: 'modern',
+    name: 'Modern',
+    description: 'Colorful accents with customizable theme colors',
+  },
+  {
+    id: 'modern-two-column',
+    name: 'Modern Two Column',
+    description: 'Two-column layout with modern colorful accents and themes',
+  },
+  {
+    id: 'latex',
+    name: 'LaTeX',
+    description: 'Classic serif academic layout with ruled section headers',
+  },
+  {
+    id: 'clean',
+    name: 'Clean',
+    description: 'Minimal sans layout with large understated section headers',
+  },
+  {
+    id: 'vivid',
+    name: 'Vivid',
+    description: 'Colorful two-column layout with accent headers and arrow bullets',
+  },
+];
+
+/**
+ * Signature font presets for single-typeface templates.
+ *
+ * LaTeX and Clean bind their headers to `--header-font` and body to `--body-font`, so
+ * both font controls are live. Selecting one of these templates applies its signature
+ * fonts (so it matches its reference look by default); the user can then override either
+ * control. Templates not listed here keep the current font settings on selection.
+ */
+export const TEMPLATE_FONT_PRESETS: Partial<
+  Record<TemplateType, { headerFont: HeaderFontFamily; bodyFont: BodyFontFamily }>
+> = {
+  latex: { headerFont: 'serif', bodyFont: 'serif' },
+  clean: { headerFont: 'sans-serif', bodyFont: 'sans-serif' },
+};
+
+/**
+ * Return settings with the given template applied, seeding the template's signature
+ * fonts when it has a preset. Use this at every template-change entry point so the
+ * single-typeface templates render their reference look by default.
+ */
+export function applyTemplatePreset(
+  settings: TemplateSettings,
+  template: TemplateType
+): TemplateSettings {
+  const preset = TEMPLATE_FONT_PRESETS[template];
+  if (!preset) return { ...settings, template };
+  return {
+    ...settings,
+    template,
+    fontSize: { ...settings.fontSize, headerFont: preset.headerFont, bodyFont: preset.bodyFont },
+  };
+}

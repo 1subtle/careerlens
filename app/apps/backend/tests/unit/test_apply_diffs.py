@@ -1,0 +1,854 @@
+"""Unit tests for apply_diffs() — path resolution, verification gates, and actions."""
+
+import copy
+import pytest
+
+from app.schemas.models import ResumeChange
+from app.services.improver import apply_diffs
+
+
+class TestApplyDiffsReplace:
+    """Tests for the 'replace' action."""
+
+    def test_replace_summary(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="summary",
+                action="replace",
+                original=sample_resume["summary"],
+                value="Updated summary text.",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(rejected) == 0
+        assert result["summary"] == "Updated summary text."
+
+    def test_replace_description_bullet(self, sample_resume):
+        original_bullet = sample_resume["workExperience"][0]["description"][1]
+        changes = [
+            ResumeChange(
+                path="workExperience[0].description[1]",
+                action="replace",
+                original=original_bullet,
+                value="Architected microservices migration serving 100K users",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert result["workExperience"][0]["description"][1] == changes[0].value
+
+    def test_replace_project_description_bullet(self, sample_resume):
+        original_bullet = sample_resume["personalProjects"][0]["description"][0]
+        changes = [
+            ResumeChange(
+                path="personalProjects[0].description[0]",
+                action="replace",
+                original=original_bullet,
+                value="Python CLI tool generating API clients from OpenAPI specs",
+                reason="Added Python keyword",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert result["personalProjects"][0]["description"][0] == changes[0].value
+
+    def test_replace_case_insensitive_original_match(self, sample_resume):
+        original_bullet = sample_resume["workExperience"][0]["description"][0]
+        changes = [
+            ResumeChange(
+                path="workExperience[0].description[0]",
+                action="replace",
+                original=original_bullet.upper(),  # Case difference
+                value="New text",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+
+
+class TestApplyDiffsAppend:
+    """Tests for the 'append' action."""
+
+    def test_append_bullet_to_experience(self, sample_resume):
+        original_count = len(sample_resume["workExperience"][0]["description"])
+        changes = [
+            ResumeChange(
+                path="workExperience[0].description",
+                action="append",
+                original=None,
+                value="Implemented CI/CD pipelines with GitHub Actions",
+                reason="Added CI/CD keyword",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(result["workExperience"][0]["description"]) == original_count + 1
+        assert result["workExperience"][0]["description"][-1] == changes[0].value
+
+    def test_append_bullet_to_project(self, sample_resume):
+        original_count = len(sample_resume["personalProjects"][0]["description"])
+        changes = [
+            ResumeChange(
+                path="personalProjects[0].description",
+                action="append",
+                original=None,
+                value="Published to PyPI with 10K+ monthly downloads",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(result["personalProjects"][0]["description"]) == original_count + 1
+
+
+class TestApplyDiffsAddSkill:
+    """Tests for adding verified skills to the technical skills list."""
+
+    def test_add_skill_to_technical_skills(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="add_skill",
+                original=None,
+                value="Kubernetes",
+                reason="JD-required skill approved by verifier",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "Kubernetes"}],
+        )
+        assert len(applied) == 1
+        assert len(rejected) == 0
+        assert "Kubernetes" in result["additional"]["technicalSkills"]
+
+    def test_add_skill_rejects_unverified_skill(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="add_skill",
+                original=None,
+                value="BananaDB",
+                reason="Unsupported skill should not be appended",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "Kubernetes"}],
+        )
+        assert len(applied) == 0
+        assert len(rejected) == 1
+        assert "BananaDB" not in result["additional"]["technicalSkills"]
+
+    def test_add_skill_rejects_duplicate_case_insensitive(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="add_skill",
+                original=None,
+                value="python",
+                reason="Duplicate skill should not be appended",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "Python"}],
+        )
+        assert len(applied) == 0
+        assert len(rejected) == 1
+        assert result["additional"]["technicalSkills"].count("Python") == 1
+
+    def test_add_skill_rejects_non_skill_path(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="summary",
+                action="add_skill",
+                original=None,
+                value="Kubernetes",
+                reason="Skill additions are only allowed in technical skills",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "Kubernetes"}],
+        )
+        assert len(applied) == 0
+        assert len(rejected) == 1
+        assert "Kubernetes" not in result["additional"]["technicalSkills"]
+
+
+class TestApplyDiffsReorder:
+    """Tests for the 'reorder' action."""
+
+    def test_reorder_skills(self, sample_resume):
+        original_skills = sample_resume["additional"]["technicalSkills"]
+        reordered = list(reversed(original_skills))
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=reordered,
+                reason="Prioritized relevant skills",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert result["additional"]["technicalSkills"] == reordered
+
+    def test_reorder_with_unverified_items_drops_them_keeps_originals(self, sample_resume):
+        """Issue #736: a reorder mixing in new items is salvaged, not dropped —
+        new items without a verified target are removed, originals preserved."""
+        original = sample_resume["additional"]["technicalSkills"]
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=["Python", "Kubernetes", "Go"],  # Kubernetes/Go new, no verified targets
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        skills = result["additional"]["technicalSkills"]
+        assert len(applied) == 1 and len(rejected) == 0
+        assert "Kubernetes" not in skills and "Go" not in skills
+        assert set(skills) == set(original)
+        assert skills[0] == "Python"
+
+    def test_reorder_case_insensitive_matching(self, sample_resume):
+        original_skills = sample_resume["additional"]["technicalSkills"]
+        reordered = [s.lower() for s in reversed(original_skills)]
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=reordered,
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+
+    def test_reorder_accepts_list_original_and_applies(self, sample_resume):
+        # The live LLM ignores the prompt's `original: null` for reorder and sends
+        # the current skills LIST as `original`. The schema must accept that — a
+        # `str | None`-only `original` dropped the whole change at parse time with a
+        # `string_type` error ("Skipping malformed change") — and a pure reorder
+        # (same items, new order) must still apply.
+        original_skills = sample_resume["additional"]["technicalSkills"]
+        reordered = list(reversed(original_skills))
+        change = ResumeChange(
+            path="additional.technicalSkills",
+            action="reorder",
+            original=original_skills,  # a LIST, exactly as the LLM sends it
+            value=reordered,
+            reason="prioritize JD-relevant skills",
+        )
+        assert change.original == original_skills
+        result, applied, rejected = apply_diffs(sample_resume, [change])
+        assert len(applied) == 1
+        assert result["additional"]["technicalSkills"] == reordered
+
+    def test_list_original_rejected_for_non_reorder_actions(self):
+        # A list `original` is valid ONLY for reorder. For a text action like
+        # replace it would bypass the original-match gate and crash the
+        # invented-metrics check, so the schema rejects it at construction.
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):
+            ResumeChange(
+                path="summary",
+                action="replace",
+                original=["a", "b"],  # list original on a text action — invalid
+                value="new summary",
+                reason="test",
+            )
+
+
+class TestApplyDiffsBlockedPaths:
+    """Tests for blocked path rejection."""
+
+    @pytest.mark.parametrize("path,original_val", [
+        ("personalInfo.name", "Jane Doe"),
+        ("personalInfo.email", "jane@example.com"),
+    ])
+    def test_reject_personal_info(self, sample_resume, path, original_val):
+        changes = [
+            ResumeChange(path=path, action="replace", original=original_val, value="X", reason="test")
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+        assert len(applied) == 0
+
+    def test_reject_date_change(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="workExperience[0].years",
+                action="replace",
+                original="Jan 2021 - Present",
+                value="Jan 2019 - Present",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_reject_company_change(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="workExperience[0].company",
+                action="replace",
+                original="Acme Corp",
+                value="Google",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_reject_education_change(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="education[0].degree",
+                action="replace",
+                original="B.S. Computer Science",
+                value="M.S. Computer Science",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_reject_custom_sections(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="customSections.volunteer",
+                action="replace",
+                original=None,
+                value="Volunteer work",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_reject_project_role(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="personalProjects[0].role",
+                action="replace",
+                original="Creator & Maintainer",
+                value="CTO",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_reject_location_change(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="workExperience[0].location",
+                action="replace",
+                original="San Francisco, CA",
+                value="Remote",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+
+class TestApplyDiffsVerificationGates:
+    """Tests for path resolution and original text verification."""
+
+    def test_reject_out_of_bounds_index(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="workExperience[99].description[0]",
+                action="replace",
+                original="Nonexistent",
+                value="New",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_reject_original_text_mismatch(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="workExperience[0].description[0]",
+                action="replace",
+                original="This text does not exist anywhere in the resume",
+                value="New text",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_reject_unknown_action_at_schema_level(self, sample_resume):
+        """Pydantic Literal type prevents invalid actions before apply_diffs sees them."""
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):
+            ResumeChange(
+                path="summary",
+                action="delete",  # type: ignore[arg-type]
+                original=sample_resume["summary"],
+                value="",
+                reason="test",
+            )
+
+    def test_reject_nonexistent_path(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="nonexistent.field",
+                action="replace",
+                original="x",
+                value="y",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+
+class TestApplyDiffsIntegrity:
+    """Tests for data integrity and multi-change scenarios."""
+
+    def test_does_not_mutate_original(self, sample_resume):
+        original_copy = copy.deepcopy(sample_resume)
+        changes = [
+            ResumeChange(
+                path="summary",
+                action="replace",
+                original=sample_resume["summary"],
+                value="Changed",
+                reason="test",
+            )
+        ]
+        result, _, _ = apply_diffs(sample_resume, changes)
+        assert sample_resume == original_copy
+        assert result["summary"] == "Changed"
+
+    def test_multiple_changes_partial_rejection(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="summary",
+                action="replace",
+                original=sample_resume["summary"],
+                value="New summary",
+                reason="good",
+            ),
+            ResumeChange(
+                path="personalInfo.name",
+                action="replace",
+                original="Jane Doe",
+                value="Bad",
+                reason="blocked",
+            ),
+            ResumeChange(
+                path="workExperience[0].description[0]",
+                action="replace",
+                original=sample_resume["workExperience"][0]["description"][0],
+                value="Updated bullet",
+                reason="good",
+            ),
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 2
+        assert len(rejected) == 1
+        assert result["summary"] == "New summary"
+        assert result["personalInfo"]["name"] == "Jane Doe"  # Unchanged
+
+    def test_empty_changes_list(self, sample_resume):
+        result, applied, rejected = apply_diffs(sample_resume, [])
+        assert len(applied) == 0
+        assert len(rejected) == 0
+        assert result == sample_resume
+
+    def test_all_changes_applied(self, sample_resume, sample_changes):
+        result, applied, rejected = apply_diffs(sample_resume, sample_changes)
+        assert len(rejected) == 0
+        assert len(applied) == len(sample_changes)
+
+
+class TestApplyDiffsEdgeCases:
+    """Edge cases: hostile inputs, malformed paths, boundary conditions."""
+
+    def test_append_to_non_list_rejected(self, sample_resume):
+        """Append to a string field (summary) should be rejected."""
+        changes = [
+            ResumeChange(
+                path="summary",
+                action="append",
+                original=None,
+                value="Extra text",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+        assert len(applied) == 0
+
+    def test_reorder_non_list_rejected(self, sample_resume):
+        """Reorder on a string field should be rejected."""
+        changes = [
+            ResumeChange(
+                path="summary",
+                action="reorder",
+                original=None,
+                value=["a", "b"],
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_reorder_with_non_list_value_rejected(self, sample_resume):
+        """Reorder where value is a string instead of list should be rejected."""
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value="Python, Docker",  # type: ignore[arg-type]
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_reorder_with_duplicates_is_deduped_and_preserves_originals(self, sample_resume):
+        """Issue #736: a reorder with a duplicate and missing items is salvaged —
+        the duplicate is collapsed and every original is preserved (no loss)."""
+        original = sample_resume["additional"]["technicalSkills"]
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=["Python", "Python", "Docker", "AWS", "PostgreSQL"],  # Python duplicated, Redis/FastAPI missing
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        skills = result["additional"]["technicalSkills"]
+        assert len(applied) == 1
+        assert skills.count("Python") == 1          # duplicate collapsed
+        assert set(skills) == set(original)          # nothing lost
+
+    def test_empty_path_rejected(self, sample_resume):
+        """Empty path string should be rejected."""
+        changes = [
+            ResumeChange(
+                path="",
+                action="replace",
+                original="x",
+                value="y",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_deeply_nested_invalid_path_rejected(self, sample_resume):
+        """Path with too many segments that don't resolve."""
+        changes = [
+            ResumeChange(
+                path="workExperience[0].description[0].nested.deep",
+                action="replace",
+                original="x",
+                value="y",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_negative_index_rejected(self, sample_resume):
+        """Negative array index should not resolve."""
+        changes = [
+            ResumeChange(
+                path="workExperience[-1].description[0]",
+                action="replace",
+                original="x",
+                value="y",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_second_experience_entry(self, sample_resume):
+        """Changes to the second work experience entry should work."""
+        original_bullet = sample_resume["workExperience"][1]["description"][0]
+        changes = [
+            ResumeChange(
+                path="workExperience[1].description[0]",
+                action="replace",
+                original=original_bullet,
+                value="Updated payment system description",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert result["workExperience"][1]["description"][0] == "Updated payment system description"
+        # First entry unchanged
+        assert result["workExperience"][0]["description"][0] == sample_resume["workExperience"][0]["description"][0]
+
+
+class TestApplyDiffsNewPaths:
+    """Newly allowed paths for issue #805 (broader diff scope, casing preserved)."""
+
+    def test_replace_education_description(self, sample_resume):
+        """Education description (a single string) should be replaceable."""
+        changes = [
+            ResumeChange(
+                path="education[0].description",
+                action="replace",
+                original=sample_resume["education"][0]["description"],
+                value="Graduated with honors; focus on distributed systems and APIs",
+                reason="surface relevant coursework",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(rejected) == 0
+        assert result["education"][0]["description"] == changes[0].value
+
+    def test_reject_education_description_list_index(self, sample_resume):
+        """Education description is a scalar string, so the [j] bullet form is not allowed."""
+        changes = [
+            ResumeChange(
+                path="education[0].description[0]",
+                action="replace",
+                original="Graduated with honors, Dean's List",
+                value="anything",
+                reason="test",
+            )
+        ]
+        _result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 0
+        assert len(rejected) == 1
+
+    def test_reorder_languages(self, sample_resume):
+        """Languages list should be reorderable (same items, new order)."""
+        original = sample_resume["additional"]["languages"]
+        changes = [
+            ResumeChange(
+                path="additional.languages",
+                action="reorder",
+                original=None,
+                value=list(reversed(original)),
+                reason="prioritize Spanish for this role",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(rejected) == 0
+        assert result["additional"]["languages"] == list(reversed(original))
+
+    def test_reorder_awards(self, sample_resume):
+        """Awards list should be reorderable."""
+        original = sample_resume["additional"]["awards"]
+        changes = [
+            ResumeChange(
+                path="additional.awards",
+                action="reorder",
+                original=None,
+                value=list(original),
+                reason="no change needed",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(rejected) == 0
+        assert result["additional"]["awards"] == original
+
+    def test_reorder_certifications(self, sample_resume):
+        """Certifications list should be reorderable."""
+        original = sample_resume["additional"]["certificationsTraining"]
+        changes = [
+            ResumeChange(
+                path="additional.certificationsTraining",
+                action="reorder",
+                original=None,
+                value=list(original),
+                reason="no change needed",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(rejected) == 0
+
+    @pytest.mark.parametrize(
+        "path,original,value",
+        [
+            ("education[0].degree", "B.S. Computer Science", "M.S. Computer Science"),
+            ("education[0].institution", "MIT", "Stanford"),
+            ("education[0].years", "2014 - 2018", "2014 - 2020"),
+        ],
+    )
+    def test_reject_blocked_education_fields(self, sample_resume, path, original, value):
+        """Degree/institution/years stay blocked even though description is now allowed."""
+        changes = [
+            ResumeChange(
+                path=path,
+                action="replace",
+                original=original,
+                value=value,
+                reason="test",
+            )
+        ]
+        _result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 0
+        assert len(rejected) == 1
+
+
+class TestReorderSalvage:
+    """Issue #736: a reorder whose items don't exactly match the original must be
+    SALVAGED, not dropped wholesale — reorder existing items, never lose an
+    original, and (skills only) add new items that pass the verified gate."""
+
+    def test_reorder_with_verified_new_skill_is_salvaged(self, sample_resume):
+        original = sample_resume["additional"]["technicalSkills"]  # 6 items
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=["FastAPI", "Python", "Docker", "AWS", "PostgreSQL", "Redis", "Kubernetes"],
+                reason="surface JD skills; Kubernetes is JD-required",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume, changes, allowed_skill_targets=[{"skill": "Kubernetes"}]
+        )
+        skills = result["additional"]["technicalSkills"]
+        assert len(applied) == 1 and len(rejected) == 0
+        assert "Kubernetes" in skills                      # verified new skill added
+        assert set(original).issubset(set(skills))         # no original lost
+        assert skills[0] == "FastAPI"                       # LLM order honored
+
+    def test_reorder_with_unverified_new_skill_drops_only_that_skill(self, sample_resume):
+        original = sample_resume["additional"]["technicalSkills"]
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=["Redis", "Python", "FastAPI", "Docker", "AWS", "PostgreSQL", "Rust"],
+                reason="Rust is not in the verified targets",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume, changes, allowed_skill_targets=[{"skill": "Kubernetes"}]
+        )
+        skills = result["additional"]["technicalSkills"]
+        assert len(applied) == 1                            # salvaged, not rejected
+        assert "Rust" not in skills                         # unverified addition dropped
+        assert set(original).issubset(set(skills))          # originals preserved
+        assert skills[0] == "Redis"
+
+    def test_reorder_omitting_original_skill_preserves_it(self, sample_resume):
+        original = sample_resume["additional"]["technicalSkills"]
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=["Redis", "Python"],  # omits 4 originals
+                reason="prioritize two skills",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        skills = result["additional"]["technicalSkills"]
+        assert len(applied) == 1
+        assert set(skills) == set(original)                 # nothing lost
+        assert skills[:2] == ["Redis", "Python"]            # requested order first
+
+    def test_reorder_languages_with_new_item_drops_it(self, sample_resume):
+        original = sample_resume["additional"]["languages"]
+        changes = [
+            ResumeChange(
+                path="additional.languages",
+                action="reorder",
+                original=None,
+                value=["Spanish (Conversational)", "English (Native)", "French (Fluent)"],
+                reason="no verified-target gate for languages — must not fabricate",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        langs = result["additional"]["languages"]
+        assert len(applied) == 1
+        assert "French (Fluent)" not in langs               # no fabrication
+        assert set(langs) == set(original)
+
+    def test_pure_permutation_still_applies(self, sample_resume):
+        """Regression: an exact permutation keeps working unchanged."""
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=["Redis", "PostgreSQL", "AWS", "Docker", "FastAPI", "Python"],
+                reason="pure reorder",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1 and len(rejected) == 0
+        assert result["additional"]["technicalSkills"] == [
+            "Redis", "PostgreSQL", "AWS", "Docker", "FastAPI", "Python"
+        ]
+
+    def test_salvage_places_verified_new_skill_in_requested_position(self, sample_resume):
+        """PR #830 review (Copilot): a verified new skill the model puts near the
+        top of the reorder must land there, not be appended last."""
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=["Kubernetes", "Python", "FastAPI", "Docker", "AWS", "PostgreSQL", "Redis"],
+                reason="prioritize Kubernetes (JD-required, verified)",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume, changes, allowed_skill_targets=[{"skill": "Kubernetes"}]
+        )
+        skills = result["additional"]["technicalSkills"]
+        assert skills[0] == "Kubernetes"  # requested position honored, not appended last
+        assert set(sample_resume["additional"]["technicalSkills"]).issubset(set(skills))
+
+    def test_salvage_preserves_case_duplicate_originals(self, sample_resume):
+        """PR #830 review (kilo): case-duplicate originals must not be lost."""
+        resume = {"additional": {"technicalSkills": ["python", "Python", "Docker"]}}
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=["Docker", "python", "Go"],  # Go new+unverified, both pythons are originals
+                reason="test dup handling",
+            )
+        ]
+        result, applied, rejected = apply_diffs(resume, changes)
+        skills = result["additional"]["technicalSkills"]
+        assert len(applied) == 1
+        # Both case-variants of the original survive; the unverified new item is dropped.
+        assert sorted(skills) == sorted(["python", "Python", "Docker"])
+        assert "Go" not in skills

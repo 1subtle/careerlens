@@ -1,0 +1,273 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@source "../../../{app,components,hooks,lib,messages}/**/*.{js,ts,jsx,tsx,mdx}";
+
+@theme inline {
+  /* No --radius-* tokens — Swiss style commits to rounded-none everywhere.
+     Dead tokens removed. */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Swiss Style brand tokens. --color-primary, --color-destructive,
+     --color-secondary, --color-background already exist above via the
+     legacy var(--xxx) chain — these are only the additional brand
+     semantics that didn't exist as @theme tokens before. */
+  --color-canvas: #f0f0e8;
+  --color-ink: #000000;
+  --color-success: #15803d;
+  --color-warning: #f97316;
+
+  /* Brand-tinted neutrals (OKLCH, chroma tinted ~0.005-0.018 toward
+     Hyper Blue hue 264) — replace ad-hoc Tailwind grays. */
+  --color-paper-tint: oklch(96% 0.005 264); /* replaces gray-50/100/200 */
+  --color-steel-grey: oklch(64% 0.012 264); /* replaces gray-300/400/500 */
+  --color-ink-soft: oklch(38% 0.018 264); /* replaces gray-600/700/800/900 */
+
+  /* Hard offset shadows in solid ink — Swiss style commits to no blur.
+     Sized small (1px) through xl (12px) for Hero/featured surfaces. */
+  --shadow-sw-xs: 1px 1px 0px 0px #000000;
+  --shadow-sw-sm: 2px 2px 0px 0px #000000;
+  --shadow-sw-default: 4px 4px 0px 0px #000000;
+  --shadow-sw-card: 6px 6px 0px 0px #000000;
+  --shadow-sw-lg: 8px 8px 0px 0px #000000;
+  --shadow-sw-xl: 12px 12px 0px 0px #000000;
+
+  /* Fonts */
+  --font-sans: 'Geist Sans', sans-serif;
+  --font-mono: 'Space Grotesk', monospace;
+
+  /* Animations */
+  --animate-gradient: gradient 8s linear infinite;
+
+  @keyframes gradient {
+    to {
+      background-position: 200% center;
+    }
+  }
+}
+
+:root {
+  --font-mono: 'Geist Mono', monospace;
+  --font-sans: 'Geist', sans-serif;
+
+  /* Swiss International Style Palette */
+  --background: #f0f0e8; /* Canvas */
+  --foreground: #000000; /* Ink */
+
+  --card: #f0f0e8;
+  --card-foreground: #000000;
+
+  --popover: #f0f0e8;
+  --popover-foreground: #000000;
+
+  --primary: #1d4ed8; /* Hyper Blue */
+  --primary-foreground: #ffffff;
+
+  --secondary: #e5e5e0; /* Panel Grey */
+  --secondary-foreground: #000000;
+
+  --muted: #e5e5e0;
+  --muted-foreground: #6b7280;
+
+  --accent: #e5e5e0;
+  --accent-foreground: #000000;
+
+  --destructive: #dc2626; /* Alert Red */
+  --destructive-foreground: #ffffff;
+
+  --border: #000000;
+  --input: #f0f0e8;
+  --ring: #1d4ed8;
+
+  --chart-1: #1d4ed8;
+  --chart-2: #15803d;
+  --chart-3: #f97316;
+  --chart-4: #dc2626;
+  --chart-5: #000000;
+
+  --sidebar: #e5e5e0;
+  --sidebar-foreground: #000000;
+  --sidebar-primary: #1d4ed8;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #d8d8d2;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #000000;
+  --sidebar-ring: #1d4ed8;
+}
+
+/* Light theme only — Swiss/Brutalist works on the warm Canvas background.
+   The half-finished dark mode mapping was removed; .impeccable.md commits
+   to light only. */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  /* The global `button { font-family: var(--font-mono) }` rule was removed.
+     The Button component applies font-mono via its Tailwind classes, and the
+     global rule was leaking into nested text inside <button> elements. */
+}
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .resume-print,
+  .resume-print *,
+  .cover-letter-print,
+  .cover-letter-print * {
+    visibility: visible !important;
+  }
+
+  .resume-print,
+  .cover-letter-print {
+    width: 100% !important;
+    max-width: 210mm !important;
+    min-height: 0 !important;
+    position: static !important;
+    margin: 0 auto !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+
+  .resume-body {
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+
+  .resume-scale {
+    transform: none !important;
+    scale: 1 !important;
+  }
+
+  a {
+    color: #000000 !important;
+    text-decoration: none !important;
+  }
+}
+
+/* ============================================
+   PAGE BREAK CONTROL
+   Prevents individual items from being split
+   across pages during PDF generation.
+   NOTE: Sections CAN span pages - only individual
+   items (job entries, project entries) stay together.
+   ============================================ */
+
+/* Individual items should stay together (job entries, projects, etc.) */
+.resume-body .resume-item {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Section titles should not be orphaned at bottom of page */
+.resume-body .resume-section-title,
+.resume-body .resume-section-title-sm {
+  break-after: avoid;
+  page-break-after: avoid;
+  /* Ensure at least 3 lines of content follow the header before a page break */
+  orphans: 3;
+  widows: 3;
+}
+
+/* Keep section header together with its first item */
+.resume-body .resume-section {
+  break-inside: auto; /* Allow sections to span pages */
+}
+
+/* Ensure the header + first content element stay together */
+.resume-body .resume-section-title + .resume-items > *:first-child,
+.resume-body .resume-section-title-sm + .resume-items > *:first-child,
+.resume-body .resume-section-title + p,
+.resume-body .resume-section-title-sm + p,
+.resume-body .resume-section-title + ul,
+.resume-body .resume-section-title-sm + ul,
+.resume-body .resume-section-title + .resume-item,
+.resume-body .resume-section-title-sm + .resume-item {
+  break-before: avoid;
+  page-break-before: avoid;
+}
+
+/* Generic no-break class for any element */
+.resume-body [data-no-break] {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Print-specific overrides for resume templates */
+@media print {
+  .resume-body {
+    padding: var(--margin-top) var(--margin-right) var(--margin-bottom) var(--margin-left) !important;
+  }
+
+  .resume-body .resume-section-title,
+  .resume-body .resume-section-title-sm {
+    border-bottom-color: #9ca3af !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* Reinforce page break rules in print - only for individual items */
+  .resume-body .resume-item {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Keep section header with first content in print */
+  .resume-body .resume-section-title + .resume-items > *:first-child,
+  .resume-body .resume-section-title-sm + .resume-items > *:first-child,
+  .resume-body .resume-section-title + p,
+  .resume-body .resume-section-title-sm + p,
+  .resume-body .resume-section-title + ul,
+  .resume-body .resume-section-title-sm + ul,
+  .resume-body .resume-section-title + .resume-item,
+  .resume-body .resume-section-title-sm + .resume-item {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+  }
+}

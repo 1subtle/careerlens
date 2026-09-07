@@ -1,0 +1,42 @@
+services:
+  resume-matcher:
+    image: ghcr.io/srbhr/resume-matcher
+    build: .
+    container_name: resume-matcher
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - resume-data:/app/backend/data
+    #secrets:
+    #  - llm_api_key
+    environment:
+      # domain in reverse proxy
+      - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost:3000}
+      # Logging configuration: DEBUG, INFO, WARNING, ERROR
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      #- LOG_LEVEL_FILE=${LOG_LEVEL_FILE:-}
+      # Debug level for LiteLLM: DEBUG, INFO, WARNING, ERROR
+      - LOG_LLM=${LOG_LLM:-WARNING}
+      #- LOG_LLM_FILE=${LOG_LLM_FILE:-}
+      # LLM Configuration - configure via Settings UI or set env vars for explicit overrides
+      # Supported providers: openai, anthropic, openrouter, gemini, deepseek, ollama
+      # Defaults are defined in apps/backend/app/config.py
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - LLM_MODEL=${LLM_MODEL:-}
+      # Optional Docker Secret file path (same behavior as Postgres-style *_FILE)
+      #- LLM_API_KEY_FILE=${LLM_API_KEY_FILE:-/run/secrets/llm_api_key}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      # For Ollama running on host machine, use host.docker.internal:
+      # - LLM_API_BASE=http://host.docker.internal:11434
+      - LLM_API_BASE=${LLM_API_BASE:-}
+      # CORS origins (JSON array format). FRONTEND_BASE_URL is auto-included.
+      #- CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
+    restart: unless-stopped
+
+#secrets:
+#  llm_api_key:
+#    file: ./secrets/llm_api_key
+
+volumes:
+  resume-data:
+    driver: local

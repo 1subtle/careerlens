@@ -1,0 +1,1118 @@
+{
+  "common": {
+    "save": "保存",
+    "saving": "保存中...",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "download": "下载",
+    "loading": "加载中...",
+    "uploading": "上传中...",
+    "checking": "检查中...",
+    "processing": "处理中...",
+    "generating": "生成中...",
+    "error": "错误",
+    "success": "成功",
+    "confirm": "确认",
+    "back": "返回",
+    "retry": "重试",
+    "next": "下一步",
+    "continue": "继续",
+    "finish": "完成",
+    "optional": "可选",
+    "close": "关闭",
+    "ok": "确定",
+    "search": "搜索",
+    "filter": "筛选",
+    "reset": "重置",
+    "apply": "应用",
+    "selectOption": "请选择...",
+    "unknown": "未知",
+    "keysCleared": "API密钥已成功清除",
+    "databaseReset": "数据库已成功重置",
+    "popupBlocked": "弹窗被阻止。请允许弹窗或手动打开此链接：{url}",
+    "resumeDeleted": "此简历已被删除。请上传或选择另一份简历。"
+  },
+  "home": {
+    "brandLine1": "简历",
+    "brandLine2": "匹配器",
+    "docs": "使用文档",
+    "launchApp": "启动应用"
+  },
+  "nav": {
+    "dashboard": "仪表板",
+    "builder": "简历生成器",
+    "tailor": "定制简历",
+    "settings": "设置",
+    "backToDashboard": "返回仪表板",
+    "goToSettings": "前往设置",
+    "applicationTracker": "申请追踪"
+  },
+  "dashboard": {
+    "title": "仪表板",
+    "subtitle": "管理您的简历和求职申请",
+    "myResumes": "我的简历",
+    "noResumes": "暂无简历",
+    "noResumesDescription": "上传您的第一份简历开始使用",
+    "uploadResume": "上传简历",
+    "createNew": "新建",
+    "lastModified": "最后修改",
+    "actions": "操作",
+    "preview": "预览",
+    "viewResume": "查看简历",
+    "editResume": "编辑简历",
+    "deleteResume": "删除简历",
+    "downloadPdf": "下载PDF",
+    "tailorResume": "为职位定制",
+    "selectModule": "选择模块",
+    "masterResume": "主简历",
+    "tailoredResume": "定制简历",
+    "initializeMasterResume": "初始化主简历",
+    "initializeSequence": "初始化流程",
+    "refreshStatus": "刷新状态",
+    "retryProcessing": "重试处理",
+    "retryingProcessing": "正在重试...",
+    "deleteAndReupload": "删除并重新上传",
+    "processingFailedHint": "我们无法读取此文件。请重试或上传其他文件。",
+    "retrySuccess": "处理成功！",
+    "retryFailed": "重试失败。请尝试上传其他文件。",
+    "createResume": "创建简历",
+    "edited": "编辑于 {date}",
+    "statusLine": "状态：{status}",
+    "status": {
+      "checking": "检查中...",
+      "processing": "处理中...",
+      "ready": "就绪",
+      "failed": "处理失败",
+      "pending": "等待中"
+    },
+    "llmNotConfiguredTitle": "[ 未配置 LLM ]",
+    "llmNotConfiguredMessage": "> 缺少 API 密钥。配置前将禁用简历定制功能。",
+    "setupRequiredTitle": "[ 需要配置 ]",
+    "setupRequiredMessage": "> 请在设置中配置 API 密钥以启用简历定制。",
+    "uploadDialog": {
+      "success": "简历上传成功。",
+      "successMaster": "简历已上传并设为主简历。",
+      "successMissingId": "上传成功但未返回简历 ID。",
+      "parsingFailed": "简历已上传但AI解析失败。您仍可手动定制。",
+      "failed": "上传失败。",
+      "dropzoneTitle": "点击或拖拽文件",
+      "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）",
+      "tryDifferentFile": "尝试其他文件",
+      "parsingFailedKeepOpen": "AI 解析失败。请尝试其他文件，或关闭此对话框。"
+    },
+    "errors": {
+      "loadFailed": "无法加载简历，请重试。",
+      "deleteFailed": "无法删除简历。现有简历仍可使用。"
+    }
+  },
+  "builder": {
+    "title": "简历生成器",
+    "editMode": "编辑模式",
+    "previewMode": "预览模式",
+    "createAndPreview": "创建与预览",
+    "unsavedDraft": "未保存草稿",
+    "autoSave": {
+      "saving": "同步中...",
+      "saved": "所有更改已保存",
+      "localDraft": "草稿已在本地保存",
+      "saveNow": "立即保存",
+      "retrySave": "重试保存",
+      "savedButton": "已保存",
+      "localDraftUnavailable": "无法保存本地草稿"
+    },
+    "draftRecovery": {
+      "title": "恢复本地草稿？",
+      "description": "浏览器中的本地草稿与服务器已保存版本不同。你可以恢复本地草稿继续编辑，或使用服务器版本并丢弃本地草稿。",
+      "newDescription": "此浏览器中有一份未保存的简历草稿。恢复草稿以继续编辑，或放弃草稿并重新开始。",
+      "restoreDraft": "恢复草稿",
+      "useServer": "使用服务器版本"
+    },
+    "leaveWithLocalDraft": {
+      "title": "未同步仍要离开？",
+      "description": "最新修改暂时无法同步到服务器。本地浏览器草稿仍已保存，但可能无法在其他浏览器或设备上使用。",
+      "leave": "离开到仪表盘",
+      "stay": "继续编辑"
+    },
+    "personalInfo": "个人信息",
+    "summary": "个人简介",
+    "experience": "工作经历",
+    "education": "教育背景",
+    "skills": "技能",
+    "projects": "项目经历",
+    "certifications": "证书",
+    "languages": "语言能力",
+    "awards": "荣誉奖项",
+    "addSection": "添加板块",
+    "removeSection": "删除板块",
+    "saveChanges": "保存更改",
+    "discardChanges": "放弃更改",
+    "placeholders": {
+      "summary": "简要描述你的职业背景..."
+    },
+    "contentStats": {
+      "wordsChars": "{wordCount} 词 / {charCount} 字符"
+    },
+    "additionalForm": {
+      "instructions": "每行输入一条内容（按 Enter 换行）。",
+      "placeholders": {
+        "technicalSkills": "React\nTypeScript\nNode.js",
+        "languages": "中文\n英语",
+        "certifications": "AWS 解决方案架构师\nGoogle Analytics",
+        "awards": "月度最佳员工\n黑客松冠军"
+      }
+    },
+    "customSections": {
+      "dialogTitle": "添加自定义板块",
+      "dialogDescription": "为简历创建一个自定义名称与类型的新板块。",
+      "sectionNameLabel": "板块名称",
+      "sectionNamePlaceholder": "例如：论文发表、志愿者经历、证书",
+      "sectionTypeLabel": "板块类型",
+      "addCustomSectionButton": "添加自定义板块",
+      "sectionTypes": {
+        "textBlockLabel": "文本块",
+        "textBlockDescription": "单个文本区域（类似个人简介）",
+        "itemListLabel": "条目列表",
+        "itemListDescription": "包含多个条目的列表（类似工作经历）",
+        "stringListLabel": "简单列表",
+        "stringListDescription": "简单的文本列表（类似技能）"
+      },
+      "contentLabel": "内容",
+      "contentPlaceholder": "请输入“{name}”的内容...",
+      "defaultTextPlaceholder": "请输入内容...",
+      "entryLabel": "条目",
+      "addEntryLabel": "添加条目",
+      "itemsLabel": "列表项",
+      "itemsPlaceholder": "每行一个列表项",
+      "unknownSectionType": "未知板块类型：{type}",
+      "unknownDefaultSection": "未知默认板块：{section}"
+    },
+    "sectionHeader": {
+      "renameSection": "重命名板块",
+      "customTag": "自定义",
+      "hiddenFromPdfTag": "PDF 中隐藏",
+      "hideSection": "隐藏板块",
+      "showSection": "显示板块",
+      "moveUp": "上移",
+      "moveDown": "下移",
+      "deleteSection": "删除板块",
+      "deleteTitle": "删除板块",
+      "deleteDescription": "确定要删除“{name}”吗？此操作无法撤销。"
+    },
+    "previewTabs": {
+      "resume": "简历",
+      "coverLetter": "求职信",
+      "outreach": "联系邮件",
+      "jdMatch": "JD 匹配",
+      "interviewPrep": "面试准备"
+    },
+    "footer": {
+      "moduleLabel": "简历编辑模块",
+      "singleColumn": "单栏",
+      "twoColumn": "双栏"
+    },
+    "pageSize": {
+      "usLetter": "美式信纸"
+    },
+    "generatePrompt": {
+      "notAvailableTitle": "{title} 暂不可用",
+      "notAvailableDescription": "要生成 {title}，请先填写职位描述并完成一次简历定制。",
+      "goToDashboard": "前往仪表板",
+      "generateTitle": "生成 {title}",
+      "coverLetterDescription": "基于你的简历与职位描述生成定制求职信。",
+      "outreachDescription": "基于你的简历与职位描述生成用于 LinkedIn 或邮件的外联消息。",
+      "generateButton": "生成 {title}",
+      "coverLetterFooter": "提示：先完成简历定制效果更佳。",
+      "outreachFooter": "提示：尽量简短并加入个性化细节。",
+      "interviewPrepDescription": "基于已定制简历和职位描述生成针对性的面试准备内容。",
+      "interviewPrepFooter": "提示：定制简历后使用，准备真实且基于简历证据的回答。"
+    },
+    "regenerateDialog": {
+      "title": "重新生成 {title}？",
+      "description": "将用新生成的内容替换当前的 {title}。你所做的任何编辑都会丢失。"
+    },
+    "regenerate": {
+      "buttonLabel": "AI 重新生成",
+      "selectDialog": {
+        "title": "选择要重新生成的项目",
+        "subtitle": "选择您想要改进的简历部分",
+        "experience": "工作经历",
+        "projects": "项目经历",
+        "skills": "技术技能",
+        "noItemsSelected": "请至少选择一个项目",
+        "noItemsAvailable": "没有可重新生成的项目。请先添加工作经历、项目经历或技能。",
+        "itemCount": {
+          "one": "{count} 条",
+          "other": "{count} 条"
+        },
+        "continueButton": "继续"
+      },
+      "instructionDialog": {
+        "title": "您想要改进什么？",
+        "subtitle": "提供具体反馈以指导 AI",
+        "defaultInstruction": "使用更有力的行动动词改进内容，并在可能时体现可量化的影响。",
+        "selectedItems": "已选项目",
+        "placeholder": "示例：添加更多量化指标、强调领导能力、使用更多行动动词...",
+        "hint": "请具体说明您不满意的地方",
+        "backButton": "返回",
+        "generateButton": "生成"
+      },
+      "diffPreview": {
+        "title": "预览变更",
+        "subtitle": "应用前查看重新生成的内容",
+        "expandItem": "展开 {item}",
+        "collapseItem": "收起 {item}",
+        "partialFailures": "部分项目未能重新生成（{count} 个）。你仍可以预览并应用已成功生成的变更。",
+        "changesCount": "{count} 个项目已修改",
+        "rejectButton": "拒绝并重新生成",
+        "acceptButton": "接受变更",
+        "originalLabel": "原始",
+        "newLabel": "新内容",
+        "noContent": "无内容",
+        "applying": "正在应用...",
+        "loading": "正在生成改进内容...",
+        "retryRefresh": "重试刷新",
+        "refreshing": "正在刷新..."
+      },
+      "errors": {
+        "generationFailed": "生成内容失败，请重试。",
+        "applyFailed": "应用变更失败，请重试。",
+        "resumeChanged": "简历内容在重新生成后已发生变化。请重新生成后再试。",
+        "noChangesToApply": "没有可应用的变更。",
+        "networkError": "网络错误，请检查您的连接。",
+        "refreshFailed": "更改已保存，但无法刷新简历。请重试刷新。"
+      }
+    },
+    "jdMatch": {
+      "yourResume": "你的简历",
+      "matchingKeywordsHighlighted": "（已高亮匹配关键词）",
+      "jobDescriptionTitle": "职位描述",
+      "at": "在",
+      "atSeparator": " 在 ",
+      "roleSeparator": "—",
+      "aboutTitle": "关于 JD 匹配",
+      "aboutDescription": "该视图用于展示简历与职位描述（JD）的匹配程度。职位描述中的关键词会在简历中以黄色高亮，帮助你快速查看已覆盖的技能与术语。",
+      "highlightedKeywordsTitle": "高亮关键词",
+      "highlightedKeywordsDescriptionPrefix": "被标记为",
+      "highlightColor": "黄色",
+      "highlightedKeywordsDescriptionSuffix": "的词同时出现在职位描述与简历中。匹配度越高，通常意味着与岗位要求的契合度更好。",
+      "highlightedKeywordsDescriptionTemplate": "被标记为__COLOR__的词同时出现在职位描述与简历中。匹配度越高，通常意味着与岗位要求的契合度更好。",
+      "tipsTitle": "提示",
+      "tips": {
+        "items": {
+          "addMissingKeywords": "在“简历”标签页补充缺失的关键词",
+          "focusTechnicalSkills": "重点关注 JD 中提到的技术技能与工具",
+          "matchActionVerbs": "对齐岗位要求中的行动动词"
+        }
+      },
+      "stats": {
+        "keywordsExtracted": "已提取 {count} 个关键词",
+        "matchesFound": "已匹配 {count} 处",
+        "matchRateLabel": "匹配率："
+      }
+    },
+    "genericItemForm": {
+      "itemLabel": "条目",
+      "addItemLabel": "添加{label}",
+      "fields": {
+        "title": "标题",
+        "organization": "组织/公司",
+        "location": "地点",
+        "years": "时间",
+        "descriptionPoints": "描述要点"
+      },
+      "actions": {
+        "addPoint": "添加要点",
+        "togglePointStyle": "切换项目符号"
+      },
+      "placeholders": {
+        "title": "标题",
+        "organization": "组织/公司",
+        "location": "地点",
+        "years": "2020年1月 - 至今",
+        "description": "描述你的贡献..."
+      },
+      "noEntries": "// 暂无{label}",
+      "addFirstItem": "添加第一条{label}"
+    },
+    "forms": {
+      "experience": {
+        "addJob": "添加经历",
+        "addFirstJob": "添加第一条经历",
+        "fields": {
+          "jobTitle": "职位名称",
+          "company": "公司"
+        },
+        "placeholders": {
+          "jobTitle": "高级开发工程师",
+          "company": "科技公司",
+          "location": "远程 / 城市",
+          "years": "2020年1月 - 至今",
+          "description": "描述你的成果..."
+        }
+      },
+      "education": {
+        "addSchool": "添加教育经历",
+        "addFirstSchool": "添加第一条教育经历",
+        "fields": {
+          "institution": "学校/机构",
+          "degree": "学位/专业",
+          "description": "描述",
+          "descriptionOptional": "描述（可选）"
+        },
+        "placeholders": {
+          "institution": "某某大学",
+          "degree": "工学学士",
+          "years": "2016年8月 - 2020年5月",
+          "description": "补充说明..."
+        }
+      },
+      "projects": {
+        "addProject": "添加项目",
+        "addFirstProject": "添加第一个项目",
+        "fields": {
+          "projectName": "项目名称",
+          "role": "角色",
+          "website": "网站"
+        },
+        "placeholders": {
+          "projectName": "Resume Matcher",
+          "role": "作者",
+          "years": "2023年3月",
+          "github": "github.com/username/project",
+          "website": "https://project-demo.com",
+          "description": "项目细节..."
+        }
+      }
+    },
+    "formatting": {
+      "panelTitle": "模板与排版",
+      "template": "模板",
+      "templates": {
+        "swissSingle": {
+          "name": "单栏",
+          "description": "传统全宽布局，内容密度最高"
+        },
+        "swissTwoColumn": {
+          "name": "双栏",
+          "description": "以经历为主的主栏布局，侧栏展示技能"
+        },
+        "modern": {
+          "name": "现代",
+          "description": "彩色点缀，支持自定义主题色"
+        },
+        "modernTwoColumn": {
+          "name": "现代双栏",
+          "description": "现代双栏布局，带彩色点缀与主题色"
+        },
+        "latex": {
+          "name": "LaTeX",
+          "description": "经典衬线学术版式，带分隔线的栏目标题"
+        },
+        "clean": {
+          "name": "简洁",
+          "description": "极简无衬线版式，栏目标题大而低调"
+        },
+        "vivid": {
+          "name": "鲜明",
+          "description": "彩色双栏布局，强调色标题与箭头项目符号"
+        }
+      },
+      "accentColor": "强调色",
+      "accentColors": {
+        "blue": "蓝色",
+        "green": "绿色",
+        "orange": "橙色",
+        "red": "红色"
+      },
+      "pageSize": "纸张尺寸",
+      "margins": "页边距（mm）",
+      "margin": {
+        "top": "上",
+        "bottom": "下",
+        "left": "左",
+        "right": "右"
+      },
+      "spacing": "间距",
+      "spacingSection": "板块",
+      "spacingItems": "条目",
+      "spacingLines": "行距",
+      "fontSize": "字号",
+      "baseFontSize": "正文",
+      "headerScale": "标题",
+      "headerFontFamily": "标题字体",
+      "bodyFontFamily": "正文字体",
+      "fontNames": {
+        "serif": "衬线",
+        "sans": "无衬线",
+        "mono": "等宽"
+      },
+      "options": "选项",
+      "compactMode": "紧凑模式",
+      "contactIcons": "联系方式图标",
+      "effectiveOutput": "生效预览",
+      "effectiveMargins": "页边距（mm）：上{top} 下{bottom} 左{left} 右{right}",
+      "effectiveSectionGap": "板块间距",
+      "effectiveItemGap": "条目间距",
+      "effectiveLineHeight": "行高",
+      "effectiveBaseFont": "正文字号",
+      "effectiveHeaderScale": "标题缩放",
+      "effectiveHeaderFont": "标题字体",
+      "effectiveBodyFont": "正文字体",
+      "compactHint": "紧凑模式会收紧间距与行高；页边距与正文字号保持不变。",
+      "resetDefaults": "恢复默认设置"
+    },
+    "personalInfoForm": {
+      "placeholders": {
+        "name": "张三",
+        "title": "软件工程师",
+        "email": "zhangsan@example.com",
+        "phone": "+86 138 0000 0000",
+        "location": "城市，国家",
+        "website": "portfolio.com",
+        "linkedin": "linkedin.com/in/zhangsan",
+        "github": "github.com/zhangsan"
+      }
+    },
+    "leftPanel": {
+      "editorPanel": "编辑面板",
+      "coverLetterEditor": "求职信编辑",
+      "outreachEditor": "联系邮件编辑",
+      "jdMatchAnalysis": "JD 匹配分析",
+      "interviewPrep": "面试准备"
+    },
+    "alerts": {
+      "saveNotAvailable": "仅在编辑现有简历时可保存。",
+      "saveFailed": "保存简历失败，请重试。",
+      "autoSaveFailed": "暂时无法同步，草稿已安全保存在本地。",
+      "loadFailed": "无法从服务器加载此简历。请刷新重试；编辑已禁用，以免覆盖已保存的副本。",
+      "coverLetterSaveSuccess": "求职信已保存",
+      "outreachSaveSuccess": "联系邮件已保存",
+      "downloadSuccess": "简历已下载",
+      "reloadFailed": "变更已应用，但重新加载简历失败。请刷新页面。",
+      "downloadNotAvailable": "仅已保存的简历可下载。",
+      "downloadFailed": "下载简历失败，请重试。",
+      "coverLetterSaveFailed": "保存求职信失败，请重试。",
+      "coverLetterDownloadRequiresResume": "请先保存简历再下载求职信。",
+      "coverLetterMissing": "暂无求职信内容。请在设置中启用求职信生成并完成一次简历定制。",
+      "coverLetterDownloadFailed": "下载求职信失败：{error}",
+      "outreachSaveFailed": "保存联系邮件失败，请重试。",
+      "coverLetterGenerateFailed": "生成求职信失败：{error}",
+      "outreachGenerateFailed": "生成联系邮件失败：{error}",
+      "interviewPrepGenerateFailed": "生成面试准备失败：{error}"
+    },
+    "leaveWithoutDraft": {
+      "title": "要带着未保存的更改离开吗？",
+      "description": "最新更改无法同步到服务器，也无法保存在此浏览器中。现在离开可能会丢失这些更改。",
+      "leave": "仍然离开",
+      "stay": "继续编辑"
+    }
+  },
+  "enrichment": {
+    "title": "简历增强",
+    "loading": {
+      "analyzingTitle": "正在分析你的简历...",
+      "analyzingDescription": "识别哪些内容需要补充细节",
+      "generatingTitle": "正在生成增强描述...",
+      "generatingDescription": "根据你的回答优化简历内容",
+      "applyingTitle": "正在应用增强内容...",
+      "applyingDescription": "更新你的主简历"
+    },
+    "questionProgress": "问题 {current}/{total}",
+    "itemType": {
+      "experience": "经历",
+      "project": "项目"
+    },
+    "shortcutHint": "Shift+Enter 换行，Cmd/Ctrl+Enter 继续",
+    "preview": {
+      "title": "确认新增内容",
+      "description": "查看将添加到简历中的新要点",
+      "applyButton": "添加到简历",
+      "keepingLabel": "保留",
+      "addingLabel": "新增",
+      "existingCount": "（已有 {count} 条）",
+      "newCount": "（新增 {count} 条）",
+      "noExistingDescription": "暂无原有描述",
+      "partialFailure": "部分项目未能改进",
+      "partialFailureDescription": "以下项目将保持不变。你可以应用已成功生成的改进，稍后再重试其他项目。"
+    },
+    "complete": {
+      "title": "简历已增强！",
+      "updatedCountSingular": "已成功更新 {count} 条内容",
+      "updatedCountPlural": "已成功更新 {count} 条内容",
+      "updatedFallback": "已将增强描述更新到你的简历中",
+      "doneButton": "完成",
+      "refreshFailedTitle": "已保存 — 需要刷新",
+      "refreshFailed": "增强内容已保存，但当前页面无法刷新。请重试以查看最新简历。",
+      "retryRefresh": "重试刷新",
+      "refreshing": "正在刷新简历..."
+    },
+    "noImprovements": {
+      "title": "你的简历已经很棒！",
+      "defaultDescription": "未发现需要改进的条目。你的经历与项目描述已经足够详细。"
+    },
+    "error": {
+      "title": "出现错误",
+      "unexpected": "发生了未预期的错误",
+      "answerRequired": "请至少回答一个问题后再生成改进内容。"
+    }
+  },
+  "tailor": {
+    "title": "定制简历",
+    "subtitle": "为特定职位优化您的简历",
+    "heroTitle": "定制您的简历",
+    "selectResume": "选择简历",
+    "pasteJobDescription": "粘贴职位描述",
+    "pasteJobDescriptionBelow": "在下方粘贴职位描述",
+    "jobDescriptionPlaceholder": "在此粘贴职位描述...",
+    "promptLabel": "匹配强度",
+    "promptDescription": "选择与职位描述对齐的程度。",
+    "promptOptions": {
+      "nudge": {
+        "label": "轻度调整",
+        "description": "最小化修改以更好匹配现有经验。"
+      },
+      "keywords": {
+        "label": "关键词增强",
+        "description": "不改变角色或范围，融入相关关键词。"
+      },
+      "full": {
+        "label": "完全定制",
+        "description": "基于职位描述进行全面定制。"
+      }
+    },
+    "analyzeJob": "分析职位",
+    "generateTailored": "生成定制简历",
+    "setupRequiredTitle": "[ 需要配置 ]",
+    "noApiKeyMessage": "> 未配置 API 密钥。定制简历需要 LLM 提供商。",
+    "configureApiKey": "配置 API 密钥",
+    "configureApiKeyFirst": "请先配置 API 密钥",
+    "charactersCount": "{count} 字符",
+    "matchScore": "匹配度",
+    "suggestions": "建议",
+    "keywords": "关键词建议",
+    "footerTagline": "AI 驱动的优化引擎",
+    "diffModal": {
+      "title": "审核 AI 定制结果",
+      "subtitle": "请仔细检查以下变更，确保不包含虚假内容",
+      "summary": "变更摘要",
+      "skillsAdded": "新增技能",
+      "skillsRemoved": "删除技能",
+      "descriptionsModified": "修改描述",
+      "certificationsAdded": "新增认证",
+      "highRiskChanges": "高风险变更",
+      "warningTitle": "检测到 {count} 项高风险新增内容",
+      "warningMessage": "请确认这些新增内容确实存在于您的原始简历中，或在描述中有所体现",
+      "summaryChanges": "摘要变更",
+      "skillChanges": "技能变更",
+      "descriptionChanges": "经历描述变更",
+      "experienceChanges": "经历条目变更",
+      "educationChanges": "教育变更",
+      "projectChanges": "项目变更",
+      "certificationChanges": "认证变更",
+      "languageChanges": "语言变更",
+      "awardChanges": "奖项变更",
+      "rejectButton": "拒绝并重新生成",
+      "confirmButton": "确认并保存"
+    },
+    "regenerateDialog": {
+      "title": "重新生成定制简历？",
+      "description": "这将丢弃当前预览并请求新的 AI 定制结果。",
+      "confirmLabel": "重新生成"
+    },
+    "missingDiffDialog": {
+      "title": "无法计算变更",
+      "description": "无法为此简历计算差异。这可能发生在缺少结构化数据的旧简历上。你可以继续保存定制简历，或取消后再检查。",
+      "confirmLabel": "继续保存"
+    },
+    "errors": {
+      "jobDescriptionTooShort": "职位描述过短。请添加更多细节后重试。",
+      "apiKeyError": "您的 API 密钥无效。请在设置中检查。",
+      "rateLimit": "已达到速率限制。请等待约一分钟后重试。",
+      "timeout": "简历预览在 {minutes} 分钟后超时。请缩短职位描述，或改用更简单的提示词后重试。",
+      "failedToGenerate": "无法生成简历。请在设置中检查 API 密钥后重试。",
+      "failedToPreview": "无法预览简历。请在设置中检查 API 密钥后重试。",
+      "failedToConfirm": "无法应用更改。请重试。",
+      "previewUnavailable": "此预览已过期或原始简历已更改。请先生成新的预览再保存。"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "配置您的偏好",
+    "aiProvider": "AI 供应商",
+    "aiProviderDescription": "选择您首选的AI供应商进行简历分析",
+    "apiKey": "API 密钥",
+    "apiKeyPlaceholder": "输入您的API密钥",
+    "saveApiKey": "保存API密钥",
+    "contentLanguage": "内容语言",
+    "contentLanguageDescription": "生成内容的语言（简历、求职信）",
+    "uiLanguage": "界面语言",
+    "uiLanguageDescription": "用户界面的语言",
+    "theme": "主题",
+    "themeDescription": "选择您喜欢的颜色主题",
+    "lightMode": "浅色",
+    "darkMode": "深色",
+    "systemMode": "跟随系统",
+    "dangerZone": "危险区域",
+    "clearApiKeys": "清除 API 密钥",
+    "clearApiKeysDescription": "从配置中删除所有存储的 API 密钥。此操作无法撤销。",
+    "resetDatabase": "重置数据库",
+    "resetDatabaseDescription": "删除所有数据，包括简历、职位和生成的内容。此操作无法撤销。",
+    "llmConfigurationTitle": "LLM 配置",
+    "providerLabel": "提供商",
+    "statusCards": {
+      "llm": "LLM",
+      "database": "数据库",
+      "resumes": "简历",
+      "jobs": "职位",
+      "improvements": "优化",
+      "masterResume": "主简历"
+    },
+    "statusValues": {
+      "healthy": "健康",
+      "offline": "离线",
+      "connected": "已连接",
+      "configured": "已配置",
+      "notSet": "未设置"
+    },
+    "apiKeyMenu": {
+      "buttonLabel": "LLM API",
+      "title": "OpenAI API 密钥",
+      "description": "提供密钥以启用托管的 OpenAI 模型。",
+      "savedMessage": "API 密钥已保存。",
+      "loadError": "无法加载 API 密钥",
+      "updateError": "无法更新 API 密钥"
+    },
+    "setupRequired": {
+      "title": "[ 需要配置 ]",
+      "description": "> 未配置 API 密钥。请在下方添加 LLM 提供商的 API 密钥以启用简历定制。"
+    },
+    "systemStatus": {
+      "title": "系统状态",
+      "refresh": "刷新",
+      "unableToConnect": "无法连接到服务器",
+      "expectedAt": "预期地址：{apiUrl}",
+      "lastFetched": {
+        "never": "从未",
+        "justNow": "刚刚",
+        "minutesAgo": "{minutes} 分钟前",
+        "hoursAgo": "{hours} 小时前"
+      }
+    },
+    "llmConfiguration": {
+      "selectedProvider": "已选择：{provider}",
+      "modelLabel": "模型",
+      "defaultModel": "默认：{model}",
+      "apiKeyLabel": "API 密钥",
+      "apiKeyOptionalForOllama": "（Ollama 可选）",
+      "apiKeyOptional": "（可选）",
+      "apiKeyPlaceholder": "sk-...",
+      "apiKeyNotRequiredPlaceholder": "本地模型不需要",
+      "apiKeyOptionalPlaceholder": "如果你的服务器不需要认证，留空即可",
+      "leaveBlankToKeepExistingKey": "留空以保留现有密钥",
+      "baseUrlLabel": "Base URL（可选）",
+      "baseUrlPlaceholder": "例如 https://api.openai.com/v1",
+      "baseUrlDescription": "可用于中转站/聚合站等自定义接口地址。不填写则使用提供商默认地址。",
+      "azureBaseUrlLabel": "Azure AI Foundry 终结点",
+      "azureBaseUrlDescription": "粘贴 Foundry 中的终结点。GPT 部署可使用服务根地址或 /openai/v1/responses；Azure AI Inference 模型可使用 /models 终结点。",
+      "ollamaServerUrl": "Ollama 服务器地址",
+      "ollamaServerUrlPlaceholder": "http://localhost:11434",
+      "reasoningEffortLabel": "推理深度",
+      "reasoningEffortAuto": "自动",
+      "reasoningEffortAutoDesc": "不发送 reasoning_effort —— 默认值，最大限度兼容",
+      "reasoningEffortMinimal": "极低",
+      "reasoningEffortLow": "低",
+      "reasoningEffortMedium": "中",
+      "reasoningEffortHigh": "高",
+      "reasoningEffortDescription": "仅影响具备推理能力的模型（gpt-5 系列、Claude 3.7+、DeepSeek R1、OpenAI o1/o3）。不支持的提供商会自动忽略该参数。",
+      "testConnection": "测试连接",
+      "errorPrefix": "错误：{error}",
+      "connectionSuccessful": "连接成功",
+      "connectionFailed": "连接失败",
+      "connectionDetails": "提供商：{provider} | 模型：{model}",
+      "testPromptLabel": "测试内容",
+      "modelOutputLabel": "模型输出",
+      "reasoningContentLabel": "模型思考过程",
+      "errorDetailLabel": "错误详情",
+      "healthErrors": {
+        "api_key_missing": "未配置 API Key，请在设置中添加。",
+        "health_check_failed": "健康检查失败。",
+        "duplicate_v1_path": "健康检查失败。Base URL 可能包含重复的 /v1 路径。",
+        "not_found_404": "健康检查失败。404 未找到，请检查 Base URL 是否与提供方匹配。",
+        "html_response": "健康检查失败。Base URL 返回了 HTML，可能是控制台地址或网关不支持该路径。"
+      },
+      "healthWarnings": {
+        "empty_content": "健康检查返回了空内容。"
+      }
+    },
+    "contentGeneration": {
+      "title": "内容生成",
+      "description": "在简历定制过程中启用额外的内容生成。启用后，这些文档将与定制简历一起自动生成。",
+      "coverLetter": {
+        "label": "求职信",
+        "description": "与简历一起生成定制求职信"
+      },
+      "outreachMessage": {
+        "label": "冷启动外联消息",
+        "description": "生成用于 LinkedIn 或邮件的社交/外联消息"
+      },
+      "customPromptLabel": "自定义提示词（可选）",
+      "customPromptHelp": "必须包含以下占位符（各自使用大括号括起来）：job_description、resume_data、output_language。留空则使用默认提示词。",
+      "customPromptResetButton": "恢复默认",
+      "customPromptErrorMissing": "缺少必需的占位符：{missing}",
+      "interviewPrep": {
+        "label": "面试准备",
+        "description": "保存定制简历时自动生成面试准备内容"
+      }
+    },
+    "promptSettings": {
+      "title": "提示词设置",
+      "description": "选择用于简历定制的默认提示词。",
+      "defaultLabel": "默认定制提示词"
+    },
+    "footer": {
+      "status": {
+        "checking": "检查中...",
+        "ready": "状态：就绪",
+        "setupRequired": "状态：需要配置",
+        "offline": "状态：离线"
+      }
+    },
+    "errors": {
+      "unableToConnectBackend": "无法连接到服务器。请确认服务器正在运行。",
+      "apiKeyRequired": "所选提供商需要 API 密钥。",
+      "baseUrlRequired": "{provider} 需要基础 URL。",
+      "unknownProvider": "后端返回未知提供商：{provider}",
+      "unableToSaveConfiguration": "无法保存配置",
+      "failedToClearApiKeys": "清除 API 密钥失败，请重试。",
+      "failedToResetDatabase": "重置数据库失败，请重试。"
+    },
+    "apiKeys": {
+      "savedTitle": "已保存的 API 密钥",
+      "deleteAria": "删除 {provider} 密钥",
+      "deleteConfirmTitle": "删除 API 密钥？",
+      "deleteConfirmDescription": "删除已保存的 {provider} API 密钥？你之后可以重新添加。"
+    }
+  },
+  "resumeViewer": {
+    "resumeNotFound": "未找到简历",
+    "loading": "正在加载简历...",
+    "useTailorFeature": "使用定制功能",
+    "retryProcessing": "重试处理",
+    "deleteAndStartOver": "删除并重新开始",
+    "returnToDashboard": "返回仪表板",
+    "enhanceResume": "增强简历",
+    "downloadResume": "下载简历",
+    "deletedTitle": "已删除简历",
+    "deletedDescriptionMaster": "您的主简历已从系统中永久删除。",
+    "deletedDescriptionRegular": "该简历已从系统中永久删除。",
+    "deleteFailedTitle": "删除失败",
+    "errors": {
+      "processingFailed": "我们无法读取您的简历。请重试处理，或删除后上传其他文件。",
+      "stillProcessing": "您的简历仍在处理中。请等待几秒后刷新页面。",
+      "notProcessedYet": "简历尚未处理。请使用定制功能生成结构化简历。",
+      "noDataAvailable": "没有可用的简历数据。",
+      "failedToLoad": "加载简历数据失败。",
+      "failedToDelete": "删除简历失败，请重试。",
+      "failedToDownload": "无法下载简历，请重试。",
+      "failedToRename": "无法重命名简历，请重试。"
+    },
+    "titlePlaceholder": "输入简历标题...",
+    "downloadFailedTitle": "下载失败",
+    "renameFailedTitle": "重命名失败"
+  },
+  "preview": {
+    "margins": "页边距",
+    "calculating": "计算中...",
+    "pageBreak": "分页符",
+    "pageCountSingular": "{count} 页",
+    "pageCountPlural": "{count} 页",
+    "zoomIn": "放大",
+    "zoomOut": "缩小"
+  },
+  "resume": {
+    "personalInfo": {
+      "name": "姓名",
+      "title": "职位名称",
+      "email": "电子邮箱",
+      "phone": "电话",
+      "location": "所在地",
+      "website": "个人网站",
+      "linkedin": "领英",
+      "github": "GitHub"
+    },
+    "sections": {
+      "personalInfo": "个人信息",
+      "summary": "个人简介",
+      "experience": "工作经历",
+      "education": "教育背景",
+      "projects": "项目经历",
+      "skills": "技能与荣誉",
+      "skillsOnly": "技能",
+      "certifications": "培训与证书",
+      "languages": "语言能力",
+      "awards": "荣誉奖项",
+      "links": "链接"
+    },
+    "defaults": {
+      "name": "你的姓名"
+    },
+    "additional": {
+      "technicalSkills": "技术技能"
+    },
+    "additionalLabels": {
+      "technicalSkills": "技术技能：",
+      "languages": "语言能力：",
+      "certifications": "培训与证书：",
+      "awards": "荣誉奖项："
+    }
+  },
+  "coverLetter": {
+    "title": "求职信",
+    "generate": "生成求职信",
+    "regenerate": "重新生成",
+    "copyToClipboard": "复制到剪贴板",
+    "copied": "已复制！",
+    "editor": {
+      "placeholder": "启用求职信生成并完成一次简历定制后，求职信内容会显示在这里...",
+      "tip": "提示：一封好的求职信通常在 300-400 词左右，可根据需要进行个性化修改。"
+    },
+    "preview": {
+      "defaultName": "你的姓名",
+      "emptyTitle": "还没有求职信内容。",
+      "emptyDescription": "请在设置中启用求职信生成，然后完成一次简历定制。"
+    },
+    "print": {
+      "emptyContent": "暂无求职信内容。"
+    }
+  },
+  "outreach": {
+    "title": "联系邮件",
+    "generate": "生成联系邮件",
+    "regenerate": "重新生成",
+    "copy": "复制",
+    "copyToClipboard": "复制到剪贴板",
+    "copied": "已复制！",
+    "editor": {
+      "placeholder": "启用外联消息生成并完成一次简历定制后，外联消息会显示在这里...",
+      "tip": "提示：外联消息建议保持简短（100-150 词）。可复制后粘贴到 LinkedIn 或邮件中。"
+    },
+    "preview": {
+      "channels": {
+        "linkedin": "LinkedIn",
+        "email": "邮件"
+      },
+      "howToUseTitle": "使用方法：",
+      "steps": {
+        "step1": "1. 点击上方按钮复制消息",
+        "step2": "2. 打开 LinkedIn 或你的邮件客户端",
+        "step3": "3. 粘贴并按需个性化调整",
+        "step4": "4. 发送给招聘人员或用人经理"
+      },
+      "emptyTitle": "还没有外联消息。",
+      "emptyDescription": "请在设置中启用外联消息生成，然后完成一次简历定制。"
+    }
+  },
+  "errors": {
+    "generic": "出了点问题，请重试。",
+    "networkError": "网络错误，请检查您的连接。",
+    "unauthorized": "请登录后继续。",
+    "notFound": "未找到请求的资源。",
+    "validationError": "部分字段需要注意。请检查标记的字段后重试。",
+    "boundary": {
+      "title": "出现错误",
+      "description": "发生了意外问题。请尝试重新加载页面 — 如果问题持续，请告知我们。",
+      "tryAgain": "重试",
+      "reloadPage": "重新加载页面"
+    }
+  },
+  "a11y": {
+    "removeItem": "移除项目",
+    "removeDescription": "移除此行",
+    "removeFile": "移除文件"
+  },
+  "confirmations": {
+    "deleteResume": "删除此简历？",
+    "deleteResumeDescription": "简历将被永久删除。",
+    "deleteMasterResumeTitle": "删除主简历",
+    "deleteMasterResumeDescription": "您的主简历将被永久删除。",
+    "deleteResumeFromSystemDescription": "该简历将被永久删除。",
+    "deleteResumeConfirmLabel": "删除简历",
+    "keepResumeCancelLabel": "保留简历",
+    "discardChanges": "放弃未保存的更改？",
+    "discardChangesDescription": "您将丢失所有未保存的工作。",
+    "clearApiKeys": "清除所有 API 密钥？",
+    "clearApiKeysDescription": "下次使用 AI 功能前，您需要重新输入它们。",
+    "resetDatabase": "重置所有内容并重新开始？",
+    "resetDatabaseDescription": "这将永久删除每一份简历、职位描述和生成的文档。"
+  },
+  "resumeWizard": {
+    "title": "简历向导",
+    "answerLabel": "你的回答",
+    "keepAddingPrompt": "你想添加或修改什么？",
+    "readyHint": "你已经有足够的内容来生成一份出色的简历——随时可以查看并完成。",
+    "sections": {
+      "intro": "开始使用",
+      "contact": "联系方式",
+      "summary": "职业摘要",
+      "workExperience": "工作经历",
+      "internships": "实习经历",
+      "education": "教育背景",
+      "personalProjects": "项目",
+      "skills": "技能",
+      "review": "审查"
+    },
+    "actions": {
+      "continue": "继续",
+      "skip": "跳过",
+      "back": "返回",
+      "review": "审查并完成",
+      "create": "创建主简历",
+      "keepAdding": "继续添加",
+      "backToDashboard": "返回仪表板",
+      "openCreated": "打开已创建的简历",
+      "retryDraftBackup": "重试本地备份",
+      "stay": "留在此页面",
+      "leaveWithoutSaving": "不保存并离开"
+    },
+    "preview": {
+      "label": "实时草稿",
+      "empty": "当你回答问题时，简历将在此处显示。",
+      "unnamed": "未命名简历",
+      "experience": "经历",
+      "education": "教育",
+      "projects": "项目",
+      "skills": "技能"
+    },
+    "errors": {
+      "turnFailed": "向导无法保存该回答。请重试。",
+      "finalizeFailed": "向导无法创建你的主简历。请重试。",
+      "createdNavigationFailed": "您的主简历已创建，但此页面无法自动打开它。请使用下方按钮继续。"
+    },
+    "draftStorageUnavailable": {
+      "title": "本地草稿不可用",
+      "description": "向导的最新进度仅保留在此标签页中。请在离开或重新加载前重试本地备份。"
+    },
+    "leaveWithoutDraft": {
+      "title": "没有本地备份，仍要离开吗？",
+      "description": "如果在本地备份成功前离开或重新加载，向导的最新进度将会丢失。"
+    },
+    "entry": {
+      "kicker": "主简历设置",
+      "title": "选择你的起点",
+      "description": "从现有文档创建主简历，或在 AI 引导下逐步构建。",
+      "upload": {
+        "kicker": "现有文件",
+        "title": "上传简历",
+        "description": "从 PDF、DOC 或 DOCX 文件开始，让 Resume Matcher 将其解析为你的主档案。",
+        "action": "上传简历"
+      },
+      "wizard": {
+        "kicker": "AI 引导",
+        "title": "使用 AI 向导构建",
+        "description": "回答聚焦问题，让向导为你的主简历整理出扎实的初稿。",
+        "action": "启动向导"
+      }
+    },
+    "created": {
+      "title": "主简历已创建",
+      "description": "您的主简历已创建。打开它以继续编辑。"
+    }
+  },
+  "tracker": {
+    "manage": "管理",
+    "manageDialog": {
+      "title": "管理看板列",
+      "description": "选择在看板上显示的阶段。",
+      "visible": "已显示",
+      "hidden": "已隐藏",
+      "lastVisibleHint": "至少需要保留一个阶段处于显示状态。",
+      "close": "完成"
+    },
+    "scroll": {
+      "prev": "向左滚动",
+      "next": "向右滚动",
+      "hint": "滚动查看更多阶段"
+    },
+    "title": "申请追踪",
+    "subtitle": "追踪每份定制简历在求职流程中的进展。",
+    "addApplication": "添加申请",
+    "columns": {
+      "saved": "已保存",
+      "applied": "已投递",
+      "no_response": "无回复",
+      "response": "有回复",
+      "interview": "面试",
+      "accepted": "已录用",
+      "rejected": "已拒绝",
+      "empty": "这里还没有内容"
+    },
+    "empty": {
+      "title": "暂无申请",
+      "description": "为某个职位定制简历，或手动添加一项，即可开始追踪。"
+    },
+    "card": {
+      "companyUnknown": "未知公司",
+      "roleUnknown": "未命名职位",
+      "sharedResume": "共享简历",
+      "selectAria": "选择申请",
+      "dragAria": "拖动以重新排序"
+    },
+    "modal": {
+      "jobDescription": "职位描述",
+      "noJobDescription": "没有职位描述。",
+      "notes": "备注",
+      "notesPlaceholder": "为此申请添加备注……",
+      "saveNotes": "保存备注",
+      "resumeUnavailable": "所投递的简历已不可用。",
+      "loadFailed": "无法加载此申请。",
+      "editResume": "编辑简历"
+    },
+    "bulk": {
+      "selected": "已选择 {count} 项",
+      "moveTo": "移动到……",
+      "clear": "清除",
+      "deleteConfirmTitle": "删除申请？",
+      "deleteConfirmDescription": "删除选中的 {count} 项申请？此操作无法撤销。"
+    },
+    "manualAdd": {
+      "title": "添加申请",
+      "description": "粘贴职位描述以追踪一项申请。",
+      "resume": "简历",
+      "untitledResume": "未命名简历",
+      "jobDescription": "职位描述",
+      "jobDescriptionPlaceholder": "在此粘贴职位描述……",
+      "company": "公司",
+      "role": "职位",
+      "optional": "可选",
+      "status": "状态",
+      "submit": "添加",
+      "validation": "请选择一份简历并粘贴职位描述。",
+      "failed": "无法创建该申请。"
+    },
+    "errors": {
+      "loadFailed": "无法加载申请。",
+      "moveFailed": "无法移动该申请。",
+      "deleteFailed": "无法删除该申请。"
+    }
+  },
+  "interviewPrep": {
+    "title": "面试准备",
+    "regenerate": "重新生成",
+    "unavailableTitle": "面试准备不可用",
+    "loadingContextDescription": "正在检查这份定制简历的职位上下文，然后才能生成面试准备。",
+    "missingContextDescription": "这份定制简历缺少生成面试准备所需的已保存职位上下文。请使用职位描述重新定制简历后再使用此流程。",
+    "saveRequiredDescription": "请先保存这份定制简历，然后再生成面试准备。",
+    "focusArea": "关注点",
+    "suggestedAnswerPoints": "建议回答要点",
+    "whyItMatters": "为什么重要",
+    "preparationSuggestion": "准备建议",
+    "sections": {
+      "roleFit": "岗位匹配分析",
+      "resumeQuestions": "基于简历的问题",
+      "projectFollowUps": "项目追问",
+      "skillGaps": "技能差距",
+      "talkingPoints": "沟通要点"
+    }
+  }
+}

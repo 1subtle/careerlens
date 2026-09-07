@@ -1,0 +1,137 @@
+# .gitignore (in your-project-root/apps/backend/)
+
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+activate_this.py
+
+# Python Bytecode and Caches
+__pycache__/
+*.py[cod]
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+uv.lock
+
+# SQLite databases
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+
+# Encryption secret for API keys at rest - NEVER COMMIT
+**/data/.secret_key
+
+# Test artifacts
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Local instance or config files specific to backend
+instance/
+.env # Backend specific environment variables
+
+# Config file with API keys - NEVER COMMIT
+**/config.json
+apps/backend/data/config.json
+
+# cursor related files
+.cursor/
+.cursorrules
+
+# Claude Code — track only CLAUDE.md and settings.json, ignore everything else
+# (skills, subagents, thoughts, prompts, sessions are all personal workflow)
+.claude/*
+!.claude/CLAUDE.md
+!.claude/settings.json
+skills-lock.json
+
+# AI assistant tool folders (personal workflow, not tracked)
+.agents/
+.github/agents/
+.github/skills/
+.github/prompts/
+.github/copilot-instructions.md
+.kilocode/
+.gemini/
+.codex/
+.firecrawl/
+AGENTS.md
+GEMINI.md
+CODEX.md
+
+.DS_Store
+
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+.idea/
+
+# Config file with API keys - NEVER COMMIT
+config.json
+**/config.json
+
+# Agentic E2E monitor — runtime evidence bundles and the local-only skill
+/artifacts/
+/.claude/skills/monitor-e2e/
+
+# Superpowers brainstorming visual-companion scratch (local only)
+/.superpowers/
