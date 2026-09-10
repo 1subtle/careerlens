@@ -12,6 +12,7 @@ from fastapi.routing import APIRoute
 
 from app.ai_limits import PromptSizeError
 from app.config import settings
+from app.credits import refund_failed_generations
 
 logger = logging.getLogger(__name__)
 _deadline: ContextVar[float | None] = ContextVar("ai_operation_deadline", default=None)
@@ -65,6 +66,8 @@ class AIOperationRoute(APIRoute):
         handler = super().get_route_handler()
         if "POST" not in self.methods:
             return handler
+
+        handler = refund_failed_generations(handler)
 
         async def bounded_handler(request: Request) -> Response:
             started = asyncio.get_running_loop().time()

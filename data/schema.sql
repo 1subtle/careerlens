@@ -39,6 +39,24 @@ CREATE INDEX IF NOT EXISTS ix_applications_resume_id ON applications (resume_id)
 CREATE INDEX IF NOT EXISTS ix_applications_status ON applications (status);
 
 
+CREATE TABLE IF NOT EXISTS direction_history (
+	id VARCHAR NOT NULL,
+	resume_id VARCHAR NOT NULL,
+	resume_hash VARCHAR NOT NULL,
+	input_snapshot JSON NOT NULL,
+	input_hash VARCHAR NOT NULL,
+	result JSON NOT NULL,
+	created_at VARCHAR NOT NULL,
+	PRIMARY KEY (id)
+)
+
+;
+
+CREATE INDEX IF NOT EXISTS ix_direction_history_created_at ON direction_history (created_at);
+
+CREATE INDEX IF NOT EXISTS ix_direction_history_resume_id ON direction_history (resume_id);
+
+
 CREATE TABLE IF NOT EXISTS improvements (
 	request_id VARCHAR NOT NULL,
 	original_resume_id VARCHAR NOT NULL,
@@ -60,10 +78,26 @@ CREATE TABLE IF NOT EXISTS jobs (
 	resume_id VARCHAR,
 	created_at VARCHAR NOT NULL,
 	metadata_json JSON NOT NULL,
+	version INTEGER DEFAULT '1' NOT NULL,
 	PRIMARY KEY (job_id)
 )
 
 ;
+
+
+CREATE TABLE IF NOT EXISTS market_history (
+	id VARCHAR NOT NULL,
+	source VARCHAR NOT NULL,
+	input_snapshot JSON NOT NULL,
+	input_hash VARCHAR NOT NULL,
+	result JSON NOT NULL,
+	created_at VARCHAR NOT NULL,
+	PRIMARY KEY (id)
+)
+
+;
+
+CREATE INDEX IF NOT EXISTS ix_market_history_created_at ON market_history (created_at);
 
 
 CREATE TABLE IF NOT EXISTS resumes (
@@ -80,6 +114,7 @@ CREATE TABLE IF NOT EXISTS resumes (
 	outreach_message TEXT,
 	interview_prep TEXT,
 	title VARCHAR,
+	template_settings JSON,
 	original_markdown TEXT,
 	created_at VARCHAR NOT NULL,
 	updated_at VARCHAR NOT NULL,

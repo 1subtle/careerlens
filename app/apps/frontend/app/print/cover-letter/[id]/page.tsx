@@ -8,6 +8,7 @@
 import { API_BASE } from '@/lib/api/client';
 import { translate } from '@/lib/i18n/server';
 import { resolveLocale } from '@/lib/i18n/locale';
+import { printSessionHeaders } from '../../session-headers';
 
 const PAGE_DIMENSIONS = {
   A4: { width: 210, height: 297 },
@@ -40,6 +41,8 @@ interface CoverLetterData {
 async function fetchCoverLetterData(resumeId: string): Promise<CoverLetterData> {
   const res = await fetch(`${API_BASE}/resumes?resume_id=${encodeURIComponent(resumeId)}`, {
     cache: 'no-store',
+    redirect: 'error',
+    headers: await printSessionHeaders(),
   });
   if (!res.ok) {
     throw new Error(`Failed to load resume (status ${res.status}).`);

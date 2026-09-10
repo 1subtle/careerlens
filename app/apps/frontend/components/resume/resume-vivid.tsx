@@ -1,4 +1,5 @@
 import React from 'react';
+import { ResumePhoto } from './resume-photo';
 import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
 import type {
   ResumeData,
@@ -150,6 +151,7 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
     <>
       {/* Header */}
       <div className={baseStyles['resume-header']}>
+        <ResumePhoto photo={personalInfo?.photo} />
         <h1 className={baseStyles['resume-name']}>
           <span className={styles.nameFirst}>{nameFirst}</span>
           {nameRest && <span className={styles.nameRest}> {nameRest}</span>}

@@ -1,0 +1,19 @@
+#cloud-config
+package_update: true
+packages:
+  - docker.io
+  - docker-compose-v2
+  - docker-buildx
+  - curl
+  - ca-certificates
+write_files:
+  - path: /etc/docker/daemon.json
+    content: '{"log-driver":"json-file","log-opts":{"max-size":"10m","max-file":"3"}}'
+runcmd:
+  - [fallocate, -l, 8G, /swapfile]
+  - [chmod, '600', /swapfile]
+  - [mkswap, /swapfile]
+  - [swapon, /swapfile]
+  - [sh, -c, 'echo /swapfile none swap sw 0 0 >> /etc/fstab']
+  - [systemctl, enable, --now, docker]
+  - [systemctl, restart, docker]

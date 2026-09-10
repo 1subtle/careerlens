@@ -5,6 +5,7 @@ import logging
 from fastapi import APIRouter
 
 from app.database import db
+from app.hosting import is_hosted
 from app.llm import check_llm_health, get_llm_config
 from app.schemas import HealthResponse, StatusResponse
 
@@ -45,8 +46,11 @@ async def get_status() -> StatusResponse:
         config = get_llm_config()
         # ollama / openai_compatible run without a key, matching check_llm_health.
         llm_configured = bool(config.api_key) or config.provider in ("ollama", "openai_compatible")
-        llm_status = await check_llm_health(config)
-        llm_healthy = bool(llm_status.get("healthy"))
+        # Hosted status polling must not provide an unmetered paid-model probe.
+        # llm_healthy stays false when no live probe has been performed.
+        if not is_hosted():
+            llm_status = await check_llm_health(config)
+            llm_healthy = bool(llm_status.get("healthy"))
     except Exception:
         logger.exception("Status: LLM health check failed")
 
@@ -59,7 +63,9 @@ async def get_status() -> StatusResponse:
     has_master_resume = bool(db_stats.get("has_master_resume"))
 
     return StatusResponse(
-        status="ready" if llm_healthy and has_master_resume else "setup_required",
+        status="ready"
+        if (llm_configured if is_hosted() else llm_healthy) and has_master_resume
+        else "setup_required",
         llm_configured=llm_configured,
         llm_healthy=llm_healthy,
         has_master_resume=has_master_resume,

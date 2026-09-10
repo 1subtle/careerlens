@@ -12,8 +12,10 @@ from typing import Any
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from app.models import Base
+from app.migrations import migrate_connection
 
 __all__ = ["Base", "make_async_engine", "make_sync_engine", "init_models_sync"]
 
@@ -21,16 +23,15 @@ __all__ = ["Base", "make_async_engine", "make_sync_engine", "init_models_sync"]
 def _apply_sqlite_pragmas(dbapi_connection: Any, _connection_record: Any) -> None:
     """Set per-connection SQLite PRAGMAs.
 
-    WAL improves concurrent read/write between the async (doc tables) and sync
-    (api_keys) engines pointed at the same file; ``busy_timeout`` rides out the
-    brief lock contention that creates; ``foreign_keys`` enforces relational
-    integrity (off by default in SQLite).
+    Rollback journals let business and billing databases participate in one
+    atomic attached transaction. FULL synchronization preserves durable commits.
     """
     cursor = dbapi_connection.cursor()
     try:
-        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA busy_timeout=10000")
+        cursor.execute("PRAGMA journal_mode=DELETE")
+        cursor.execute("PRAGMA synchronous=FULL")
         cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.execute("PRAGMA busy_timeout=5000")
     finally:
         cursor.close()
 
@@ -40,40 +41,31 @@ def _url(path: Path, *, driver: str) -> str:
     return f"sqlite+{driver}:///{path}" if driver else f"sqlite:///{path}"
 
 
-def make_async_engine(path: Path) -> AsyncEngine:
+def make_async_engine(path: Path, *, pooled: bool = True) -> AsyncEngine:
     """Create the async engine (``aiosqlite``) for the document tables."""
-    engine = create_async_engine(_url(path, driver="aiosqlite"), future=True)
+    options = {} if pooled else {"poolclass": NullPool}
+    engine = create_async_engine(_url(path, driver="aiosqlite"), future=True, **options)
     event.listen(engine.sync_engine, "connect", _apply_sqlite_pragmas)
     return engine
 
 
-def make_sync_engine(path: Path) -> Engine:
+def make_sync_engine(path: Path, *, pooled: bool = True) -> Engine:
     """Create the sync engine used for the encrypted api_keys table.
 
     Key reads happen synchronously (``get_llm_config`` → ``load_config_file`` →
     ``resolve_api_key``), so a sync engine avoids threading async through
     ``llm.py``. It points at the same file as the async engine.
     """
-    engine = create_engine(_url(path, driver=""), future=True)
+    options = {} if pooled else {"poolclass": NullPool}
+    engine = create_engine(_url(path, driver=""), future=True, **options)
     event.listen(engine, "connect", _apply_sqlite_pragmas)
     return engine
 
 
 def init_models_sync(engine: Engine) -> None:
-    """Create all tables (idempotent) using a sync engine connection."""
-    Base.metadata.create_all(engine)
-
-    # ``create_all`` does not ALTER existing SQLite tables. Keep this additive
-    # migration idempotent so older local databases can load resumes safely.
-    with engine.begin() as conn:
-        columns = conn.exec_driver_sql("PRAGMA table_info(resumes)").mappings().all()
-        existing_columns = {column["name"] for column in columns}
-        if columns and "interview_prep" not in existing_columns:
-            conn.exec_driver_sql("ALTER TABLE resumes ADD COLUMN interview_prep TEXT")
-        if columns and "processing_token" not in existing_columns:
-            conn.exec_driver_sql("ALTER TABLE resumes ADD COLUMN processing_token TEXT")
-
-        preview_columns = conn.exec_driver_sql("PRAGMA table_info(tailoring_previews)").mappings().all()
-        if preview_columns and "improvements" not in {column["name"] for column in preview_columns}:
-            conn.exec_driver_sql("ALTER TABLE tailoring_previews ADD COLUMN improvements JSON")
-        conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS ix_preview_compatibility ON tailoring_previews (source_id, job_id, payload_hash, created_at)")
+    """Apply immutable, checksummed business migrations before using models."""
+    raw = engine.raw_connection()
+    try:
+        migrate_connection(raw.driver_connection, "business")
+    finally:
+        raw.close()

@@ -16,6 +16,7 @@ from fastapi.responses import Response
 from pydantic import ValidationError
 
 from app.ai_limits import MAX_JOB_CHARACTERS, PromptSizeError, require_source_size
+from app.credits import CreditError
 from app.ai_budget import (
     AIOperationDeadlineExceeded,
     AIOperationRoute,
@@ -239,7 +240,7 @@ def _raise_improve_error(
     error: Exception,
     detail: str,
 ) -> NoReturn:
-    logger.error("Resume %s failed during %s: %s", action, stage, error)
+    logger.error("Resume %s failed during %s (%s)", action, stage, type(error).__name__)
     raise HTTPException(status_code=500, detail=detail)
 
 
@@ -690,7 +691,7 @@ async def _generate_auxiliary_messages(
         return_exceptions=True,
     )
     for label, result in zip(task_labels, results):
-        if isinstance(result, (AIOperationDeadlineExceeded, PromptSizeError)):
+        if isinstance(result, (AIOperationDeadlineExceeded, PromptSizeError, CreditError)):
             raise result
         if isinstance(result, Exception):
             logger.warning(
@@ -940,7 +941,7 @@ async def upload_resume(
             status_code=504,
             detail="Document conversion timed out. Please try a simpler document.",
         ) from e
-    except (DatabaseBusyError, PromptSizeError):
+    except (DatabaseBusyError, PromptSizeError, CreditError):
         raise
     except Exception as e:
         logger.exception("Document parsing failed")
@@ -999,10 +1000,10 @@ async def upload_resume(
         # Try to parse to structured JSON (optional, may fail if LLM not configured)
         try:
             processed_data = await parse_resume_to_json(markdown_content)
-        except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+        except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError, CreditError):
             raise
         except Exception as e:
-            logger.warning(f"Resume parsing to JSON failed for {file.filename}: {e}")
+            logger.warning("Resume parsing to JSON failed (%s)", type(e).__name__)
             outcome = await db.finish_resume_processing(
                 resume["resume_id"],
                 processing_token,
@@ -1043,6 +1044,7 @@ async def upload_resume(
         asyncio.CancelledError,
         AIOperationDeadlineExceeded,
         PromptSizeError,
+        CreditError,
         DatabaseBusyError,
     ):
         await _finish_cancelled_processing(resume["resume_id"], processing_token)
@@ -1185,7 +1187,7 @@ async def improve_resume_preview_endpoint(
                 "job description or a simpler prompt."
             ),
         )
-    except (DatabaseBusyError, PromptSizeError):
+    except (DatabaseBusyError, PromptSizeError, CreditError):
         raise
     except Exception as e:
         _raise_improve_error("preview", progress["stage"], e, detail)
@@ -1274,10 +1276,10 @@ async def _improve_preview_flow(
                 response_warnings.append(
                     f"{len(rejected_targets)} unsupported skill target(s) rejected"
                 )
-        except (AIOperationDeadlineExceeded, PromptSizeError):
+        except (AIOperationDeadlineExceeded, PromptSizeError, CreditError):
             raise
         except Exception as e:
-            logger.warning("Skill target planning failed, continuing without it: %s", e)
+            logger.warning("Skill target planning failed, continuing without it (%s)", type(e).__name__)
             response_warnings.append("Skill target planning failed")
 
         progress["stage"] = "generate_resume_diffs"
@@ -1380,10 +1382,10 @@ async def _improve_preview_flow(
                 refinement_result.passes_completed,
                 len(refinement_result.ai_phrases_removed),
             )
-    except (AIOperationDeadlineExceeded, PromptSizeError):
+    except (AIOperationDeadlineExceeded, PromptSizeError, CreditError):
         raise
     except Exception as e:
-        logger.warning("Refinement failed, using unrefined result: %s", e)
+        logger.warning("Refinement failed, using unrefined result (%s)", type(e).__name__)
         if refinement_attempted:
             response_warnings.append(REFINEMENT_FAILED_WARNING)
 
@@ -1616,7 +1618,7 @@ async def improve_resume_confirm_endpoint(
         ) from e
     except HTTPException:
         raise
-    except (DatabaseBusyError, PromptSizeError):
+    except (DatabaseBusyError, PromptSizeError, CreditError):
         raise
     except Exception as e:
         _raise_improve_error("confirm", stage, e, detail)
@@ -1768,10 +1770,10 @@ async def improve_resume_endpoint(
                     refinement_result.passes_completed,
                     len(refinement_result.ai_phrases_removed),
                 )
-        except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+        except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError, CreditError):
             raise
         except Exception as e:
-            logger.warning("Refinement failed, using unrefined result: %s", e)
+            logger.warning("Refinement failed, using unrefined result (%s)", type(e).__name__)
             if refinement_attempted:
                 response_warnings.append(REFINEMENT_FAILED_WARNING)
 
@@ -1889,11 +1891,11 @@ async def improve_resume_endpoint(
             ),
         )
 
-    except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+    except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError, CreditError):
         raise
 
     except Exception as e:
-        logger.error(f"Resume improvement failed: {e}")
+        logger.error("Resume improvement failed (%s)", type(e).__name__)
         raise HTTPException(
             status_code=500,
             detail="Failed to improve resume. Please try again.",
@@ -2099,10 +2101,10 @@ async def retry_processing(resume_id: str) -> ResumeUploadResponse:
     try:
         try:
             processed_data = await parse_resume_to_json(markdown_content)
-        except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+        except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError, CreditError):
             raise
         except Exception as e:
-            logger.warning(f"Retry processing failed for resume {resume_id}: {e}")
+            logger.warning("Retry processing failed for resume %s (%s)", resume_id, type(e).__name__)
             outcome = await db.finish_resume_processing(
                 resume_id,
                 processing_token,
@@ -2141,6 +2143,7 @@ async def retry_processing(resume_id: str) -> ResumeUploadResponse:
         asyncio.CancelledError,
         AIOperationDeadlineExceeded,
         PromptSizeError,
+        CreditError,
         DatabaseBusyError,
     ):
         await _finish_cancelled_processing(resume_id, processing_token)
@@ -2243,17 +2246,17 @@ async def generate_cover_letter_endpoint(resume_id: str) -> GenerateContentRespo
         cover_letter_content = await generate_cover_letter(
             resume_data, job["content"], language
         )
-    except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+    except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError, CreditError):
         raise
     except Exception as e:
-        logger.error(f"Cover letter generation failed: {e}")
+        logger.error("Cover letter generation failed (%s)", type(e).__name__)
         raise HTTPException(
             status_code=500,
             detail="Failed to generate cover letter. Please try again.",
         )
 
     # Save to resume record
-    await db.update_resume(resume_id, {"cover_letter": cover_letter_content})
+    await db.update_resume(resume_id, {"cover_letter": cover_letter_content}, settle_credits=True)
 
     return GenerateContentResponse(
         content=cover_letter_content,
@@ -2317,17 +2320,17 @@ async def generate_outreach_endpoint(resume_id: str) -> GenerateContentResponse:
         outreach_content = await generate_outreach_message(
             resume_data, job["content"], language
         )
-    except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+    except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError, CreditError):
         raise
     except Exception as e:
-        logger.error(f"Outreach message generation failed: {e}")
+        logger.error("Outreach message generation failed (%s)", type(e).__name__)
         raise HTTPException(
             status_code=500,
             detail="Failed to generate outreach message. Please try again.",
         )
 
     # Save to resume record
-    await db.update_resume(resume_id, {"outreach_message": outreach_content})
+    await db.update_resume(resume_id, {"outreach_message": outreach_content}, settle_credits=True)
 
     return GenerateContentResponse(
         content=outreach_content,
@@ -2385,10 +2388,10 @@ async def generate_interview_prep_endpoint(
             job["content"],
             language,
         )
-    except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+    except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError, CreditError):
         raise
     except Exception as e:
-        logger.exception("Interview preparation generation failed: %s", e)
+        logger.error("Interview preparation generation failed (%s)", type(e).__name__)
         raise HTTPException(
             status_code=500,
             detail="Failed to generate interview preparation. Please try again.",
@@ -2397,6 +2400,7 @@ async def generate_interview_prep_endpoint(
     await db.update_resume(
         resume_id,
         {"interview_prep": _serialize_interview_prep(interview_prep)},
+        settle_credits=True,
     )
 
     return GenerateInterviewPrepResponse(

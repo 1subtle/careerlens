@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { ChevronUp, ChevronDown, Trash2, Eye, EyeOff, Pencil, Check, X } from 'lucide-react';
 import type { SectionMeta } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
+import documentStyles from './resume-document.module.css';
 
 interface SectionHeaderProps {
   section: SectionMeta;
@@ -19,6 +20,7 @@ interface SectionHeaderProps {
   isLast: boolean;
   canDelete: boolean;
   children?: React.ReactNode;
+  documentMode?: boolean;
 }
 
 /**
@@ -41,6 +43,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   isLast,
   canDelete,
   children,
+  documentMode = false,
 }) => {
   const { t } = useTranslations();
   const [isEditing, setIsEditing] = useState(false);
@@ -87,12 +90,23 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
 
   return (
     <div
-      className={`space-y-0 border p-6 bg-white shadow-sw-default ${
-        isHidden ? 'border-dashed border-steel-grey opacity-60' : 'border-black'
-      }`}
+      className={
+        documentMode
+          ? documentStyles.section
+          : `space-y-0 border p-6 bg-white shadow-sw-default ${
+              isHidden ? 'border-dashed border-steel-grey opacity-60' : 'border-black'
+            }`
+      }
+      data-hidden={isHidden || undefined}
     >
       {/* Section Header */}
-      <div className="flex justify-between items-center border-b border-black pb-2 mb-4">
+      <div
+        className={
+          documentMode
+            ? documentStyles.heading
+            : 'flex justify-between items-center border-b border-black pb-2 mb-4'
+        }
+      >
         {/* Section Name (editable) */}
         <div className="flex items-center gap-2">
           {isEditing ? (

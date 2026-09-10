@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from app.ai_limits import validate_prompt_size
 from app.ai_budget import remaining_timeout
 from app.config import load_config_file, save_config_file, settings
+from app.credits import charge_generation
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
@@ -932,9 +933,9 @@ async def check_llm_health(
             )
         return result
     except Exception as e:
-        # Log full exception details server-side, but do not expose them to clients
-        logging.exception(
-            "LLM health check failed",
+        # Provider exceptions may include request bodies and API credentials.
+        logging.error(
+            "LLM health check failed (%s)", type(e).__name__,
             extra={"provider": config.provider, "model": config.model},
         )
 
@@ -963,6 +964,7 @@ async def check_llm_health(
         return result
 
 
+@charge_generation
 async def complete(
     prompt: str,
     system_prompt: str | None = None,
@@ -1014,9 +1016,10 @@ async def complete(
     except TimeoutError:
         raise
     except Exception as e:
-        # Log the actual error server-side for debugging
-        logging.error(f"LLM completion failed: {e}", extra={
-                      "model": model_name})
+        logging.error(
+            "LLM completion failed (%s)", type(e).__name__,
+            extra={"model": model_name},
+        )
         raise ValueError(
             "LLM completion failed. Please check your API configuration and try again."
         ) from e
@@ -1503,6 +1506,7 @@ def _extract_json(content: str, _depth: int = 0) -> str:
     raise ValueError(f"No JSON found in response (response length: {len(original)})")
 
 
+@charge_generation
 async def complete_json(
     prompt: str,
     system_prompt: str | None = None,
@@ -1586,6 +1590,16 @@ async def complete_json(
             # no_think setting. Scope it to structured-output requests only.
             if _uses_opencode_zen_hy3(config):
                 kwargs["extra_body"] = {"reasoning_effort": "no_think"}
+            elif (
+                config.provider == "deepseek"
+                and model_name.startswith("deepseek/deepseek-v4-")
+                and reasoning_effort is None
+            ):
+                # V4 enables thinking by default, which can exhaust the
+                # resume endpoint's deadline before producing JSON. Keep
+                # explicit effort settings, but use non-thinking extraction
+                # when the user has not requested an effort level.
+                kwargs["extra_body"] = {"thinking": {"type": "disabled"}}
             elif reasoning_effort:
                 kwargs["reasoning_effort"] = reasoning_effort
 
@@ -1657,7 +1671,10 @@ async def complete_json(
 
         except json.JSONDecodeError as e:
             # Content quality — malformed JSON, retry with prompt hint
-            logging.warning(f"JSON parse failed (attempt {attempt + 1}): {e}")
+            logging.warning(
+                "JSON parse failed (attempt %d, line %d, column %d)",
+                attempt + 1, e.lineno, e.colno,
+            )
             if use_json_mode and not json_mode_failed:
                 # JSON-012: Registry claimed JSON mode support but the upstream
                 # failed to return valid JSON. Disable JSON mode for retries.
@@ -1677,7 +1694,10 @@ async def complete_json(
 
         except ValueError as e:
             # Content quality — empty response, JSON extraction failure
-            logging.warning(f"Content extraction failed (attempt {attempt + 1}): {e}")
+            logging.warning(
+                "Content extraction failed (attempt %d, %s)",
+                attempt + 1, type(e).__name__,
+            )
             if attempt < retries:
                 messages[-1]["content"] = (
                     prompt

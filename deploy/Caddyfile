@@ -1,0 +1,23 @@
+{$CAREERLENS_DOMAIN} {
+    encode zstd gzip
+    request_body {
+        max_size 12MB
+    }
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+    reverse_proxy careerlens:3000 {
+        # The API trusts only its loopback Next.js proxy. Replace incoming
+        # forwarding headers here so clients cannot choose the rate-limit IP.
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-Proto https
+    }
+}
+
+www.careerlens.cc, careerlens-studio.japaneast.cloudapp.azure.com {
+    redir https://{$CAREERLENS_DOMAIN}{uri} permanent
+}

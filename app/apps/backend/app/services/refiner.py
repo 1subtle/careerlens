@@ -15,7 +15,8 @@ from functools import lru_cache
 from typing import Any
 
 from app.ai_budget import AIOperationDeadlineExceeded
-from app.ai_limits import PromptSizeError
+from app.ai_limits import PromptSizeError, without_resume_photo
+from app.credits import CreditError
 from app.llm import complete_json
 from app.prompts.refinement import (
     AI_PHRASE_BLACKLIST,
@@ -150,7 +151,7 @@ async def refine_resume(
                 current = finalize_ai_resume(initial_tailored, candidate)
                 if current != before:
                     passes += 1
-            except (AIOperationDeadlineExceeded, PromptSizeError):
+            except (AIOperationDeadlineExceeded, PromptSizeError, CreditError):
                 raise
             except Exception as e:
                 logger.warning("Keyword injection failed: %s", e)
@@ -610,8 +611,8 @@ async def inject_keywords(
 
     prompt = KEYWORD_INJECTION_PROMPT.format(
         keywords_to_inject=json.dumps(keywords_to_inject),
-        current_resume=json.dumps(tailored),
-        master_resume=json.dumps(master),
+        current_resume=json.dumps(without_resume_photo(tailored)),
+        master_resume=json.dumps(without_resume_photo(master)),
         job_description=truncated_jd,
     )
 
@@ -649,9 +650,12 @@ async def inject_keywords(
         # prompt is not a guarantee for positional metadata. Restore it locally,
         # matching the defence-in-depth pattern the improve pipeline already
         # uses for dates, skills, personalInfo and custom sections.
+        original_info = tailored.get("personalInfo")
+        if isinstance(original_info, dict) and "photo" in original_info:
+            result["personalInfo"]["photo"] = original_info["photo"]
         return _preserve_description_styles(tailored, result)
 
-    except (AIOperationDeadlineExceeded, PromptSizeError):
+    except (AIOperationDeadlineExceeded, PromptSizeError, CreditError):
         raise
     except Exception as e:
         logger.warning("Keyword injection failed: %s", e)

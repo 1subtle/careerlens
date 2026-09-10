@@ -7,8 +7,16 @@ from collections import Counter, deque
 from collections.abc import Callable
 from typing import Any, Protocol
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, ValidationError, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    ValidationError,
+    field_validator,
+)
 
+from app.ai_limits import without_resume_photo
 from app.config_cache import get_content_language
 from app.llm import _scrub_secrets, complete_json
 from app.prompts.resume_wizard import RESUME_WIZARD_TURN_PROMPT
@@ -402,7 +410,9 @@ async def run_ai_turn(
     """Run one adaptive AI turn (answer or skip) and validate the result."""
     section = state.current_question.section
     language = get_content_language()
-    resume_json = json.dumps(state.resume_data.model_dump(mode="json"), ensure_ascii=False)
+    resume_json = json.dumps(
+        without_resume_photo(state.resume_data.model_dump(mode="json")), ensure_ascii=False
+    )
     prompt_answer = (
         "(The user skipped this question. Do NOT modify resume_data. "
         "Ask the next most useful question for a different section.)"

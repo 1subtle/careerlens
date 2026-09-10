@@ -10,6 +10,7 @@ FROM node:22-bookworm AS frontend-builder
 # Default routes requests through Next.js rewrites on the same origin.
 ARG NEXT_PUBLIC_API_URL=/
 ENV NEXT_TELEMETRY_DISABLED=1 \
+    NODE_OPTIONS=--max-old-space-size=2048 \
     NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 WORKDIR /app/frontend
@@ -37,6 +38,7 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     NODE_ENV=production \
+    NODE_OPTIONS=--max-old-space-size=512 \
     NEXT_TELEMETRY_DISABLED=1
 
 # Install system dependencies
@@ -82,6 +84,9 @@ WORKDIR /app/backend
 RUN pip install uv==0.12.10 && uv sync --frozen --no-dev
 ENV PATH="/app/backend/.venv/bin:${PATH}"
 
+# Keep the pinned, checksum-verified model outside the persistent data volume.
+RUN DATA_DIR=/opt/careerlens-seed python -m app.scripts.prepare_embeddings
+
 # ============================================
 # Frontend Setup
 # ============================================
@@ -111,7 +116,8 @@ RUN useradd -m -u 1000 appuser \
 USER appuser
 
 # Install Playwright Chromium as appuser (so browsers are in correct location)
-RUN python -m playwright install chromium
+RUN python -m playwright install chromium \
+    && python -c "from playwright.sync_api import sync_playwright; p = sync_playwright().start(); browser = p.chromium.launch(headless=True); browser.close(); p.stop()"
 
 # Expose the public port (backend remains internal on 8000)
 EXPOSE 3000
@@ -122,9 +128,9 @@ VOLUME ["/app/backend/data"]
 # Set working directory
 WORKDIR /app
 
-# Health check on internal backend port only (independent of host port mapping).
-HEALTHCHECK --interval=10s --timeout=10s --start-period=30s --retries=5 \
-    CMD curl -f http://127.0.0.1:8000/api/v1/health || exit 1
+# Both the API and the public Next.js server must respond.
+HEALTHCHECK --interval=10s --timeout=10s --start-period=120s --retries=5 \
+    CMD curl -fsS --max-time 3 http://127.0.0.1:8000/api/v1/health > /dev/null && curl -fsS --max-time 3 http://127.0.0.1:3000/ > /dev/null || exit 1
 
 # Start the application
 CMD ["/app/start.sh"]

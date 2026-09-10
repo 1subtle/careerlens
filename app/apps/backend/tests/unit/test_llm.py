@@ -651,6 +651,44 @@ class TestCompleteJsonFallback:
         }
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("provider", "model", "effort", "disable_thinking"),
+        [
+            ("deepseek", "deepseek-v4-flash", None, True),
+            ("deepseek", "deepseek-v4-pro", None, True),
+            ("deepseek", "deepseek-v4-flash", "low", False),
+            ("deepseek", "deepseek-chat", None, False),
+            ("openrouter", "deepseek/deepseek-v4-flash", None, False),
+        ],
+    )
+    @patch("app.llm.get_router")
+    @patch("app.llm._supports_json_mode")
+    async def test_deepseek_v4_json_thinking_default(
+        self, mock_supports_json, mock_get_router, provider, model, effort, disable_thinking
+    ):
+        mock_supports_json.return_value = False
+        choice = MagicMock()
+        choice.message.content = '{"required_skills": ["Python"]}'
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=MagicMock(choices=[choice]))
+        config = LLMConfig(
+            provider=provider, model=model, api_key="test", reasoning_effort=effort
+        )
+        mock_get_router.return_value = (router, config)
+
+        from app.llm import complete_json
+
+        await complete_json("Extract keywords", schema_type="keywords")
+
+        kwargs = router.acompletion.call_args.kwargs
+        if disable_thinking:
+            assert kwargs["extra_body"] == {"thinking": {"type": "disabled"}}
+            assert "reasoning_effort" not in kwargs
+        else:
+            assert "extra_body" not in kwargs
+            assert kwargs.get("reasoning_effort") == effort
+
+    @pytest.mark.asyncio
     @patch("app.llm.get_router")
     @patch("app.llm.get_model_name")
     @patch("app.llm._supports_json_mode")

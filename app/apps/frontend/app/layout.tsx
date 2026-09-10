@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Geist, Noto_Sans_JP, Noto_Sans_KR, Noto_Sans_SC, Space_Grotesk } from 'next/font/google';
 import './(default)/css/globals.css';
+import { AuthProvider } from '@/components/auth/auth-provider';
+import { LanguageProvider } from '@/lib/context/language-context';
 
 const spaceGrotesk = Space_Grotesk({
   variable: '--font-space-grotesk',
@@ -52,6 +54,10 @@ export const metadata: Metadata = {
   title: 'CareerLens · AI 简历诊断与岗位匹配',
   description: '从真实经历出发，查看岗位要求、匹配证据与定向优化建议。',
   applicationName: 'CareerLens',
+  icons: {
+    icon: '/illustrations/careerlens-favicon.png',
+    apple: '/illustrations/apple-icon.png',
+  },
   keywords: ['resume', 'matcher', 'job', 'application'],
 };
 
@@ -61,7 +67,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${geist.variable} ${spaceGrotesk.variable} ${notoSansSC.variable} ${notoSansKR.variable} ${notoSansJP.variable} antialiased bg-background text-ink-soft min-h-full`}
       >
-        {children}
+        <AuthProvider>
+          <LanguageProvider>{children}</LanguageProvider>
+        </AuthProvider>
       </body>
     </html>
   );

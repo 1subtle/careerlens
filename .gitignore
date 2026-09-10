@@ -16,3 +16,11 @@ __pycache__/
 .local/
 app/apps/backend/data/
 app/apps/backend/uploads/
+output/resumes/
+deploy/secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519

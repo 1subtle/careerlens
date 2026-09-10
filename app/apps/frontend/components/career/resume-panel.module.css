@@ -1,0 +1,430 @@
+.panel {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  color: var(--ink, #292237);
+  background: var(--surface, #fffefa);
+}
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--line, #ded6c7);
+  background: color-mix(in srgb, var(--paper, #fff9df) 42%, var(--surface, #fffefa));
+}
+.title {
+  flex: 1 1 160px;
+  width: 160px;
+  min-width: 120px;
+  max-width: 320px;
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+.title:hover {
+  border-color: color-mix(in srgb, var(--accent, #7e5be8) 35%, var(--line, #ded6c7));
+  background: var(--surface, #fffefa);
+}
+.title:focus-visible {
+  background: var(--surface, #fffefa);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.button,
+.back,
+.next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+.button:hover,
+.back:hover,
+.next:hover {
+  background: var(--soft, #f1ebff);
+}
+.primary,
+.primary:hover {
+  background: var(--action, #6e4dcc);
+  color: #fff;
+  border: 1.5px solid var(--ink, #292237);
+  box-shadow: 2px 2px 0 var(--ink, #292237);
+}
+.primary:hover {
+  background: var(--accent, #7e5be8);
+}
+.primary:active:not(:disabled) {
+  box-shadow: 1px 1px 0 var(--ink, #292237);
+}
+.iconButton {
+  width: 36px;
+  padding: 6px;
+}
+.modes {
+  display: flex;
+  padding: 2px;
+  border: 1px solid color-mix(in srgb, var(--ink, #292237) 32%, var(--line, #ded6c7));
+  border-radius: 10px;
+  background: var(--surface, #fffefa);
+}
+.modes .button {
+  min-height: 30px;
+  padding: 4px 8px;
+}
+.button[aria-pressed='true'] {
+  background: var(--soft, #f1ebff);
+  color: var(--action, #6e4dcc);
+}
+.modes .button[aria-pressed='true'] {
+  background: var(--yellow, #ffe36b);
+  color: var(--ink, #292237);
+}
+.panel :is(button, input, textarea, a):focus-visible,
+.dialog :is(button, a):focus-visible {
+  outline: 2px solid var(--action, #6e4dcc);
+  outline-offset: 3px;
+}
+.panel button:disabled,
+.title:disabled,
+.dialog button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.chapters {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 0 18px;
+  padding: 4px 28px;
+  border-bottom: 1px solid var(--line, #ded6c7);
+  background: color-mix(in srgb, var(--paper, #fff9df) 18%, var(--surface, #fffefa));
+}
+.chapters a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  color: var(--muted, #6f647d);
+  font-size: 12px;
+  border-radius: 4px;
+  text-decoration: none;
+}
+.chapters a:hover {
+  color: var(--ink, #292237);
+  background: var(--yellow, #ffe36b);
+  box-shadow: 0 0 0 4px var(--yellow, #ffe36b);
+}
+.viewport {
+  flex: 1 0 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: visible;
+  background: var(--surface, #fffefa);
+  scrollbar-color: color-mix(in srgb, var(--accent, #7e5be8) 28%, var(--line, #ded6c7)) transparent;
+}
+.document,
+.importView {
+  width: min(100%, 1240px);
+  margin-inline: auto;
+  padding: 24px clamp(20px, 3vw, 40px) 72px;
+}
+.editor {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.next {
+  margin-top: 28px;
+  padding-inline: 0;
+  color: var(--muted, #6f647d);
+}
+.preview {
+  width: min(100%, 900px);
+  margin-inline: auto;
+  padding: 24px 24px 64px;
+}
+.previewHint,
+.note,
+.muted {
+  color: var(--muted, #6f647d);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.previewHint {
+  margin: 0 0 24px;
+}
+.layoutViewport {
+  display: flex;
+}
+.layout {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  height: max(720px, calc(100dvh - 84px));
+}
+.layoutControls {
+  flex-shrink: 0;
+  padding: 14px 20px;
+  border: 0;
+  border-bottom: 1px solid var(--line, #ded6c7);
+}
+.layoutIntro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.layoutIntro > div {
+  flex: 1;
+  min-width: 160px;
+}
+.layoutIntro strong {
+  font-size: 14px;
+}
+.layoutIntro span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted, #6f647d);
+  margin-top: 3px;
+}
+.layoutFields {
+  display: grid;
+  grid-template-columns: 1.7fr repeat(5, 1fr);
+  gap: 8px 12px;
+}
+.layoutFields label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--muted, #6f647d);
+}
+.layoutFields :is(select, input) {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding: 3px 7px;
+  border: 1px solid var(--line, #ded6c7);
+  border-radius: 6px;
+  background: var(--surface, #fffefa);
+  color: var(--ink, #292237);
+  font: inherit;
+  font-size: 13px;
+}
+.layoutNotice {
+  padding: 7px 20px;
+  font-size: 12px;
+  color: var(--action, #6e4dcc);
+  background: var(--soft, #f1ebff);
+}
+.layoutNotice[role='alert'] {
+  color: #a62835;
+}
+.paperPreview {
+  flex: 1;
+  min-height: 220px;
+  min-width: 0;
+}
+.paperPreview :global(.bg-secondary) {
+  background: var(--paper, #fff9df);
+}
+.paperPreview :global(.shadow-sw-card) {
+  border: 1px solid #d9d5cd;
+  box-shadow: 0 3px 14px #29223714;
+}
+.panel select:focus-visible {
+  outline: 2px solid var(--action, #6e4dcc);
+  outline-offset: 2px;
+}
+.note {
+  width: min(100%, 960px);
+  margin: 0 auto;
+  padding: 12px 28px 0;
+}
+.note[role='alert'] {
+  color: #a62835;
+}
+.back {
+  margin-bottom: 24px;
+  padding-inline: 0;
+  color: var(--muted, #6f647d);
+}
+.importView h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+}
+.importView > p {
+  margin: 0 0 24px;
+  color: var(--muted, #6f647d);
+  font-size: 14px;
+}
+.field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+.field textarea {
+  width: 100%;
+  min-height: 320px;
+  max-height: none;
+  padding: 14px 16px;
+  border: 1px solid var(--line, #ded6c7);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.75;
+  resize: none;
+  overflow: hidden;
+}
+.dialog {
+  width: min(420px, calc(100% - 32px));
+  margin: auto;
+  padding: 20px;
+  border: 1.5px solid var(--ink, #292237);
+  border-radius: 14px;
+  background: var(--surface, #fffefa);
+  color: var(--ink, #292237);
+  box-shadow: 3px 3px 0 var(--ink, #292237);
+}
+.dialog::backdrop {
+  background: #29223742;
+}
+.dialogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.dialogHeader h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.dialogActions {
+  display: grid;
+  gap: 8px;
+}
+.dialogActions > .button {
+  justify-content: flex-start;
+}
+.dialogActions > .muted {
+  margin: 8px 0 16px;
+}
+.danger {
+  color: #a62835;
+}
+.fileImport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.fileImport .button {
+  border-color: var(--ink, #292237);
+  background: var(--paper, #fff9df);
+}
+.fileImport .button:hover {
+  background: var(--yellow, #ffe36b);
+}
+.fileImport span {
+  color: var(--muted, #6f647d);
+  font-size: 13px;
+}
+@media (max-width: 760px) {
+  .layout {
+    min-height: 850px;
+  }
+  .layoutFields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .layoutFields :is(input, select) {
+    height: 40px;
+  }
+  .layoutControls {
+    padding: 12px;
+  }
+  .toolbar {
+    position: static;
+    padding: 10px 12px;
+  }
+  .title {
+    max-width: none;
+  }
+  .actions {
+    width: 100%;
+    margin: 0;
+  }
+  .button,
+  .back,
+  .next,
+  .modes .button {
+    min-height: 44px;
+  }
+  .iconButton {
+    width: 44px;
+  }
+  .chapters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-inline: 20px;
+    gap: 0 14px;
+  }
+  .chapters a {
+    flex-shrink: 0;
+    min-height: 36px;
+    white-space: nowrap;
+  }
+  .document,
+  .importView,
+  .preview {
+    padding-inline: 20px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .back,
+  .next {
+    transition: none;
+  }
+}

@@ -84,6 +84,7 @@ async def isolated_backend_state(
     from app import crypto
     from app.config_cache import invalidate_config_cache
     from app.database import Database
+    from app.tenant_database import TenantDatabaseProxy
 
     test_data_dir = tmp_path / "data"
     test_db = Database(db_path=test_data_dir / "resume_matcher.db")
@@ -100,8 +101,10 @@ async def isolated_backend_state(
     for module_name, module in tuple(sys.modules.items()):
         if not module_name.startswith("app.") or module is None:
             continue
-        if isinstance(getattr(module, "db", None), Database):
+        if isinstance(getattr(module, "db", None), (Database, TenantDatabaseProxy)):
             monkeypatch.setattr(module, "db", test_db)
+        if isinstance(getattr(module, "operator_db", None), Database):
+            monkeypatch.setattr(module, "operator_db", test_db)
 
     invalidate_config_cache()
     crypto.reset_cache()

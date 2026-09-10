@@ -1,4 +1,5 @@
 import React from 'react';
+import { ResumePhoto } from './resume-photo';
 import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
 import type {
   ResumeData,
@@ -265,6 +266,7 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({
       {/* Header Section - Centered Layout (always first) */}
       {personalInfo && (
         <header className={`text-center ${baseStyles['resume-header']}`}>
+          <ResumePhoto photo={personalInfo?.photo} />
           {/* Name - Centered */}
           {personalInfo.name && (
             <h1 className={`${baseStyles['resume-name']} tracking-tight uppercase mb-1`}>

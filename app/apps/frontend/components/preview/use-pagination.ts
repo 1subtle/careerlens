@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { type PageSize, type MarginSettings } from '@/lib/types/template-settings';
 import { getContentAreaPx } from '@/lib/constants/page-dimensions';
+import baseStyles from '@/components/resume/styles/_base.module.css';
 
 export interface PageBreak {
   pageNumber: number;
@@ -68,7 +69,7 @@ export function usePagination({
       // - .resume-item: Individual job entries, project entries, education entries
       // - [data-no-break]: Explicitly marked elements
       // NOTE: We do NOT include .resume-section because sections SHOULD span pages
-      const items = container.querySelectorAll('.resume-item, [data-no-break]');
+      const items = container.querySelectorAll(`.${baseStyles['resume-item']}, [data-no-break]`);
       const itemBounds: { top: number; bottom: number; element: Element }[] = [];
       const containerRect = container.getBoundingClientRect();
 
@@ -84,17 +85,17 @@ export function usePagination({
       // CRITICAL: Prevent section headers from being orphaned at page bottom
       // A section header should stay with at least its first content element
       const sectionTitles = container.querySelectorAll(
-        '.resume-section-title, .resume-section-title-sm'
+        `.${baseStyles['resume-section-title']}, .${baseStyles['resume-section-title-sm']}`
       );
       sectionTitles.forEach((title) => {
         const titleRect = title.getBoundingClientRect();
-        const section = title.closest('.resume-section');
+        const section = title.closest(`.${baseStyles['resume-section']}`);
         if (section) {
           // Find the first content element after the title
           // Could be: .resume-item, .resume-items > first-child, p, ul, etc.
           const firstContent =
-            section.querySelector('.resume-item') ||
-            section.querySelector('.resume-items > *:first-child') ||
+            section.querySelector(`.${baseStyles['resume-item']}`) ||
+            section.querySelector(`.${baseStyles['resume-items']} > *:first-child`) ||
             title.nextElementSibling; // Fallback to immediate sibling (p, ul, etc.)
 
           if (firstContent && firstContent !== title) {

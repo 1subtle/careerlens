@@ -1,0 +1,529 @@
+{
+  "checked_at": "2026-09-09T13:18:22.947527+00:00",
+  "website": "https://careerlens.cc/",
+  "deployment_status": "completed",
+  "application_image": "sha256:b697e998afb80aea81933f7914589ec74b550cb4dc89e2b6ae7604715ea7c721",
+  "persistent_data_volume": "careerlens-hosted_hosted-data",
+  "caddy_source_sha256": "f2ff9ceb4615b46d616198522c6ea9e2e0c2a06458be297492ef21cbe94ae8bc",
+  "runtime": {
+    "public_url": "https://careerlens.cc",
+    "sender": "CareerLens <login@example.com>",
+    "signup_credits": 20,
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "app_health": "healthy",
+    "caddy_state": "running"
+  },
+  "public_checks": {
+    "domain": "careerlens.cc",
+    "checked_at": "2026-09-09T13:11:11.835986+00:00",
+    "method": "Python urllib with default certificate validation and default proxy handling; automatic redirects disabled; no authentication cookies",
+    "all_passed": true,
+    "checks": [
+      {
+        "name": "health",
+        "url": "https://careerlens.cc/api/v1/health",
+        "status": 200,
+        "location": null,
+        "tls_verified": true,
+        "json": {
+          "status": "healthy"
+        },
+        "passed": true,
+        "note": "Verified immediately before the other checks in a separate request."
+      },
+      {
+        "name": "homepage",
+        "url": "https://careerlens.cc/",
+        "checked_at": "2026-09-09T13:11:10.485077+00:00",
+        "status": 200,
+        "location": null,
+        "content_type": "text/html; charset=utf-8",
+        "tls_verified": true,
+        "title": "CareerLens · AI 简历诊断与岗位匹配",
+        "contains_careerlens": true,
+        "response_bytes": 15481,
+        "body_sha256": "21787459f36b84e5c10dff86e8e8bc39a6a49d2b279df4dcb7ca10d414df21b6",
+        "passed": true
+      },
+      {
+        "name": "http_to_https",
+        "url": "http://careerlens.cc/api/v1/health?deployment_check=http&keep=query",
+        "checked_at": "2026-09-09T13:11:10.485215+00:00",
+        "status": 308,
+        "location": "https://careerlens.cc/api/v1/health?deployment_check=http&keep=query",
+        "content_type": null,
+        "tls_verified": false,
+        "expected_location": "https://careerlens.cc/api/v1/health?deployment_check=http&keep=query",
+        "passed": true
+      },
+      {
+        "name": "www_redirect",
+        "url": "https://www.careerlens.cc/api/v1/health?deployment_check=www&keep=query",
+        "checked_at": "2026-09-09T13:11:10.485269+00:00",
+        "status": 301,
+        "location": "https://careerlens.cc/api/v1/health?deployment_check=www&keep=query",
+        "content_type": null,
+        "tls_verified": true,
+        "expected_location": "https://careerlens.cc/api/v1/health?deployment_check=www&keep=query",
+        "passed": true
+      },
+      {
+        "name": "legacy_redirect",
+        "url": "https://careerlens-studio.japaneast.cloudapp.azure.com/api/v1/health?deployment_check=legacy&keep=query",
+        "checked_at": "2026-09-09T13:11:11.105110+00:00",
+        "status": 301,
+        "location": "https://careerlens.cc/api/v1/health?deployment_check=legacy&keep=query",
+        "content_type": null,
+        "tls_verified": true,
+        "expected_location": "https://careerlens.cc/api/v1/health?deployment_check=legacy&keep=query",
+        "passed": true
+      },
+      {
+        "name": "credits_unauthenticated",
+        "url": "https://careerlens.cc/api/v1/auth/credits",
+        "checked_at": "2026-09-09T13:11:11.109972+00:00",
+        "status": 401,
+        "location": null,
+        "content_type": "application/json",
+        "tls_verified": true,
+        "json": {
+          "detail": "请先登录"
+        },
+        "passed": true
+      },
+      {
+        "name": "session_public",
+        "url": "https://careerlens.cc/api/v1/auth/session",
+        "checked_at": "2026-09-09T13:11:11.182393+00:00",
+        "status": 200,
+        "location": null,
+        "content_type": "application/json",
+        "tls_verified": true,
+        "json": {
+          "mode": "hosted",
+          "user": null,
+          "email_login_available": true,
+          "github_url": ""
+        },
+        "passed": true
+      }
+    ]
+  },
+  "mail": {
+    "domain": "careerlens.cc",
+    "verification_states": {
+      "DKIM": {
+        "errorCode": "None",
+        "status": "Verified"
+      },
+      "DKIM2": {
+        "errorCode": "None",
+        "status": "Verified"
+      },
+      "DMARC": {
+        "status": "NotStarted"
+      },
+      "Domain": {
+        "errorCode": "None",
+        "status": "Verified"
+      },
+      "SPF": {
+        "errorCode": "None",
+        "status": "Verified"
+      }
+    },
+    "domain_provisioning_state": "Succeeded",
+    "communication_provisioning_state": "Succeeded",
+    "linked_domain_count": 2,
+    "existing_domains_preserved": true,
+    "sender_addresses": [
+      "login@example.com"
+    ],
+    "dns_checks": [
+      {
+        "purpose": "DKIM",
+        "name": "selector1-azurecomm-prod-net._domainkey.careerlens.cc",
+        "type": "CNAME",
+        "matched": true
+      },
+      {
+        "purpose": "DKIM2",
+        "name": "selector2-azurecomm-prod-net._domainkey.careerlens.cc",
+        "type": "CNAME",
+        "matched": true
+      },
+      {
+        "purpose": "Domain",
+        "name": "careerlens.cc",
+        "type": "TXT",
+        "matched": true
+      },
+      {
+        "purpose": "SPF",
+        "name": "careerlens.cc",
+        "type": "TXT",
+        "matched": true
+      }
+    ],
+    "default_email_limits_per_subscription": {
+      "per_minute": 30,
+      "per_hour": 100,
+      "source": "https://learn.microsoft.com/en-us/azure/communication-services/concepts/service-limits#email"
+    },
+    "smtp_check": {
+      "url": "https://careerlens.cc/api/v1/auth/email/start",
+      "http_status": 200,
+      "response_keys": [
+        "challenge_id",
+        "email",
+        "expires_in_seconds",
+        "retry_after_seconds"
+      ],
+      "seconds": 5.93,
+      "from": "login@example.com",
+      "recipient": "operator_account",
+      "delivery_confirmed_by_inbox": false
+    }
+  },
+  "hosted_smoke": {
+    "events": [
+      {
+        "check": "loopback_api_only",
+        "status": "passed"
+      },
+      {
+        "check": "hosted_preflight",
+        "status": "passed"
+      },
+      {
+        "check": "artifacts",
+        "directory": "/tmp/careerlens-qa/4bde579537084a33a0740ab857070ae7"
+      },
+      {
+        "check": "identities_are_new",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 0.33
+      },
+      {
+        "check": "verified_session_cookie",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 0.08
+      },
+      {
+        "check": "session_identity",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 0.03
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "signup_credit_grant",
+        "status": "passed",
+        "balance": 20
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 0.03
+      },
+      {
+        "check": "verified_session_cookie",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 0.04
+      },
+      {
+        "check": "session_identity",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "signup_credit_grant",
+        "status": "passed",
+        "balance": 20
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "create_chinese_resume",
+        "http_status": 200,
+        "seconds": 2.26
+      },
+      {
+        "check": "owner_state",
+        "http_status": 200,
+        "seconds": 0.31
+      },
+      {
+        "check": "owner_sees_resume",
+        "status": "passed"
+      },
+      {
+        "check": "deepseek_configured",
+        "status": "passed"
+      },
+      {
+        "check": "create_synthetic_job",
+        "http_status": 200,
+        "seconds": 0.19
+      },
+      {
+        "check": "rules_match",
+        "http_status": 200,
+        "seconds": 0.08
+      },
+      {
+        "check": "rules_match",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "non_ai_actions_are_free",
+        "status": "passed"
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 200,
+        "seconds": 0.18
+      },
+      {
+        "check": "tenant_isolation",
+        "status": "passed",
+        "resumes": 0,
+        "jobs": 0,
+        "matches": 0
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 404,
+        "seconds": 0.04
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 404,
+        "seconds": 0.05
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 404,
+        "seconds": 0.07
+      },
+      {
+        "check": "real_ai_rewrite",
+        "http_status": 200,
+        "seconds": 6.57
+      },
+      {
+        "check": "ai_rewrite_metadata",
+        "status": "passed"
+      },
+      {
+        "check": "ai_fact_review_passed",
+        "status": "passed",
+        "claims": 1
+      },
+      {
+        "check": "ai_exact_evidence_citations",
+        "status": "passed"
+      },
+      {
+        "check": "ai_resume_expression_improved",
+        "status": "passed"
+      },
+      {
+        "check": "real_ai_rewrite",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "successful_generations_debit",
+        "status": "passed",
+        "before": 20,
+        "after": 18,
+        "charged": 2
+      },
+      {
+        "check": "real_ai_rewrite",
+        "http_status": 200,
+        "seconds": 0.0
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "other_account_balance_unchanged",
+        "status": "passed"
+      },
+      {
+        "check": "apply_ai_rewrite",
+        "http_status": 404,
+        "seconds": 0.02
+      },
+      {
+        "check": "apply_ai_rewrite",
+        "http_status": 200,
+        "seconds": 0.05
+      },
+      {
+        "check": "rewrite_saved_as_new_resume",
+        "status": "passed"
+      },
+      {
+        "check": "apply_ai_rewrite",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "apply_is_idempotent",
+        "status": "passed"
+      },
+      {
+        "check": "apply_ai_rewrite",
+        "http_status": 200,
+        "seconds": 0.03
+      },
+      {
+        "check": "original_resume_unchanged",
+        "status": "passed"
+      },
+      {
+        "check": "owner_docx",
+        "http_status": 200,
+        "seconds": 0.48
+      },
+      {
+        "check": "word_content_type",
+        "status": "passed"
+      },
+      {
+        "check": "native_word_contains_rewrite",
+        "status": "passed",
+        "text_characters": 194,
+        "bytes": 37489
+      },
+      {
+        "check": "owner_pdf",
+        "http_status": 200,
+        "seconds": 39.89
+      },
+      {
+        "check": "pdf_content_type",
+        "status": "passed"
+      },
+      {
+        "check": "pdf_chinese_contains_rewrite",
+        "status": "passed",
+        "pages": 1,
+        "text_characters": 196,
+        "bytes": 246399
+      },
+      {
+        "check": "owner_pdf",
+        "http_status": 404,
+        "seconds": 0.69
+      },
+      {
+        "check": "owner_pdf",
+        "http_status": 404,
+        "seconds": 0.03
+      },
+      {
+        "check": "owner_pdf",
+        "http_status": 200,
+        "seconds": 0.02
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "apply_and_exports_are_free",
+        "status": "passed"
+      },
+      {
+        "check": "repeat_email_login",
+        "http_status": 200,
+        "seconds": 0.09
+      },
+      {
+        "check": "verified_session_cookie",
+        "status": "passed"
+      },
+      {
+        "check": "repeat_email_login",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "login_does_not_repeat_signup_grant",
+        "status": "passed"
+      },
+      {
+        "check": "cleanup",
+        "status": "passed",
+        "users": 2,
+        "credit_accounts": 2,
+        "directories": 2
+      },
+      {
+        "check": "overall",
+        "status": "passed",
+        "checks": 69,
+        "seconds": 53.82
+      }
+    ],
+    "summary": {
+      "check": "overall",
+      "status": "passed",
+      "checks": 69,
+      "seconds": 53.82
+    }
+  },
+  "repository_note": "发布仓库时已脱敏发件邮箱；完整原始验收记录保留于本机。"
+}

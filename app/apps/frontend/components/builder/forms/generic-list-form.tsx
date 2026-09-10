@@ -10,6 +10,7 @@ interface GenericListFormProps {
   onChange: (items: string[]) => void;
   label?: string;
   placeholder?: string;
+  documentMode?: boolean;
 }
 
 /**
@@ -23,14 +24,15 @@ export const GenericListForm: React.FC<GenericListFormProps> = ({
   onChange,
   label,
   placeholder,
+  documentMode = false,
 }) => {
   const { t } = useTranslations();
   const finalLabel = label ?? t('builder.customSections.itemsLabel');
   const finalPlaceholder = placeholder ?? t('builder.customSections.itemsPlaceholder');
 
   const handleChange = (value: string) => {
-    // Split by newlines, filter empty lines
-    const newItems = value.split('\n').filter((item) => item.trim() !== '');
+    // Preserve the new line while editing, as in the built-in skills form.
+    const newItems = value.split('\n');
     onChange(newItems);
   };
 
@@ -50,9 +52,11 @@ export const GenericListForm: React.FC<GenericListFormProps> = ({
       <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
         {finalLabel}
       </Label>
-      <p className="font-mono text-xs uppercase tracking-wider text-blue-700 mb-2">
-        {t('builder.additionalForm.instructions')}
-      </p>
+      {!documentMode && (
+        <p className="font-mono text-xs uppercase tracking-wider text-blue-700 mb-2">
+          {t('builder.additionalForm.instructions')}
+        </p>
+      )}
       <Textarea
         value={formatItems(items)}
         onChange={(e) => handleChange(e.target.value)}

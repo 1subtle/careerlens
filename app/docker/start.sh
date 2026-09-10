@@ -103,31 +103,48 @@ normalize_log_level() {
     esac
 }
 
-# Exit code to propagate from failed child processes
-EXIT_CODE=0
-
 # Cleanup function for graceful shutdown
 cleanup() {
+    local exit_code=$?
     # Prevent re-entry from signals during cleanup
+    trap - EXIT
     trap '' SIGTERM SIGINT SIGQUIT
 
     echo "" >&2
     info "Shutting down Resume Matcher..."
 
-    # Kill frontend if running
-    if [ -n "$FRONTEND_PID" ] && kill -0 "$FRONTEND_PID" 2>/dev/null; then
-        kill "$FRONTEND_PID" 2>/dev/null || true
-        wait "$FRONTEND_PID" 2>/dev/null || true
-    fi
-
-    # Kill backend if running
-    if [ -n "$BACKEND_PID" ] && kill -0 "$BACKEND_PID" 2>/dev/null; then
-        kill "$BACKEND_PID" 2>/dev/null || true
-        wait "$BACKEND_PID" 2>/dev/null || true
-    fi
+    # Stop both children before waiting for either one to finish.
+    local pid
+    for pid in "$FRONTEND_PID" "$BACKEND_PID"; do
+        if [ -n "$pid" ]; then
+            kill "$pid" 2>/dev/null || true
+        fi
+    done
+    for pid in "$FRONTEND_PID" "$BACKEND_PID"; do
+        if [ -n "$pid" ]; then
+            wait "$pid" 2>/dev/null || true
+        fi
+    done
 
     status "Shutdown complete"
-    exit "${EXIT_CODE}"
+    exit "$exit_code"
+}
+
+wait_for_service() {
+    local name="$1" pid="$2" url="$3" i
+    for i in {1..30}; do
+        if ! kill -0 "$pid" 2>/dev/null; then
+            error "$name process (PID: $pid) died during startup"
+            return 1
+        fi
+        if curl -fsS --max-time 2 "$url" > /dev/null 2>&1; then
+            status "$name is ready (PID: $pid)"
+            return 0
+        fi
+        sleep 1
+    done
+    error "$name failed readiness checks"
+    return 1
 }
 
 # Initialize PIDs so cleanup doesn't fail on early exit
@@ -135,7 +152,8 @@ BACKEND_PID=""
 FRONTEND_PID=""
 
 # Set up signal handlers
-trap cleanup SIGTERM SIGINT SIGQUIT
+trap cleanup EXIT
+trap 'exit 0' SIGTERM SIGINT SIGQUIT
 
 # Print banner
 print_banner
@@ -180,7 +198,7 @@ status "Configuration loaded"
 
 # Check and create data directory
 info "Checking data directory..."
-DATA_DIR="/app/backend/data"
+export DATA_DIR="${DATA_DIR:-/app/backend/data}"
 if [ ! -d "$DATA_DIR" ]; then
     mkdir -p "$DATA_DIR"
     status "Created data directory: $DATA_DIR"
@@ -188,44 +206,47 @@ else
     status "Data directory exists: $DATA_DIR"
 fi
 
-# Check for Playwright browsers
+# Restore missing or damaged model files from the image, without network access.
+info "Preparing local embedding model..."
+cd /app/backend
+python - <<'PY'
+import hashlib
+import shutil
+from pathlib import Path
+
+from app.config import settings
+from app.services.semantic import FILES, model_dir
+
+directory = model_dir()
+seed = Path("/opt/careerlens-seed") / directory.relative_to(settings.data_dir)
+for name, expected in FILES.items():
+    target = directory / name
+    if target.is_file():
+        with target.open("rb") as stream:
+            if hashlib.file_digest(stream, "sha256").hexdigest() == expected:
+                continue
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_suffix(target.suffix + ".part")
+    shutil.copyfile(seed / name, temporary)
+    temporary.replace(target)
+PY
+status "Local embedding model is ready"
+
+# Verify Chromium can actually launch; missing libraries must fail startup.
 info "Checking Playwright browsers..."
-if [ -d "/root/.cache/ms-playwright" ] || [ -d "/home/appuser/.cache/ms-playwright" ]; then
-    status "Playwright browsers found"
-else
-    warn "Installing Playwright Chromium (this may take a moment)..."
-    python -m playwright install chromium || {
-        warn "Playwright install failed — PDF export may not work"
-    }
-    status "Playwright setup complete"
-fi
+python -c "from playwright.sync_api import sync_playwright; p = sync_playwright().start(); browser = p.chromium.launch(headless=True); browser.close(); p.stop()"
+status "Playwright Chromium is ready"
 
 # Start backend
 echo ""
 info "Starting backend server on internal port ${BACKEND_PORT}..."
 cd /app/backend
-trap '' SIGTERM SIGINT SIGQUIT
-python -m uvicorn app.main:app --host 0.0.0.0 --port "${BACKEND_PORT}" --log-level "${UVICORN_LOG_LEVEL}" &
+python -m uvicorn app.main:app --host 127.0.0.1 --port "${BACKEND_PORT}" --proxy-headers --forwarded-allow-ips 127.0.0.1 --log-level "${UVICORN_LOG_LEVEL}" &
 BACKEND_PID=$!
-trap cleanup SIGTERM SIGINT SIGQUIT
 
 # Wait for backend to be ready
 info "Waiting for backend to be ready..."
-for i in {1..30}; do
-    if curl -s "http://127.0.0.1:${BACKEND_PORT}/api/v1/health" > /dev/null 2>&1; then
-        status "Backend is ready (PID: $BACKEND_PID)"
-        break
-    fi
-    if ! kill -0 "$BACKEND_PID" 2>/dev/null; then
-        error "Backend process (PID: $BACKEND_PID) died during startup"
-        exit 1
-    fi
-    if [ $i -eq 30 ]; then
-        error "Backend failed to start within 30 seconds"
-        exit 1
-    fi
-    sleep 1
-done
+wait_for_service "Backend" "$BACKEND_PID" "http://127.0.0.1:${BACKEND_PORT}/api/v1/health"
 
 # Start frontend
 echo ""
@@ -240,11 +261,9 @@ if [ ! -f "server.js" ]; then
     exit 1
 fi
 
-trap '' SIGTERM SIGINT SIGQUIT
 node server.js "$@" &
 FRONTEND_PID=$!
-trap cleanup SIGTERM SIGINT SIGQUIT
-status "Frontend is running (PID: $FRONTEND_PID)"
+wait_for_service "Frontend" "$FRONTEND_PID" "http://127.0.0.1:${FRONTEND_PORT}/"
 
 # Wait for either process to exit, but ignore errexit for this wait
 set +e
@@ -252,4 +271,8 @@ wait -n "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null
 EXIT_CODE=$?
 set -e
 warn "A process exited unexpectedly (exit code: ${EXIT_CODE}), shutting down..."
-cleanup
+# A server exiting by itself, even successfully, requires a container restart.
+if [ "$EXIT_CODE" -eq 0 ]; then
+    EXIT_CODE=1
+fi
+exit "$EXIT_CODE"

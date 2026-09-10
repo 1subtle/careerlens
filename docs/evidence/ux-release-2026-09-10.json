@@ -1,0 +1,242 @@
+{
+  "date": "2026-09-10",
+  "verified_at_utc": "2026-09-10T09:58:21.108324+00:00",
+  "site": "https://careerlens.cc",
+  "status": "deployed_and_verified",
+  "image": "sha256:ec9fe43e05ceaf734e9db6491867d1fdb8a9c18deb6c26a833d33ada1c5667ae",
+  "rollback_image": "careerlens:before-ux-20260910T095320Z",
+  "source_sha256": "de07aa6ae39971e7ee91905cdcdb8d1d5e5dd8a4a2b43eb919bdb60aac11a440",
+  "artifact_sha256": "af9d95aa0fccec703a1b6e8c7227cf3fd1e23bd1c07cd38c3ff74b91e6e08282",
+  "build": {
+    "platform": "linux",
+    "arch": "x64",
+    "node": "v22.23.2",
+    "next": "16.3.4",
+    "lock_sha256": "a3e2abf0a6a5a86718a838adec19efdb8d496b8bdaa9b92099c6cc1672563516"
+  },
+  "builder_stopped": true,
+  "source_sync": {
+    "changed": 11,
+    "second_run_changes": 0,
+    "backup": "/home/careerlens/backups/before-ux-20260910-source-20260910T095509983700Z.tar.gz"
+  },
+  "reviewed_backend_file": "app/services/career_diagnosis.py",
+  "reviewed_backend_sha256": "938087df1ee322dfaf1b4c88a09f3d9a6133be0d0317aef22b47923ca4941b4c",
+  "other_backend_dependencies_runtime_unchanged": true,
+  "frontend_tests": {
+    "files": 74,
+    "passed": 630,
+    "typecheck": "passed",
+    "eslint": "passed"
+  },
+  "backend_tests": {
+    "passed": 1331,
+    "live_model_evaluations_deselected": 2,
+    "pdf_tests_passed_after_permission_review": 21
+  },
+  "public_checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.17
+    },
+    {
+      "path": "/login",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.97
+    },
+    {
+      "path": "/account",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.94
+    },
+    {
+      "path": "/account/wallet",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.97
+    },
+    {
+      "path": "/?account=wallet",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.87
+    },
+    {
+      "path": "/account/orders",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.95
+    },
+    {
+      "path": "/?account=orders",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.94
+    },
+    {
+      "path": "/account/usage",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.98
+    },
+    {
+      "path": "/?account=usage",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.93
+    },
+    {
+      "path": "/account/settings",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.94
+    },
+    {
+      "path": "/?account=settings",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.92
+    },
+    {
+      "path": "/account/security",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.88
+    },
+    {
+      "path": "/?account=security",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.1
+    },
+    {
+      "path": "/account/data",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.86
+    },
+    {
+      "path": "/?account=data",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.92
+    },
+    {
+      "path": "/api/v1/health",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.93
+    },
+    {
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.05
+    },
+    {
+      "path": "/api/v1/account/profile",
+      "status": 401,
+      "passed": true,
+      "seconds": 0.84
+    },
+    {
+      "path": "/api/v1/account/sessions",
+      "status": 401,
+      "passed": true,
+      "seconds": 0.85
+    },
+    {
+      "path": "/api/v1/account/export",
+      "status": 401,
+      "passed": true,
+      "seconds": 0.77
+    }
+  ],
+  "database": {
+    "audit_passed": true,
+    "snapshot_unchanged": true,
+    "accounts": 2,
+    "workspaces": 2,
+    "credit_balance_total": 39
+  },
+  "live_sources": [
+    {
+      "source": "腾讯招聘",
+      "domain": "careers.tencent.com",
+      "page_count": 10,
+      "complete_jd_count": 10,
+      "reported_total": 2268
+    },
+    {
+      "source": "Jobicy",
+      "domain": "jobicy.com",
+      "page_count": 10,
+      "complete_jd_count": 10,
+      "reported_total": 200
+    },
+    {
+      "source": "国家大学生就业服务平台",
+      "domain": "www.ncss.cn",
+      "page_count": 10,
+      "complete_jd_count": 10,
+      "reported_total": 100
+    }
+  ],
+  "new_platforms": {
+    "mode": "official_external_search_entries",
+    "names": [
+      "BOSS直聘",
+      "智联招聘",
+      "前程无忧",
+      "猎聘",
+      "实习僧"
+    ],
+    "included_in_local_sample_statistics": false
+  },
+  "ai_quality": {
+    "synthetic_inputs": true,
+    "real_model_requests": 8,
+    "related_job": {
+      "score": 42,
+      "seconds": 5.31
+    },
+    "unrelated_job": {
+      "score": 8,
+      "seconds": 6.07,
+      "single_generation": true
+    },
+    "clear_text_polish": {
+      "seconds": 1.59,
+      "substantive_changes": false
+    },
+    "fixes": [
+      "Preserve original responsibilities and results",
+      "Allow unrelated strengths and actions without JD references; gaps still require references"
+    ],
+    "report": "../AI诊断质量复测_2026-09-10.md"
+  },
+  "visual_validation": {
+    "environment": "local_synthetic_account",
+    "widths_px": [
+      1280,
+      390,
+      320
+    ],
+    "desktop_main_scroll_height_px": 693,
+    "resume_inner_scroll_disabled": true,
+    "desktop_sticky_toolbar": "passed",
+    "mobile_toolbar_scrolls_with_content": true,
+    "mobile_page_horizontal_overflow": false,
+    "table_body_font_px": 15,
+    "screenshots": [
+      "ux-resume-scroll-2026-09-10.png",
+      "ux-resume-mobile-2026-09-10.png",
+      "ux-orders-desktop-2026-09-10.png",
+      "ux-orders-mobile-2026-09-10.png"
+    ]
+  }
+}

@@ -4,10 +4,11 @@ import copy
 import json
 import logging
 import re
-from difflib import SequenceMatcher
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from typing import Any, Callable
 
+from app.ai_limits import without_resume_photo
 from app.llm import complete_json
 from app.prompts import (
     CRITICAL_TRUTHFULNESS_RULES,
@@ -20,7 +21,7 @@ from app.prompts import (
     get_language_name,
 )
 from app.prompts.templates import IMPROVE_SCHEMA_EXAMPLE
-from app.schemas import ResumeData, ResumeFieldDiff, ResumeDiffSummary
+from app.schemas import ResumeData, ResumeDiffSummary, ResumeFieldDiff
 from app.schemas.models import ImproveDiffResult, ResumeChange
 from app.services.parser import has_meaningful_resume_content
 
@@ -613,11 +614,11 @@ async def generate_resume_diffs(
     # Use structured JSON if available with month precision, else markdown
     if original_resume_data is not None:
         if _has_month_in_dates(original_resume_data):
-            resume_input = json.dumps(original_resume_data)
+            resume_input = json.dumps(without_resume_photo(original_resume_data))
         else:
-            resume_input = original_resume
+            resume_input = without_resume_photo(original_resume)
     else:
-        resume_input = original_resume
+        resume_input = without_resume_photo(original_resume)
 
     prompt = DIFF_IMPROVE_PROMPT.format(
         strategy_instruction=strategy_instruction,
@@ -787,7 +788,7 @@ def _extract_jd_skill_index(
 
 def _skill_present_in_resume_text(skill: str, resume_data: dict[str, Any]) -> bool:
     """Return True when a skill phrase already appears in the resume text."""
-    text = json.dumps(resume_data, ensure_ascii=False)
+    text = json.dumps(without_resume_photo(resume_data), ensure_ascii=False)
     return _skill_mentioned_in_text(skill, text)
 
 
@@ -893,7 +894,9 @@ async def generate_skill_target_plan(
         existing_skills=json.dumps(existing_skills, ensure_ascii=False),
         job_keywords=_prepare_keywords_for_prompt(job_keywords),
         job_description=sanitized_jd,
-        original_resume=json.dumps(original_resume_data, ensure_ascii=False),
+        original_resume=json.dumps(
+            without_resume_photo(original_resume_data), ensure_ascii=False
+        ),
     )
 
     result = await complete_json(
@@ -976,15 +979,15 @@ async def improve_resume(
     # (year-only) dates — the markdown preserves months from the original PDF.
     if original_resume_data is not None:
         if _has_month_in_dates(original_resume_data):
-            resume_input = json.dumps(original_resume_data)
+            resume_input = json.dumps(without_resume_photo(original_resume_data))
         else:
             logger.info(
                 "Structured resume data has year-only dates; using raw markdown "
                 "to preserve month precision."
             )
-            resume_input = original_resume
+            resume_input = without_resume_photo(original_resume)
     else:
-        resume_input = original_resume
+        resume_input = without_resume_photo(original_resume)
 
     prompt = prompt_template.format(
         job_description=sanitized_jd,

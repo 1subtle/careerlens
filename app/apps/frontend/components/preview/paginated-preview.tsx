@@ -14,6 +14,8 @@ import { useLanguage } from '@/lib/context/language-context';
 interface PaginatedPreviewProps {
   resumeData: ResumeData;
   settings: TemplateSettings;
+  measurementRef?: React.RefObject<HTMLDivElement | null>;
+  locale?: string;
 }
 
 const MIN_ZOOM = 0.4;
@@ -24,11 +26,17 @@ const ZOOM_STEP = 0.1;
  * PaginatedPreview shows a WYSIWYG preview of the resume with actual page dimensions,
  * margin guides, and automatic pagination.
  */
-export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps) {
+export function PaginatedPreview({
+  resumeData,
+  settings,
+  measurementRef: externalMeasurement,
+  locale,
+}: PaginatedPreviewProps) {
   const { t } = useTranslations();
   // Orders the CJK font fallback so the preview matches the generated PDF.
   const { contentLanguage } = useLanguage();
-  const measurementRef = useRef<HTMLDivElement>(null);
+  const internalMeasurement = useRef<HTMLDivElement>(null);
+  const measurementRef = externalMeasurement ?? internalMeasurement;
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(0.6);
   const [showMargins, setShowMargins] = useState(false);
@@ -184,7 +192,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
             resumeData={resumeData}
             template={settings.template}
             settings={resumeSettings}
-            locale={contentLanguage}
+            locale={locale ?? contentLanguage}
             additionalSectionLabels={additionalSectionLabels}
             sectionHeadings={sectionHeadings}
             fallbackLabels={fallbackLabels}
@@ -218,7 +226,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
                   resumeData={resumeData}
                   template={settings.template}
                   settings={resumeSettings}
-                  locale={contentLanguage}
+                  locale={locale ?? contentLanguage}
                   additionalSectionLabels={additionalSectionLabels}
                   sectionHeadings={sectionHeadings}
                   fallbackLabels={fallbackLabels}

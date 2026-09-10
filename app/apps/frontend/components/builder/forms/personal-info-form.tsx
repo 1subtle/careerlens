@@ -5,13 +5,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PersonalInfo } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
+import documentStyles from '../resume-document.module.css';
+import { ResumePhotoEditor } from './resume-photo-editor';
 
 interface PersonalInfoFormProps {
   data: PersonalInfo;
   onChange: (data: PersonalInfo) => void;
+  documentMode?: boolean;
 }
 
-export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChange }) => {
+export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
+  data,
+  onChange,
+  documentMode = false,
+}) => {
   const { t } = useTranslations();
 
   const handleChange = (field: keyof PersonalInfo, value: string) => {
@@ -22,10 +29,17 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
   };
 
   return (
-    <div className="space-y-4 border border-black p-6 bg-white shadow-sw-default">
+    <div
+      className={
+        documentMode
+          ? documentStyles.section
+          : 'space-y-4 border border-black p-6 bg-white shadow-sw-default'
+      }
+    >
       <h3 className="font-serif text-xl font-bold border-b border-black pb-2 mb-4">
         {t('builder.personalInfo')}
       </h3>
+      <ResumePhotoEditor photo={data.photo} onChange={(photo) => handleChange('photo', photo)} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label

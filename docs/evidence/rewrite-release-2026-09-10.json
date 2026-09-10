@@ -1,0 +1,154 @@
+{
+  "date": "2026-09-10",
+  "site": "https://careerlens.cc",
+  "base_image": "sha256:ec9fe43e05ceaf734e9db6491867d1fdb8a9c18deb6c26a833d33ada1c5667ae",
+  "active_image": "sha256:2aac6b2287b92173538367e8945d64d48571ee888bdb46351a4b50483519ea39",
+  "rollback_image": "careerlens:before-rewrite-20260910T103332Z",
+  "source_backup": "/home/careerlens/backups/before-rewrite-source-20260910T103452194168Z.tar.gz",
+  "source_sha256": {
+    "app/services/career_ai.py": "6a662715764393519216de13a6a32da79da3ba7dc05872e6015e1dcf33fe774d",
+    "app/prompts/career_rewrite.py": "0313a5fde2e032764117b7e627c310e6cd6c7a9325ca3fb1ca6539e2b8c71361"
+  },
+  "tests_passed": 92,
+  "public_checks": {
+    "site": "https://careerlens.cc",
+    "checks": [
+      {
+        "path": "/",
+        "status": 200,
+        "passed": true,
+        "seconds": 1.19
+      },
+      {
+        "path": "/login",
+        "status": 200,
+        "passed": true,
+        "seconds": 0.82
+      },
+      {
+        "path": "/account",
+        "status": 200,
+        "passed": true,
+        "seconds": 0.96
+      },
+      {
+        "path": "/account/wallet",
+        "status": 200,
+        "passed": true,
+        "seconds": 1.01
+      },
+      {
+        "path": "/?account=wallet",
+        "status": 200,
+        "passed": true,
+        "seconds": 1.09
+      },
+      {
+        "path": "/account/orders",
+        "status": 200,
+        "passed": true,
+        "seconds": 0.86
+      },
+      {
+        "path": "/?account=orders",
+        "status": 200,
+        "passed": true,
+        "seconds": 1.03
+      },
+      {
+        "path": "/account/usage",
+        "status": 200,
+        "passed": true,
+        "seconds": 1.0
+      },
+      {
+        "path": "/?account=usage",
+        "status": 200,
+        "passed": true,
+        "seconds": 0.9
+      },
+      {
+        "path": "/account/settings",
+        "status": 200,
+        "passed": true,
+        "seconds": 1.12
+      },
+      {
+        "path": "/?account=settings",
+        "status": 200,
+        "passed": true,
+        "seconds": 1.05
+      },
+      {
+        "path": "/account/security",
+        "status": 200,
+        "passed": true,
+        "seconds": 0.94
+      },
+      {
+        "path": "/?account=security",
+        "status": 200,
+        "passed": true,
+        "seconds": 1.01
+      },
+      {
+        "path": "/account/data",
+        "status": 200,
+        "passed": true,
+        "seconds": 0.98
+      },
+      {
+        "path": "/?account=data",
+        "status": 200,
+        "passed": true,
+        "seconds": 0.88
+      },
+      {
+        "path": "/api/v1/health",
+        "status": 200,
+        "passed": true,
+        "seconds": 0.95
+      },
+      {
+        "path": "/api/v1/auth/session",
+        "status": 200,
+        "passed": true,
+        "seconds": 1.1
+      },
+      {
+        "path": "/api/v1/account/profile",
+        "status": 401,
+        "passed": true,
+        "seconds": 0.79
+      },
+      {
+        "path": "/api/v1/account/sessions",
+        "status": 401,
+        "passed": true,
+        "seconds": 0.87
+      },
+      {
+        "path": "/api/v1/account/export",
+        "status": 401,
+        "passed": true,
+        "seconds": 0.81
+      }
+    ],
+    "passed": true
+  },
+  "live_evaluation": {
+    "synthetic_cases": 5,
+    "baseline_calls": 4,
+    "initial_adaptation_calls": 4,
+    "final_comparison_calls": 4,
+    "deployed_no_jd_calls": 1,
+    "total_provider_calls": 13
+  },
+  "storage_audit": {
+    "ok": true,
+    "summaries_unchanged": true,
+    "accounts": 2,
+    "workspaces": 2,
+    "credit_balance_total": 39
+  }
+}

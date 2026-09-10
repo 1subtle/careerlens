@@ -1,0 +1,102 @@
+{
+  "date": "2026-09-07",
+  "rule_version": "career-1.1",
+  "backend": {
+    "passed": 1098,
+    "deselected": 2,
+    "seconds": 74.56
+  },
+  "frontend": {
+    "test_files": 56,
+    "passed": 503,
+    "seconds": 12.69,
+    "typecheck": "passed",
+    "eslint": "passed",
+    "production_build": "passed",
+    "static_pages": 9
+  },
+  "browser": {
+    "comparison_and_detail_open": "passed",
+    "viewport_width": 524,
+    "document_scroll_width": 524,
+    "comparison_table_width": 492,
+    "table_parent_width": 492
+  },
+  "live": {
+    "real_docx_ai": {
+      "mode": "ai",
+      "name_correct": true,
+      "projects": 2,
+      "education": 1,
+      "seconds": 4.19,
+      "warning": null
+    },
+    "source_save_and_conflict": true,
+    "comparison_and_semantic": {
+      "shared_snapshot": true,
+      "candidates": 1,
+      "score_before_review": 0.0,
+      "seconds": 0.04
+    },
+    "condition_roundtrip": true,
+    "ai_rewrite": {
+      "status": 200,
+      "seconds": 1.89,
+      "fact_check": "checked",
+      "claims": 1,
+      "change_types": [
+        "expression"
+      ],
+      "applied": true
+    },
+    "temporary_records_cleaned": true
+  },
+  "final_grounding_positive": {
+    "mode": "ai",
+    "fact_check": "checked",
+    "claims": 1,
+    "change_types": [
+      "expression"
+    ],
+    "seconds": 2.56
+  },
+  "final_grounding_negative": {
+    "unfounded_purpose_rejected": true
+  },
+  "http_workflow": {
+    "fixture": "explicitly synthetic",
+    "checks": {
+      "parse": true,
+      "match": true,
+      "accepted_version": true,
+      "idempotency": true,
+      "original_unchanged": true,
+      "before": 71.4,
+      "after": 85.7,
+      "pdf_http": true
+    },
+    "match_ms": 13.2,
+    "pdf_bytes": [
+      271129,
+      296133
+    ]
+  },
+  "rules_docx": {
+    "name_correct": true,
+    "projects": 2,
+    "education": 1,
+    "degree": "本科",
+    "project_bullets": [
+      4,
+      4
+    ]
+  },
+  "semantic": {
+    "model": "Xenova/multilingual-e5-small",
+    "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78",
+    "processing": "local CPU",
+    "auto_score": false,
+    "max_candidates_per_requirement": 3,
+    "comparison_max_jobs": 5
+  }
+}

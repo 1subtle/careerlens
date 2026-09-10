@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Editor } from '@tiptap/react';
 import { Button } from './button';
 import { Input } from './input';
@@ -109,7 +110,9 @@ export const LinkDialog: React.FC<LinkDialogProps> = ({ editor, onClose }) => {
 
   const hasExistingLink = editor.isActive('link');
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50">
       {/* Overlay */}
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
@@ -180,6 +183,7 @@ export const LinkDialog: React.FC<LinkDialogProps> = ({ editor, onClose }) => {
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

@@ -13,6 +13,7 @@ import { API_BASE } from '@/lib/api/client';
 import { translate } from '@/lib/i18n/server';
 import { resolveLocale } from '@/lib/i18n/locale';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
+import { printSessionHeaders } from '../../session-headers';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -79,6 +80,8 @@ function parseBoolean(value: string | undefined, defaultValue: boolean): boolean
 async function fetchResumeData(id: string): Promise<ResumeData> {
   const res = await fetch(`${API_BASE}/resumes?resume_id=${encodeURIComponent(id)}`, {
     cache: 'no-store',
+    redirect: 'error',
+    headers: await printSessionHeaders(),
   });
   if (!res.ok) {
     throw new Error(`Failed to load resume (status ${res.status}).`);

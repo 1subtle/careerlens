@@ -9,6 +9,9 @@ cd "$career_root/app/apps/backend"
 uv sync --frozen --extra dev
 uv run --frozen python -m playwright install chromium
 uv run --frozen python -m app.scripts.career_data init
+if ! uv run --frozen python -m app.scripts.prepare_embeddings; then
+  echo "语义模型下载未完成；基础功能可正常使用。网络恢复后，在后端目录重运行 python -m app.scripts.prepare_embeddings。"
+fi
 cd "$career_root/app/apps/frontend"
 npm ci --no-audit --no-fund
 echo "依赖与数据库已准备好。运行 bash scripts/dev.sh 启动。"

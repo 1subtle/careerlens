@@ -1,0 +1,1259 @@
+{
+  "date": "2026-09-10",
+  "timezone": "Asia/Shanghai",
+  "verification": {
+    "backend": {
+      "passed": 1298,
+      "deselected": 2,
+      "seconds": 92.6
+    },
+    "frontend": {
+      "passed": 587,
+      "files": 70,
+      "seconds": 6.52
+    },
+    "typescript": "passed",
+    "eslint": "passed",
+    "atomic_sqlite_tests": 11,
+    "payment_tests": 21,
+    "independent_recheck": {
+      "backend_passed": 149,
+      "frontend_passed": 16,
+      "note": "85 billing/auth/migration, 29 history/diagnosis, 35 retry tests; source unchanged"
+    }
+  },
+  "rehearsal": {
+    "ok": true,
+    "databases": [
+      {
+        "number": 1,
+        "kind": "auth",
+        "legacy_counts_preserved": true,
+        "balance_preserved": true,
+        "schema": {
+          "kind": "auth",
+          "version": 2,
+          "latest": 2,
+          "pending": 0
+        }
+      },
+      {
+        "number": 2,
+        "kind": "business",
+        "legacy_counts_preserved": true,
+        "balance_preserved": false,
+        "schema": {
+          "kind": "business",
+          "version": 2,
+          "latest": 2,
+          "pending": 0
+        }
+      },
+      {
+        "number": 3,
+        "kind": "business",
+        "legacy_counts_preserved": true,
+        "balance_preserved": false,
+        "schema": {
+          "kind": "business",
+          "version": 2,
+          "latest": 2,
+          "pending": 0
+        }
+      },
+      {
+        "number": 4,
+        "kind": "business",
+        "legacy_counts_preserved": true,
+        "balance_preserved": false,
+        "schema": {
+          "kind": "business",
+          "version": 2,
+          "latest": 2,
+          "pending": 0
+        }
+      }
+    ]
+  },
+  "deployment": {
+    "status": "deployed",
+    "archive_sha256": "33cde67427d5b6bb51ed6553e16bceb40d44e490d0fd27f131c33f36486ef02f",
+    "source_files": 289,
+    "activated_at": "2026-09-10T04:48:52Z",
+    "image_id": "sha256:21bc40d1970b6fb50802990012acf2a1615b4d0e4168e45dfbc5e62eb937fab4",
+    "url": "https://careerlens.cc/",
+    "backend_files_verified": 74,
+    "source_drift": [],
+    "backup": "/home/careerlens/backups/before-billing-20260910T044852Z.tar.gz",
+    "previous_image": "careerlens:before-billing-20260910T044852Z",
+    "rollback_used": false
+  },
+  "payment": {
+    "provider": "Wechat Pay Native v3",
+    "live_enabled": false,
+    "external_requirements": [
+      "Eligible merchant entity and certified appid, Native payment access and credentials",
+      "Usage accounting and cost controls before selling fixed-per-generation credits"
+    ],
+    "real_payment_tested": false,
+    "catalog_status": "provisional_not_active",
+    "catalog_file": "deploy/credit-packages.proposed.json",
+    "owner_status": "personal_account_without_business_license",
+    "proposed_packages": [
+      {
+        "id": "starter_10",
+        "name": "基础套餐",
+        "credits": 10,
+        "amount_fen": 990,
+        "currency": "CNY"
+      },
+      {
+        "id": "standard_35",
+        "name": "常用套餐",
+        "credits": 35,
+        "amount_fen": 2990,
+        "currency": "CNY"
+      },
+      {
+        "id": "plus_75",
+        "name": "进阶套餐",
+        "credits": 75,
+        "amount_fen": 5990,
+        "currency": "CNY"
+      }
+    ]
+  },
+  "browser": {
+    "status": "partial",
+    "home": "DOM and 1280x720 screenshot verified in in-app browser",
+    "authenticated_account_and_history": "not visually verified; synthetic API acceptance and component tests passed",
+    "reason": "Browser control intermittently timed out; no authenticated browser session",
+    "login": "Desktop 1280x720 and mobile 390x844 DOM/screenshots verified",
+    "screenshots": [
+      "billing-login-desktop-2026-09-10.png",
+      "billing-login-mobile-2026-09-10.png"
+    ]
+  },
+  "online_acceptance": {
+    "summary": {
+      "check": "overall",
+      "status": "passed",
+      "checks": 118,
+      "seconds": 62.12
+    },
+    "events": [
+      {
+        "check": "loopback_api_only",
+        "status": "passed"
+      },
+      {
+        "check": "hosted_preflight",
+        "status": "passed"
+      },
+      {
+        "check": "artifacts",
+        "directory": "/tmp/careerlens-qa/2af2cdab435a42e697ee7fdf9063a9ad"
+      },
+      {
+        "check": "identities_are_new",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 1.24
+      },
+      {
+        "check": "verified_session_cookie",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 0.07
+      },
+      {
+        "check": "session_identity",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 0.09
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "signup_credit_grant",
+        "status": "passed",
+        "balance": 20
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 0.03
+      },
+      {
+        "check": "verified_session_cookie",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 0.02
+      },
+      {
+        "check": "session_identity",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "signup_credit_grant",
+        "status": "passed",
+        "balance": 20
+      },
+      {
+        "check": "synthetic_email_verification",
+        "http_status": 200,
+        "seconds": 0.02
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "create_chinese_resume",
+        "http_status": 200,
+        "seconds": 2.41
+      },
+      {
+        "check": "owner_state",
+        "http_status": 200,
+        "seconds": 0.28
+      },
+      {
+        "check": "owner_sees_resume",
+        "status": "passed"
+      },
+      {
+        "check": "deepseek_configured",
+        "status": "passed"
+      },
+      {
+        "check": "create_synthetic_job",
+        "http_status": 200,
+        "seconds": 0.27
+      },
+      {
+        "check": "rules_match",
+        "http_status": 200,
+        "seconds": 0.14
+      },
+      {
+        "check": "rules_match",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "non_ai_actions_are_free",
+        "status": "passed"
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 200,
+        "seconds": 0.07
+      },
+      {
+        "check": "tenant_isolation",
+        "status": "passed",
+        "resumes": 0,
+        "jobs": 0,
+        "matches": 0
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 404,
+        "seconds": 0.07
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 404,
+        "seconds": 0.72
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 404,
+        "seconds": 0.29
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 404,
+        "seconds": 0.02
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 404,
+        "seconds": 0.32
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 404,
+        "seconds": 0.02
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 404,
+        "seconds": 0.01
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 404,
+        "seconds": 0.1
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 403,
+        "seconds": 0.01
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 403,
+        "seconds": 0.0
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 200,
+        "seconds": 0.02
+      },
+      {
+        "check": "cross_account_writes_rejected_and_owner_data_unchanged",
+        "status": "passed"
+      },
+      {
+        "check": "distinct_physical_workspace_databases",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_workspace_integrity",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_records_exist_only_in_owner_database",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_workspace_integrity",
+        "status": "passed"
+      },
+      {
+        "check": "synthetic_records_exist_only_in_owner_database",
+        "status": "passed"
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 404,
+        "seconds": 0.02
+      },
+      {
+        "check": "other_user_isolation",
+        "http_status": 404,
+        "seconds": 0.01
+      },
+      {
+        "check": "real_ai_rewrite",
+        "http_status": 200,
+        "seconds": 10.76
+      },
+      {
+        "check": "ai_rewrite_metadata",
+        "status": "passed"
+      },
+      {
+        "check": "ai_source_locations_valid",
+        "status": "passed",
+        "claims": 1
+      },
+      {
+        "check": "ai_resume_suggestion_present",
+        "status": "passed"
+      },
+      {
+        "check": "real_ai_rewrite",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "successful_generations_debit",
+        "status": "passed",
+        "before": 20,
+        "after": 19,
+        "charged": 1
+      },
+      {
+        "check": "real_ai_rewrite",
+        "http_status": 200,
+        "seconds": 0.0
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "other_account_balance_unchanged",
+        "status": "passed"
+      },
+      {
+        "check": "apply_ai_rewrite",
+        "http_status": 404,
+        "seconds": 0.02
+      },
+      {
+        "check": "apply_ai_rewrite",
+        "http_status": 200,
+        "seconds": 0.04
+      },
+      {
+        "check": "rewrite_saved_as_new_resume",
+        "status": "passed"
+      },
+      {
+        "check": "apply_ai_rewrite",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "apply_is_idempotent",
+        "status": "passed"
+      },
+      {
+        "check": "apply_ai_rewrite",
+        "http_status": 200,
+        "seconds": 0.02
+      },
+      {
+        "check": "original_resume_unchanged",
+        "status": "passed"
+      },
+      {
+        "check": "owner_docx",
+        "http_status": 200,
+        "seconds": 0.1
+      },
+      {
+        "check": "word_content_type",
+        "status": "passed"
+      },
+      {
+        "check": "native_word_contains_rewrite",
+        "status": "passed",
+        "text_characters": 256,
+        "bytes": 37592
+      },
+      {
+        "check": "owner_pdf",
+        "http_status": 200,
+        "seconds": 25.79
+      },
+      {
+        "check": "pdf_content_type",
+        "status": "passed"
+      },
+      {
+        "check": "pdf_chinese_contains_rewrite",
+        "status": "passed",
+        "pages": 1,
+        "text_characters": 258,
+        "bytes": 284586
+      },
+      {
+        "check": "owner_pdf",
+        "http_status": 404,
+        "seconds": 0.78
+      },
+      {
+        "check": "owner_pdf",
+        "http_status": 404,
+        "seconds": 0.05
+      },
+      {
+        "check": "owner_pdf",
+        "http_status": 200,
+        "seconds": 0.02
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "apply_and_exports_are_free",
+        "status": "passed"
+      },
+      {
+        "check": "repeat_email_login",
+        "http_status": 200,
+        "seconds": 0.24
+      },
+      {
+        "check": "verified_session_cookie",
+        "status": "passed"
+      },
+      {
+        "check": "repeat_email_login",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "login_does_not_repeat_signup_grant",
+        "status": "passed"
+      },
+      {
+        "check": "real_ai_match",
+        "http_status": 200,
+        "seconds": 10.38
+      },
+      {
+        "check": "ai_match_sources_linked",
+        "status": "passed"
+      },
+      {
+        "check": "real_ai_match",
+        "http_status": 200,
+        "seconds": 0.16
+      },
+      {
+        "check": "ai_match_persisted",
+        "status": "passed"
+      },
+      {
+        "check": "real_ai_match",
+        "http_status": 404,
+        "seconds": 0.41
+      },
+      {
+        "check": "real_ai_directions",
+        "http_status": 200,
+        "seconds": 2.51
+      },
+      {
+        "check": "ai_directions_sources_linked",
+        "status": "passed"
+      },
+      {
+        "check": "real_ai_directions",
+        "http_status": 200,
+        "seconds": 0.02
+      },
+      {
+        "check": "credits_contract",
+        "status": "passed"
+      },
+      {
+        "check": "diagnosis_other_account_balance_unchanged",
+        "status": "passed"
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 200,
+        "seconds": 0.06
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 200,
+        "seconds": 0.06
+      },
+      {
+        "check": "jd_version_increments",
+        "status": "passed"
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 409,
+        "seconds": 0.02
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "stale_jd_does_not_overwrite",
+        "status": "passed"
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 404,
+        "seconds": 0.01
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 200,
+        "seconds": 0.19
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 200,
+        "seconds": 0.03
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 404,
+        "seconds": 0.11
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 200,
+        "seconds": 0.25
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "market_history_survives_deleted_jd",
+        "status": "passed"
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 200,
+        "seconds": 0.02
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 404,
+        "seconds": 0.02
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 200,
+        "seconds": 0.06
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "direction_history_survives_deleted_resume",
+        "status": "passed"
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 200,
+        "seconds": 0.19
+      },
+      {
+        "check": "no_unsettled_credit_reservations",
+        "status": "passed"
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 200,
+        "seconds": 0.02
+      },
+      {
+        "check": "each_generation_has_ledger_entry",
+        "status": "passed"
+      },
+      {
+        "check": "version_and_history_contracts",
+        "http_status": 200,
+        "seconds": 0.01
+      },
+      {
+        "check": "other_account_orders_private",
+        "status": "passed"
+      },
+      {
+        "check": "cleanup",
+        "status": "passed",
+        "users": 2,
+        "credit_accounts": 2,
+        "directories": 2
+      },
+      {
+        "check": "overall",
+        "status": "passed",
+        "checks": 118,
+        "seconds": 62.12
+      }
+    ]
+  },
+  "public_checks": [
+    {
+      "path": "/",
+      "expected": 200,
+      "actual": 200,
+      "ok": true
+    },
+    {
+      "path": "/login",
+      "expected": 200,
+      "actual": 200,
+      "ok": true
+    },
+    {
+      "path": "/api/v1/health",
+      "expected": 200,
+      "actual": 200,
+      "ok": true
+    },
+    {
+      "path": "/api/v1/auth/session",
+      "expected": 200,
+      "actual": 200,
+      "ok": true
+    },
+    {
+      "path": "/api/v1/billing/summary",
+      "expected": 401,
+      "actual": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/v1/billing/ledger",
+      "expected": 401,
+      "actual": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/v1/billing/orders",
+      "expected": 401,
+      "actual": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/v1/career/state",
+      "expected": 401,
+      "actual": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/v1/career/directions/history",
+      "expected": 401,
+      "actual": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/v1/career/market/history",
+      "expected": 401,
+      "actual": 401,
+      "ok": true
+    }
+  ],
+  "storage": {
+    "before_upgrade": {
+      "auth": {
+        "account_count": 2,
+        "credit_account_count": 2,
+        "credit_balance_total": 39,
+        "credit_granted_total": 40,
+        "duplicate_normalized_email_extra_accounts": 0,
+        "duplicate_normalized_email_groups": 0,
+        "foreign_key_violations": 0,
+        "hash_format": {
+          "email_codes": {
+            "all_hex_64": true,
+            "invalid_count": 0
+          },
+          "ip_addresses": {
+            "all_hex_64": true,
+            "invalid_count": 0
+          },
+          "session_tokens": {
+            "all_hex_64": true,
+            "invalid_count": 0
+          }
+        },
+        "invalid_user_ids": 0,
+        "negative_credit_accounts": 0,
+        "orphan_credit_accounts": 0,
+        "orphan_sessions": 0,
+        "quick_check_errors": 0,
+        "quick_check_ok": true,
+        "table_rows": {
+          "challenges": 5,
+          "credit_accounts": 2,
+          "send_events": 5,
+          "sessions": 3,
+          "users": 2
+        },
+        "users_without_credit_accounts": 0
+      },
+      "cross_workspace_duplicate_primary_keys": {
+        "applications": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "improvements": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "jobs": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "match_records": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "resume_snapshots": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "resumes": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "rewrite_records": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "tailoring_previews": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        }
+      },
+      "ok": true,
+      "operator": {
+        "foreign_key_violations": 0,
+        "quick_check_errors": 0,
+        "quick_check_ok": true,
+        "table_rows": {
+          "api_keys": 0,
+          "applications": 0,
+          "improvements": 0,
+          "jobs": 0,
+          "match_records": 0,
+          "resume_snapshots": 0,
+          "resumes": 0,
+          "rewrite_records": 0,
+          "tailoring_previews": 0
+        }
+      },
+      "path_issues": {},
+      "scope": "storage_snapshot_only",
+      "users_without_workspace_database": 0,
+      "users_without_workspace_directory": 0,
+      "workspaces": [
+        {
+          "foreign_key_violations": 0,
+          "owner_exists": true,
+          "quick_check_errors": 0,
+          "quick_check_ok": true,
+          "table_rows": {
+            "api_keys": 0,
+            "applications": 0,
+            "improvements": 0,
+            "jobs": 0,
+            "match_records": 0,
+            "resume_snapshots": 0,
+            "resumes": 0,
+            "rewrite_records": 0,
+            "tailoring_previews": 0
+          },
+          "workspace_number": 1
+        },
+        {
+          "foreign_key_violations": 0,
+          "owner_exists": true,
+          "quick_check_errors": 0,
+          "quick_check_ok": true,
+          "table_rows": {
+            "api_keys": 0,
+            "applications": 0,
+            "improvements": 0,
+            "jobs": 1,
+            "match_records": 0,
+            "resume_snapshots": 0,
+            "resumes": 1,
+            "rewrite_records": 0,
+            "tailoring_previews": 0
+          },
+          "workspace_number": 2
+        }
+      ]
+    },
+    "after_upgrade": {
+      "auth": {
+        "account_count": 2,
+        "credit_account_count": 2,
+        "credit_balance_total": 39,
+        "credit_granted_total": 40,
+        "credit_reserved_total": 0,
+        "duplicate_normalized_email_extra_accounts": 0,
+        "duplicate_normalized_email_groups": 0,
+        "foreign_key_violations": 0,
+        "hash_format": {
+          "email_codes": {
+            "all_hex_64": true,
+            "invalid_count": 0
+          },
+          "ip_addresses": {
+            "all_hex_64": true,
+            "invalid_count": 0
+          },
+          "session_tokens": {
+            "all_hex_64": true,
+            "invalid_count": 0
+          }
+        },
+        "invalid_user_ids": 0,
+        "ledger_balance_mismatches": 0,
+        "negative_credit_accounts": 0,
+        "orphan_credit_accounts": 0,
+        "orphan_sessions": 0,
+        "paid_orders_without_credit": 0,
+        "quick_check_errors": 0,
+        "quick_check_ok": true,
+        "reservation_mismatches": 0,
+        "table_rows": {
+          "challenges": 5,
+          "credit_accounts": 2,
+          "credit_generations": 0,
+          "credit_ledger": 2,
+          "credit_operations": 0,
+          "payment_orders": 0,
+          "schema_migrations": 2,
+          "send_events": 5,
+          "sessions": 3,
+          "users": 2
+        },
+        "users_without_credit_accounts": 0
+      },
+      "cross_workspace_duplicate_primary_keys": {
+        "applications": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "direction_history": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "improvements": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "jobs": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "market_history": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "match_records": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "resume_snapshots": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "resumes": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "rewrite_records": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "tailoring_previews": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        }
+      },
+      "ok": true,
+      "operator": {
+        "foreign_key_violations": 0,
+        "quick_check_errors": 0,
+        "quick_check_ok": true,
+        "table_rows": {
+          "api_keys": 0,
+          "applications": 0,
+          "direction_history": 0,
+          "improvements": 0,
+          "jobs": 0,
+          "market_history": 0,
+          "match_records": 0,
+          "resume_snapshots": 0,
+          "resumes": 0,
+          "rewrite_records": 0,
+          "schema_migrations": 2,
+          "tailoring_previews": 0
+        }
+      },
+      "path_issues": {},
+      "scope": "storage_snapshot_only",
+      "users_without_workspace_database": 0,
+      "users_without_workspace_directory": 0,
+      "workspaces": [
+        {
+          "foreign_key_violations": 0,
+          "owner_exists": true,
+          "quick_check_errors": 0,
+          "quick_check_ok": true,
+          "table_rows": {
+            "api_keys": 0,
+            "applications": 0,
+            "direction_history": 0,
+            "improvements": 0,
+            "jobs": 0,
+            "market_history": 0,
+            "match_records": 0,
+            "resume_snapshots": 0,
+            "resumes": 0,
+            "rewrite_records": 0,
+            "schema_migrations": 2,
+            "tailoring_previews": 0
+          },
+          "workspace_number": 1
+        },
+        {
+          "foreign_key_violations": 0,
+          "owner_exists": true,
+          "quick_check_errors": 0,
+          "quick_check_ok": true,
+          "table_rows": {
+            "api_keys": 0,
+            "applications": 0,
+            "direction_history": 0,
+            "improvements": 0,
+            "jobs": 1,
+            "market_history": 0,
+            "match_records": 0,
+            "resume_snapshots": 0,
+            "resumes": 1,
+            "rewrite_records": 0,
+            "schema_migrations": 2,
+            "tailoring_previews": 0
+          },
+          "workspace_number": 2
+        }
+      ]
+    },
+    "after_qa_cleanup": {
+      "auth": {
+        "account_count": 2,
+        "credit_account_count": 2,
+        "credit_balance_total": 39,
+        "credit_granted_total": 40,
+        "credit_reserved_total": 0,
+        "duplicate_normalized_email_extra_accounts": 0,
+        "duplicate_normalized_email_groups": 0,
+        "foreign_key_violations": 0,
+        "hash_format": {
+          "email_codes": {
+            "all_hex_64": true,
+            "invalid_count": 0
+          },
+          "ip_addresses": {
+            "all_hex_64": true,
+            "invalid_count": 0
+          },
+          "session_tokens": {
+            "all_hex_64": true,
+            "invalid_count": 0
+          }
+        },
+        "invalid_user_ids": 0,
+        "ledger_balance_mismatches": 0,
+        "negative_credit_accounts": 0,
+        "orphan_credit_accounts": 0,
+        "orphan_sessions": 0,
+        "paid_orders_without_credit": 0,
+        "quick_check_errors": 0,
+        "quick_check_ok": true,
+        "reservation_mismatches": 0,
+        "table_rows": {
+          "challenges": 5,
+          "credit_accounts": 2,
+          "credit_generations": 0,
+          "credit_ledger": 2,
+          "credit_operations": 0,
+          "payment_orders": 0,
+          "schema_migrations": 2,
+          "send_events": 5,
+          "sessions": 3,
+          "users": 2
+        },
+        "users_without_credit_accounts": 0
+      },
+      "cross_workspace_duplicate_primary_keys": {
+        "applications": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "direction_history": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "improvements": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "jobs": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "market_history": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "match_records": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "resume_snapshots": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "resumes": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "rewrite_records": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        },
+        "tailoring_previews": {
+          "distinct_duplicate_ids": 0,
+          "extra_workspace_occurrences": 0
+        }
+      },
+      "ok": true,
+      "operator": {
+        "foreign_key_violations": 0,
+        "quick_check_errors": 0,
+        "quick_check_ok": true,
+        "table_rows": {
+          "api_keys": 0,
+          "applications": 0,
+          "direction_history": 0,
+          "improvements": 0,
+          "jobs": 0,
+          "market_history": 0,
+          "match_records": 0,
+          "resume_snapshots": 0,
+          "resumes": 0,
+          "rewrite_records": 0,
+          "schema_migrations": 2,
+          "tailoring_previews": 0
+        }
+      },
+      "path_issues": {},
+      "scope": "storage_snapshot_only",
+      "users_without_workspace_database": 0,
+      "users_without_workspace_directory": 0,
+      "workspaces": [
+        {
+          "foreign_key_violations": 0,
+          "owner_exists": true,
+          "quick_check_errors": 0,
+          "quick_check_ok": true,
+          "table_rows": {
+            "api_keys": 0,
+            "applications": 0,
+            "direction_history": 0,
+            "improvements": 0,
+            "jobs": 0,
+            "market_history": 0,
+            "match_records": 0,
+            "resume_snapshots": 0,
+            "resumes": 0,
+            "rewrite_records": 0,
+            "schema_migrations": 2,
+            "tailoring_previews": 0
+          },
+          "workspace_number": 1
+        },
+        {
+          "foreign_key_violations": 0,
+          "owner_exists": true,
+          "quick_check_errors": 0,
+          "quick_check_ok": true,
+          "table_rows": {
+            "api_keys": 0,
+            "applications": 0,
+            "direction_history": 0,
+            "improvements": 0,
+            "jobs": 1,
+            "market_history": 0,
+            "match_records": 0,
+            "resume_snapshots": 0,
+            "resumes": 1,
+            "rewrite_records": 0,
+            "schema_migrations": 2,
+            "tailoring_previews": 0
+          },
+          "workspace_number": 2
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "schemas": [
+      {
+        "kind": "auth",
+        "version": 2,
+        "latest": 2,
+        "pending": 0
+      },
+      {
+        "kind": "business",
+        "version": 2,
+        "latest": 2,
+        "pending": 0
+      },
+      {
+        "kind": "business",
+        "version": 2,
+        "latest": 2,
+        "pending": 0
+      },
+      {
+        "kind": "business",
+        "version": 2,
+        "latest": 2,
+        "pending": 0
+      }
+    ],
+    "model": {
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash"
+    },
+    "payment": {
+      "payment_enabled": false,
+      "packages": []
+    }
+  },
+  "workspace_after_deployment": {
+    "runtime_source_drift": [],
+    "example_only_changes": [
+      ".env.hosted.example"
+    ],
+    "reason": "Added comment linking provisional package file; empty package default unchanged. No production environment change."
+  }
+}

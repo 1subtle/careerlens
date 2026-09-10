@@ -301,7 +301,7 @@ class TestCheckHealthTransport:
         assert res["error_code"] == "empty_content"
 
     @respx.mock
-    async def test_health_failure_scrubs_api_key_from_error_detail(self):
+    async def test_health_failure_scrubs_api_key_from_error_detail(self, caplog):
         """A 401 yields healthy=False, an error_code, and a key-scrubbed detail.
 
         The fake provider echoes the configured ``sk-`` key in its error body
@@ -345,6 +345,7 @@ class TestCheckHealthTransport:
         assert leaking_key not in detail
         assert "sk-abcd1234" not in detail
         assert "<redacted>" in detail
+        assert leaking_key not in caplog.text
 
 
 class TestAzureFoundryTransport:

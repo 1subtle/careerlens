@@ -6,6 +6,7 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     environment:
+      CAREERLENS_MODE: local
       FRONTEND_BASE_URL: http://127.0.0.1:3000
       LOG_LEVEL: INFO
       LOG_LLM: WARNING

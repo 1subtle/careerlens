@@ -1,0 +1,56 @@
+.editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 20px;
+}
+.preview {
+  width: 72px;
+  height: 96px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border: 1px solid var(--line, #ded6c7);
+  border-radius: 4px;
+  background: #fff;
+}
+.controls {
+  min-width: 0;
+}
+.controls h4 {
+  margin: 0 0 6px;
+  font: inherit;
+  font-weight: 600;
+}
+.controls p {
+  margin: 6px 0 0;
+  color: var(--muted, #6f647d);
+  font-size: 12px;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.actions button {
+  min-height: 34px;
+  padding: 5px 10px;
+  border: 1px solid var(--line, #ded6c7);
+  border-radius: 6px;
+  background: var(--surface, #fffefa);
+  color: var(--ink, #292237);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.actions button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.actions button:focus-visible {
+  outline: 2px solid var(--action, #6e4dcc);
+  outline-offset: 3px;
+}
+.controls .error {
+  color: #a62835;
+}

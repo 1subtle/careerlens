@@ -5,13 +5,19 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { AdditionalInfo } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
+import documentStyles from '../resume-document.module.css';
 
 interface AdditionalFormProps {
   data: AdditionalInfo;
   onChange: (data: AdditionalInfo) => void;
+  documentMode?: boolean;
 }
 
-export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }) => {
+export const AdditionalForm: React.FC<AdditionalFormProps> = ({
+  data,
+  onChange,
+  documentMode = false,
+}) => {
   const { t } = useTranslations();
 
   // Helper to handle array conversions (text -> string[])
@@ -40,11 +46,17 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
 
   return (
     <div className="space-y-6">
-      <p className="font-mono text-xs uppercase tracking-wider text-blue-700">
-        {t('builder.additionalForm.instructions')}
-      </p>
+      {!documentMode && (
+        <p className="font-mono text-xs uppercase tracking-wider text-blue-700">
+          {t('builder.additionalForm.instructions')}
+        </p>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div
+        className={
+          documentMode ? documentStyles.additionalFields : 'grid grid-cols-1 md:grid-cols-2 gap-6'
+        }
+      >
         <div className="space-y-2">
           <Label
             htmlFor="technicalSkills"
@@ -53,6 +65,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
             {t('resume.additional.technicalSkills')}
           </Label>
           <Textarea
+            rows={documentMode ? 1 : undefined}
             id="technicalSkills"
             value={formatArray(data.technicalSkills)}
             onChange={(e) => handleArrayChange('technicalSkills', e.target.value)}
@@ -69,6 +82,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
             {t('resume.sections.languages')}
           </Label>
           <Textarea
+            rows={documentMode ? 1 : undefined}
             id="languages"
             value={formatArray(data.languages)}
             onChange={(e) => handleArrayChange('languages', e.target.value)}
@@ -85,6 +99,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
             {t('resume.sections.certifications')}
           </Label>
           <Textarea
+            rows={documentMode ? 1 : undefined}
             id="certifications"
             value={formatArray(data.certificationsTraining)}
             onChange={(e) => handleArrayChange('certificationsTraining', e.target.value)}
@@ -101,6 +116,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
             {t('resume.sections.awards')}
           </Label>
           <Textarea
+            rows={documentMode ? 1 : undefined}
             id="awards"
             value={formatArray(data.awards)}
             onChange={(e) => handleArrayChange('awards', e.target.value)}

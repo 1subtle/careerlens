@@ -5,7 +5,9 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from app.database import DatabaseBusyError, db
+from app.credits import CreditError, refund_failed_generations
+from app.database import DatabaseBusyError, ResumeNotFoundError, db
+from app.hosting import is_hosted
 from app.services.improver import extract_job_keywords
 from app.schemas import (
     APPLICATION_STATUS_ORDER,
@@ -55,12 +57,15 @@ async def list_applications() -> ApplicationListResponse:
 
 
 @router.post("", response_model=ApplicationResponse)
+@refund_failed_generations
 async def create_application(request: ManualApplicationCreate) -> ApplicationResponse:
     """Manually add a card from a pasted job description.
 
     Runs best-effort company/role extraction before opening a transaction, then
     commits the pasted job, its metadata and the card as one operation.
     """
+    if is_hosted() and await db.get_resume(request.resume_id) is None:
+        raise HTTPException(404, "Resume not found")
     company = request.company
     role = request.role
     if not company or not role:
@@ -77,6 +82,8 @@ async def create_application(request: ManualApplicationCreate) -> ApplicationRes
             role=role,
             notes=request.notes,
         )
+    except ResumeNotFoundError:
+        raise HTTPException(404, "Resume not found") from None
     except DatabaseBusyError:
         raise
     except Exception as e:
@@ -190,8 +197,8 @@ async def _extract_company_role(job_description: str) -> dict[str, str | None]:
             "company": (raw_company.strip() if isinstance(raw_company, str) else "") or None,
             "role": (raw_role.strip() if isinstance(raw_role, str) else "") or None,
         }
-    except DatabaseBusyError:
+    except (DatabaseBusyError, CreditError):
         raise
     except Exception as e:
-        logger.warning("Company/role extraction failed (manual add): %s", e)
+        logger.warning("Company/role extraction failed (manual add, %s)", type(e).__name__)
         return {}

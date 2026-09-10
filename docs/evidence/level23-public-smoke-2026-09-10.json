@@ -1,0 +1,126 @@
+{
+  "site": "https://careerlens.cc",
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.35
+    },
+    {
+      "path": "/login",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.92
+    },
+    {
+      "path": "/account",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.15
+    },
+    {
+      "path": "/account/wallet",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.01
+    },
+    {
+      "path": "/?account=wallet",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.94
+    },
+    {
+      "path": "/account/orders",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.37
+    },
+    {
+      "path": "/?account=orders",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.82
+    },
+    {
+      "path": "/account/usage",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.98
+    },
+    {
+      "path": "/?account=usage",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.97
+    },
+    {
+      "path": "/account/settings",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.96
+    },
+    {
+      "path": "/?account=settings",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.42
+    },
+    {
+      "path": "/account/security",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.96
+    },
+    {
+      "path": "/?account=security",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.93
+    },
+    {
+      "path": "/account/data",
+      "status": 200,
+      "passed": true,
+      "seconds": 0.97
+    },
+    {
+      "path": "/?account=data",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.09
+    },
+    {
+      "path": "/api/v1/health",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.34
+    },
+    {
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "passed": true,
+      "seconds": 1.1
+    },
+    {
+      "path": "/api/v1/account/profile",
+      "status": 401,
+      "passed": true,
+      "seconds": 1.24
+    },
+    {
+      "path": "/api/v1/account/sessions",
+      "status": 401,
+      "passed": true,
+      "seconds": 1.44
+    },
+    {
+      "path": "/api/v1/account/export",
+      "status": 401,
+      "passed": true,
+      "seconds": 1.03
+    }
+  ],
+  "passed": true
+}

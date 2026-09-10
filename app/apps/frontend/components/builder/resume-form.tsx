@@ -41,14 +41,27 @@ import {
   DEFAULT_SECTION_META,
 } from '@/lib/utils/section-helpers';
 import { useTranslations } from '@/lib/i18n';
+import { useAutoSizeTextareas } from '@/hooks/use-autosize-textareas';
+import documentStyles from './resume-document.module.css';
 
 interface ResumeFormProps {
   resumeData: ResumeData;
   onUpdate: (data: ResumeData) => void;
+  collapsible?: boolean;
+  initiallyOpenSection?: string;
+  documentMode?: boolean;
 }
 
-export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) => {
+export const ResumeForm: React.FC<ResumeFormProps> = ({
+  resumeData,
+  onUpdate,
+  collapsible = false,
+  initiallyOpenSection,
+  documentMode = false,
+}) => {
   const { t } = useTranslations();
+  const documentRef = React.useRef<HTMLDivElement>(null);
+  useAutoSizeTextareas(documentRef, resumeData, documentMode);
 
   // Get section metadata, falling back to defaults
   const allSections = getSectionMeta(resumeData);
@@ -216,6 +229,7 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
         case 'personalInfo':
           return (
             <PersonalInfoForm
+              documentMode={documentMode}
               data={resumeData.personalInfo || ({} as PersonalInfo)}
               onChange={(data) => onUpdate({ ...resumeData, personalInfo: data })}
             />
@@ -256,6 +270,7 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
         case 'additional':
           return (
             <AdditionalForm
+              documentMode={documentMode}
               data={
                 resumeData.additional || {
                   technicalSkills: [],
@@ -282,6 +297,7 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
     // The form components provide their own container styling
     return (
       <SectionHeader
+        documentMode={documentMode}
         section={section}
         onRename={(name) => handleRename(section.id, name)}
         onDelete={() => handleDelete(section.id)}
@@ -342,6 +358,7 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
         case 'stringList':
           return (
             <GenericListForm
+              documentMode={documentMode}
               items={customSection?.strings || []}
               onChange={(strings) => updateCustomSection({ strings })}
               label={t('builder.customSections.itemsLabel')}
@@ -360,6 +377,7 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
 
     return (
       <SectionHeader
+        documentMode={documentMode}
         section={section}
         onRename={(name) => handleRename(section.id, name)}
         onDelete={() => handleDelete(section.id)}
@@ -386,7 +404,10 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
         items={sortedAllSections.map((s) => s.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-6 pb-20">
+        <div
+          ref={documentRef}
+          className={documentMode ? documentStyles.document : 'space-y-6 pb-20'}
+        >
           {sortedAllSections.map((section, index) => {
             const isFirst = index === 0 || section.id === 'personalInfo';
             const isLast = index === sortedAllSections.length - 1;
@@ -395,11 +416,39 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
             const sectionContent = section.isDefault
               ? renderDefaultSection(section, isFirst, isLast)
               : renderCustomSection(section, isFirst, isLast);
+            const entryCounts: Record<string, number | undefined> = {
+              education: resumeData.education?.length,
+              workExperience: resumeData.workExperience?.length,
+              personalProjects: resumeData.personalProjects?.length,
+              additional: resumeData.additional?.technicalSkills?.length,
+            };
+            const entries = entryCounts[section.key];
 
-            return (
-              <DraggableSectionWrapper key={section.id} id={section.id} disabled={isPersonalInfo}>
-                {sectionContent}
+            const editor = (
+              <DraggableSectionWrapper id={section.id} disabled={isPersonalInfo}>
+                {collapsible && !documentMode ? (
+                  <details open={section.id === initiallyOpenSection}>
+                    <summary>
+                      <span>{section.displayName}</span>
+                      {entries !== undefined && <small>{entries} 项</small>}
+                    </summary>
+                    {sectionContent}
+                  </details>
+                ) : (
+                  sectionContent
+                )}
               </DraggableSectionWrapper>
+            );
+            return documentMode ? (
+              <section
+                key={section.id}
+                className={documentStyles.chapter}
+                id={`resume-section-${section.id}`}
+              >
+                {editor}
+              </section>
+            ) : (
+              <React.Fragment key={section.id}>{editor}</React.Fragment>
             );
           })}
 

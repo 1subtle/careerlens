@@ -4,7 +4,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException
 
-from app.database import DatabaseBusyError, db
+from app.database import DatabaseBusyError, ResumeNotFoundError, db
 from app.schemas import JobUploadRequest, JobUploadResponse
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
@@ -29,6 +29,8 @@ async def upload_job_descriptions(request: JobUploadRequest) -> JobUploadRespons
             contents=descriptions,
             resume_id=request.resume_id,
         )
+    except ResumeNotFoundError:
+        raise HTTPException(404, "Resume not found") from None
     except DatabaseBusyError:
         raise
     except Exception as exc:

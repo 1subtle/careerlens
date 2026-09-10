@@ -1,0 +1,70 @@
+.navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.navigation button {
+  min-height: 44px;
+  padding: 9px 14px;
+}
+
+.navigation button[aria-pressed='true'] {
+  background: var(--yellow);
+  border-color: var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  font-weight: 650;
+}
+
+.saved {
+  min-width: 0;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 14px;
+  padding: 0;
+  margin: 20px 0 14px;
+  border: 0;
+  min-width: 0;
+}
+
+.filters label {
+  margin-bottom: 0;
+}
+
+.saved :is(button, select, input) {
+  min-height: 44px;
+}
+
+.scope {
+  margin: 20px 0 16px;
+  overflow-wrap: anywhere;
+}
+
+.scope p {
+  margin: 6px 0;
+}
+
+.interpretation {
+  margin-top: 20px;
+  overflow-wrap: anywhere;
+}
+
+.export {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+@media (max-width: 480px) {
+  .navigation button {
+    flex: 1 1 130px;
+  }
+}

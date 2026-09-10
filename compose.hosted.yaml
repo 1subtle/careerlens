@@ -1,0 +1,63 @@
+name: careerlens-hosted
+
+services:
+  careerlens:
+    build:
+      context: ./app
+    image: careerlens:hosted
+    environment:
+      CAREERLENS_MODE: hosted
+      CAREERLENS_PUBLIC_URL: https://${CAREERLENS_DOMAIN:?Set CAREERLENS_DOMAIN in .env.hosted}
+      CAREERLENS_AUTH_SECRET: ${CAREERLENS_AUTH_SECRET:?Generate a random auth secret}
+      CAREERLENS_GITHUB_URL: ${CAREERLENS_GITHUB_URL:-}
+      CAREERLENS_SIGNUP_CREDITS: ${CAREERLENS_SIGNUP_CREDITS:-20}
+      CAREERLENS_SMTP_HOST: ${CAREERLENS_SMTP_HOST:?Configure an SMTP server}
+      CAREERLENS_SMTP_PORT: ${CAREERLENS_SMTP_PORT:-587}
+      CAREERLENS_SMTP_USERNAME: ${CAREERLENS_SMTP_USERNAME:-}
+      CAREERLENS_SMTP_PASSWORD: ${CAREERLENS_SMTP_PASSWORD:-}
+      CAREERLENS_SMTP_FROM: ${CAREERLENS_SMTP_FROM:?Configure the verified sender address}
+      CAREERLENS_SMTP_SECURITY: ${CAREERLENS_SMTP_SECURITY:-starttls}
+      CAREERLENS_CREDIT_PACKAGES: ${CAREERLENS_CREDIT_PACKAGES:-[]}
+      CAREERLENS_WECHAT_APPID: ${CAREERLENS_WECHAT_APPID:-}
+      CAREERLENS_WECHAT_MCHID: ${CAREERLENS_WECHAT_MCHID:-}
+      CAREERLENS_WECHAT_MERCHANT_SERIAL: ${CAREERLENS_WECHAT_MERCHANT_SERIAL:-}
+      CAREERLENS_WECHAT_MERCHANT_PRIVATE_KEY: ${CAREERLENS_WECHAT_MERCHANT_PRIVATE_KEY:-}
+      CAREERLENS_WECHAT_API_V3_KEY: ${CAREERLENS_WECHAT_API_V3_KEY:-}
+      CAREERLENS_WECHAT_PLATFORM_KEY_ID: ${CAREERLENS_WECHAT_PLATFORM_KEY_ID:-}
+      CAREERLENS_WECHAT_PLATFORM_PUBLIC_KEY: ${CAREERLENS_WECHAT_PLATFORM_PUBLIC_KEY:-}
+      CAREERLENS_WECHAT_NOTIFY_URL: ${CAREERLENS_WECHAT_NOTIFY_URL:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-deepseek}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_API_BASE: ${LLM_API_BASE:-https://api.deepseek.com}
+      FRONTEND_BASE_URL: http://127.0.0.1:3000
+      PDF_MAX_CONCURRENCY: ${PDF_MAX_CONCURRENCY:-1}
+      LOG_LEVEL: INFO
+      LOG_LLM: WARNING
+    expose:
+      - "3000"
+    volumes:
+      - hosted-data:/app/backend/data
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      CAREERLENS_DOMAIN: ${CAREERLENS_DOMAIN:?Set CAREERLENS_DOMAIN in .env.hosted}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      careerlens:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  hosted-data:
+  caddy-data:
+  caddy-config:

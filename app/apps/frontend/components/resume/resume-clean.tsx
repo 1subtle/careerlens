@@ -1,4 +1,5 @@
 import React from 'react';
+import { ResumePhoto } from './resume-photo';
 import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
 import type {
   ResumeData,
@@ -278,6 +279,7 @@ export const ResumeClean: React.FC<ResumeCleanProps> = ({
     <div className={styles.container}>
       {personalInfo && (
         <header className={`text-center ${baseStyles['resume-header']}`}>
+          <ResumePhoto photo={personalInfo?.photo} />
           {personalInfo.name && <h1 className={`${styles.name} mb-1`}>{personalInfo.name}</h1>}
           {personalInfo.title && (
             <div className={`${styles.tagline} mb-1`}>{personalInfo.title}</div>

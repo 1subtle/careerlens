@@ -1,0 +1,589 @@
+.center {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  color: var(--ink, #292237);
+  font: inherit;
+  width: 100%;
+  margin-inline: auto;
+}
+.center * {
+  box-sizing: border-box;
+}
+.center :is(button, a, input, select):focus-visible {
+  outline: 2px solid var(--accent, #7e5be8);
+  outline-offset: 2px;
+}
+.center button {
+  cursor: pointer;
+}
+.center button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.center a {
+  text-decoration: none;
+}
+.identityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+.accountIdentity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.identityAvatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--ink, #292237);
+  border-radius: 12px;
+  background: var(--soft, #f1ebff);
+  color: var(--action, #6e4dcc);
+  font-size: 20px;
+  font-weight: 650;
+}
+.identityDetails {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.accountIdentity strong {
+  font-size: 15px;
+  font-weight: 650;
+}
+.identityDetails span,
+.accountIdentity p {
+  color: var(--muted, #6f647d);
+  font-size: 13px;
+  margin: 0;
+}
+.logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex-shrink: 0;
+  min-height: 38px;
+  padding: 7px 11px;
+  border: 1px solid #c9bccf;
+  border-radius: 9px;
+  background: var(--surface, #fffefa);
+  color: var(--muted, #6f647d);
+  font: inherit;
+  font-size: 13px;
+}
+.logout:hover {
+  color: var(--ink, #292237);
+  background: var(--soft, #f1ebff);
+  border-color: #a68bce;
+}
+.accountTabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line, #ded6c7);
+}
+.accountTabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 8px 13px;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  color: var(--ink, #292237);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+.accountTabs button svg {
+  flex-shrink: 0;
+}
+.accountTabs button:hover {
+  background: var(--soft, #f1ebff);
+}
+.accountTabs button[aria-selected='true'],
+.accountTabs button[aria-current='page'] {
+  border-color: var(--ink, #292237);
+  background: var(--yellow, #ffe36b);
+  box-shadow: 2px 2px 0 var(--ink, #292237);
+  font-weight: 650;
+}
+.content {
+  min-width: 0;
+}
+.largeAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border: 1.5px solid var(--ink, #292237);
+  border-radius: 50%;
+  background: var(--soft, #f1ebff);
+  color: var(--action, #6e4dcc);
+  font-size: 26px;
+  font-weight: 650;
+}
+.card {
+  margin-bottom: 20px;
+  border: 1.5px solid var(--ink, #292237);
+  border-radius: 12px;
+  box-shadow: 2px 2px 0 var(--ink, #292237);
+  background: var(--surface, #fffefa);
+  padding: 24px;
+}
+.center .cardHeading h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+.cardHeading p {
+  margin: 5px 0 0;
+  color: var(--muted, #6f647d);
+  font-size: 13px;
+}
+.profileSummary {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  margin: 24px 0;
+}
+.profileSummary strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 17px;
+  font-weight: 600;
+}
+.profileSummary > div > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #42621e;
+  font-size: 12px;
+  margin-top: 5px;
+}
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 550;
+  min-width: 0;
+}
+.field input,
+.settingRow select {
+  min-height: 44px;
+  border: 1px solid #c5bacb;
+  border-radius: 6px;
+  background: var(--surface, #fffefa);
+  padding: 9px 12px;
+  width: 100%;
+  color: var(--ink, #292237);
+  font: inherit;
+}
+.field input[readonly] {
+  color: var(--muted, #6f647d);
+  background: var(--paper, #fff9df);
+}
+.field small {
+  color: var(--muted, #6f647d);
+  font-size: 12px;
+  font-weight: 400;
+}
+.idRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 20px;
+  margin-top: 22px;
+  border-top: 1px solid var(--line, #ded6c7);
+}
+.idRow > div {
+  min-width: 0;
+}
+.idRow span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted, #6f647d);
+  margin-bottom: 5px;
+}
+.idRow code {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, monospace;
+}
+.settingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 23px 0;
+}
+.settingRow + .settingRow {
+  border-top: 1px solid var(--line, #ded6c7);
+}
+.settingRow:last-child {
+  padding-bottom: 0;
+}
+.settingRow label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 550;
+}
+.settingRow p {
+  max-width: 430px;
+  color: var(--muted, #6f647d);
+  font-size: 12px;
+  margin: 7px 0 0;
+}
+.settingRow select {
+  flex: 0 0 235px;
+  max-width: 100%;
+  min-width: 170px;
+  font-size: 13px;
+}
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  border-radius: 9px;
+  padding: 9px 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+}
+.primaryButton {
+  border: 1.5px solid var(--ink, #292237);
+  box-shadow: 2px 2px 0 var(--ink, #292237);
+  background: var(--action, #6e4dcc);
+  color: white;
+}
+.primaryButton:hover:not(:disabled) {
+  background: #5937a7;
+}
+.primaryButton:active:not(:disabled) {
+  background: #4c2b98;
+  box-shadow: 1px 1px 0 var(--ink, #292237);
+}
+.secondaryButton {
+  border: 1px solid #c5bacb;
+  background: var(--surface, #fffefa);
+  color: var(--ink, #292237);
+}
+.secondaryButton:hover:not(:disabled) {
+  background: var(--soft, #f1ebff);
+  border-color: #a68bce;
+}
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface, #fffefa);
+  border: 1px solid var(--line, #ded6c7);
+  border-radius: 9px;
+  width: 44px;
+  height: 44px;
+  color: var(--muted, #6f647d);
+  flex-shrink: 0;
+}
+.formActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.error {
+  color: #b42332;
+  background: #fff4f3;
+  border: 1px solid #e5b5b9;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  overflow-wrap: anywhere;
+}
+.error button {
+  font: inherit;
+  text-decoration: underline;
+  padding: 4px;
+  border: 0;
+  background: none;
+}
+.success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #42621e;
+  background: #edf7da;
+  border: 1px solid #aec982;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+}
+.loading {
+  color: var(--muted, #6f647d);
+  padding: 28px 0;
+}
+.method {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 22px;
+}
+.method > svg {
+  color: var(--action, #6e4dcc);
+}
+.method strong {
+  font-weight: 550;
+}
+.method p {
+  font-size: 13px;
+  color: var(--muted, #6f647d);
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+}
+.verified,
+.currentBadge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 5px;
+  color: #42621e;
+  background: #edf7da;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.verified {
+  margin-left: auto;
+}
+.currentBadge {
+  display: inline-block;
+  margin-left: 8px;
+  color: var(--action, #6e4dcc);
+  background: var(--soft, #f1ebff);
+}
+.cardToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.sessions {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 0;
+}
+.sessions li {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 22px 0;
+  border-top: 1px solid var(--line, #ded6c7);
+}
+.deviceIcon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
+  background: var(--paper, #fff9df);
+  color: var(--muted, #6f647d);
+  flex-shrink: 0;
+}
+.sessionInfo {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sessionInfo strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 550;
+  margin-bottom: 6px;
+}
+.sessionInfo > span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted, #6f647d);
+  margin-top: 3px;
+}
+.cardBottom {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 24px;
+}
+.cardBottom p {
+  font-size: 12px;
+  color: var(--muted, #6f647d);
+  margin: 0;
+}
+.textLink {
+  color: var(--action, #6e4dcc);
+  font-size: 13px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.exportBody {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-top: 28px;
+}
+.exportIcon {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 66px;
+  background: var(--soft, #f1ebff);
+  border: 1px solid var(--line, #ded6c7);
+  border-radius: 10px;
+  color: var(--action, #6e4dcc);
+  flex-shrink: 0;
+}
+.exportBody strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.exportBody p {
+  color: var(--muted, #6f647d);
+  font-size: 13px;
+  margin: 8px 0;
+}
+.formatBadge {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+  background: var(--paper, #fff9df);
+  color: var(--muted, #6f647d);
+  border-radius: 4px;
+  padding: 3px 6px;
+  vertical-align: middle;
+  margin-left: 5px;
+}
+
+@media (max-width: 1000px) {
+  .settingRow {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .settingRow select {
+    flex-basis: auto;
+    width: 100%;
+  }
+}
+@media (max-width: 700px) {
+  .center {
+    gap: 18px;
+  }
+  .identityRow {
+    gap: 8px;
+  }
+  .accountIdentity {
+    gap: 9px;
+    flex: 1;
+  }
+  .identityAvatar {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+  }
+  .identityDetails span {
+    font-size: 12px;
+  }
+  .logout {
+    padding: 7px 9px;
+    font-size: 12px;
+  }
+  .accountTabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding-bottom: 14px;
+  }
+  .accountTabs button {
+    min-height: 44px;
+    padding: 8px 4px;
+    gap: 5px;
+    font-size: 12px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .logout,
+  .primaryButton,
+  .secondaryButton {
+    min-height: 44px;
+  }
+  .card {
+    padding: 20px 17px;
+  }
+  .formGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+  .field input,
+  .settingRow select {
+    font-size: 16px;
+  }
+  .sessions li {
+    flex-wrap: wrap;
+    gap: 11px;
+  }
+  .sessions li > button {
+    margin-left: 55px;
+  }
+  .sessionInfo strong {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .currentBadge {
+    margin: 0;
+  }
+  .method {
+    flex-wrap: wrap;
+  }
+  .method > div {
+    min-width: 0;
+  }
+  .verified {
+    margin-left: 38px;
+  }
+  .exportBody {
+    gap: 14px;
+  }
+  .exportIcon {
+    width: 42px;
+    height: 50px;
+  }
+  .formActions {
+    flex-wrap: wrap;
+  }
+}

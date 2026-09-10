@@ -90,10 +90,10 @@ async def resume_wizard_turn(
     except (HTTPException, AIOperationDeadlineExceeded, PromptSizeError):
         raise
     except ValueError as e:
-        logger.error("Resume wizard turn validation failed: %s", e)
+        logger.error("Resume wizard turn validation failed (%s)", type(e).__name__)
         raise HTTPException(status_code=422, detail="Could not update the resume draft.")
     except Exception as e:
-        logger.error("Resume wizard turn failed: %s", e)
+        logger.error("Resume wizard turn failed (%s)", type(e).__name__)
         raise HTTPException(
             status_code=500,
             detail="Resume wizard failed. Please try again.",

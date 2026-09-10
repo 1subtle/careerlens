@@ -1,4 +1,5 @@
 import React from 'react';
+import { ResumePhoto } from './resume-photo';
 import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
 import type {
   ResumeData,
@@ -149,6 +150,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
     <>
       {/* Header */}
       <div className={baseStyles['resume-header']}>
+        <ResumePhoto photo={personalInfo?.photo} />
         <h1 className={`${baseStyles['resume-name']} ${styles.nameAccent}`}>
           {personalInfo?.name || nameFallback}
         </h1>

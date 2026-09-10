@@ -1,0 +1,274 @@
+.document {
+  min-width: 0;
+  color: var(--ink, #292237);
+  font: inherit;
+}
+.chapter {
+  min-width: 0;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--line, #ded6c7);
+  scroll-margin-top: 16px;
+}
+.chapter:first-child {
+  padding-top: 0;
+}
+.section {
+  min-width: 0;
+}
+.document .section > h3 {
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+}
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+}
+.heading > div {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.section[data-hidden='true'] > .heading {
+  color: var(--muted, #6f647d);
+}
+.document h3 {
+  margin: 0;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.5;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+.heading h3,
+.document .section > h3 {
+  position: relative;
+  padding-left: 14px;
+}
+.heading h3::before,
+.document .section > h3::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 0;
+  width: 5px;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--accent, #7e5be8);
+}
+.document :global(.font-serif),
+.document :global(.font-mono) {
+  font-family: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.document label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted, #6f647d);
+}
+.document :global(.space-y-2),
+.document :global(.flex-1) {
+  min-width: 0;
+}
+.document :global(.grid) {
+  gap: 16px 24px;
+}
+.document :global(div.border) {
+  border: 0;
+  border-radius: 0;
+}
+.document :global(.border-black) {
+  border-color: var(--line, #ded6c7);
+}
+.document :global(.shadow-sw-default),
+.document :global(.shadow-sw-sm) {
+  box-shadow: none;
+}
+.document :global(.bg-white),
+.document :global(.bg-paper-tint),
+.document :global(.bg-secondary) {
+  background: transparent;
+}
+.document :global(.p-6) {
+  padding: 12px 0;
+}
+.document :global(.py-12) {
+  padding: 12px 0;
+  text-align: left;
+}
+.document :global(.space-y-6) {
+  --tw-space-y-reverse: 0;
+}
+.document :global(.space-y-8) > :not(:last-child) {
+  margin-bottom: 24px;
+}
+.document :global(.text-xs),
+.document :global(.text-sm) {
+  font-size: 13px;
+}
+.document :global(.text-steel-grey),
+.document :global(.text-blue-700) {
+  color: var(--muted, #6f647d);
+}
+.document :global(.text-black) {
+  color: var(--ink, #292237);
+}
+.document.document :is(input:not([type='checkbox']), textarea, select) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  min-height: 40px;
+  border: 0;
+  border-bottom: 1px solid var(--line, #ded6c7);
+  border-radius: 0;
+  padding: 7px 0;
+  background: transparent;
+  color: var(--ink, #292237);
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.65;
+  box-shadow: none;
+}
+.document.document textarea {
+  min-height: 44px;
+  max-height: none;
+  resize: none;
+  overflow-y: hidden;
+}
+.document.document :is(input:not([type='checkbox']), textarea, select):hover {
+  border-bottom-color: color-mix(in srgb, var(--accent, #7e5be8) 55%, var(--line, #ded6c7));
+}
+.document.document :is(input:not([type='checkbox']), textarea, select)::placeholder {
+  color: var(--muted, #6f647d);
+}
+.document.document :is(input, textarea, select):focus-visible {
+  outline: 2px solid var(--accent, #7e5be8);
+  outline-offset: 3px;
+  border-bottom-color: var(--accent, #7e5be8);
+  background: color-mix(in srgb, var(--soft, #f1ebff) 28%, var(--surface, #fffefa));
+  box-shadow: none;
+}
+.document.document button {
+  min-height: 32px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: normal;
+  box-shadow: none;
+  translate: none;
+  transform: none;
+}
+.document.document button:hover {
+  box-shadow: none;
+  translate: none;
+  transform: none;
+}
+.document.document button:not(:disabled):hover {
+  background: var(--soft, #f1ebff);
+  color: var(--action, #6e4dcc);
+  border-color: var(--accent, #7e5be8);
+}
+.document.document button:global(.text-destructive):hover {
+  background: color-mix(in srgb, var(--coral, #ff805f) 16%, var(--surface, #fffefa));
+  color: #a62835;
+}
+.document.document button[aria-pressed='true'] {
+  background: var(--soft, #f1ebff);
+  color: var(--action, #6e4dcc);
+}
+.document button:global(.opacity-0) {
+  opacity: 1;
+}
+.document button:global(.h-6),
+.document button:global(.h-7) {
+  min-height: 32px;
+}
+.document :global(.ProseMirror) {
+  min-width: 0;
+  max-height: none;
+  overflow: visible;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.document :global(.space-y-1):has(:global(.ProseMirror)) {
+  position: relative;
+}
+.document :global(.space-y-1):has(:global(.ProseMirror)) > div:first-child {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 3px;
+  border: 1px solid var(--ink, #292237);
+  border-radius: 8px;
+  background: var(--paper, #fff9df);
+  box-shadow: 2px 2px 0 #29223726;
+}
+.document :global(.space-y-1):has(:global(.ProseMirror)):focus-within > div:first-child {
+  display: flex;
+}
+.document :global(.space-y-1):has(:global(.ProseMirror)) > div:nth-child(2) {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line, #ded6c7);
+}
+.document :global(.space-y-1):has(:global(.ProseMirror)):hover > div:nth-child(2) {
+  border-bottom-color: color-mix(in srgb, var(--accent, #7e5be8) 55%, var(--line, #ded6c7));
+}
+.document :global(.space-y-1):has(:global(.ProseMirror)):focus-within > div:nth-child(2) {
+  border-bottom-color: var(--accent, #7e5be8);
+  background: color-mix(in srgb, var(--soft, #f1ebff) 28%, var(--surface, #fffefa));
+}
+.document > button {
+  margin-top: 20px;
+}
+.additionalFields {
+  display: grid;
+  gap: 12px;
+}
+.additionalFields > div {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.additionalFields > div > * {
+  margin: 0;
+}
+.additionalFields label {
+  padding-top: 9px;
+}
+
+@media (max-width: 700px) {
+  .additionalFields > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .additionalFields label {
+    padding-top: 0;
+  }
+  .document :global(.grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .heading {
+    align-items: flex-start;
+  }
+  .document.document button {
+    min-height: 36px;
+  }
+  .document :global(.pl-4) {
+    padding-left: 12px;
+  }
+}

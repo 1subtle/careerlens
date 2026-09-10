@@ -58,12 +58,13 @@ async def test_enhancement_all_failed_has_distinct_outcome(
     isolated_db: Database,
     sample_resume: dict[str, Any],
     monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     source = await _source_resume(isolated_db, sample_resume)
     monkeypatch.setattr(
         enrichment,
         "complete_json",
-        AsyncMock(side_effect=RuntimeError("synthetic provider failure")),
+        AsyncMock(side_effect=RuntimeError("private resume; api_key=synthetic-provider-secret")),
     )
 
     async with client:
@@ -76,6 +77,9 @@ async def test_enhancement_all_failed_has_distinct_outcome(
     assert response.json()["detail"] == (
         "Failed to generate enhancements. Original resume content was preserved."
     )
+    assert "synthetic-provider-secret" not in response.text
+    assert "synthetic-provider-secret" not in caplog.text
+    assert "private resume" not in caplog.text
 
 
 async def test_enhancement_partial_failure_reports_item_error(

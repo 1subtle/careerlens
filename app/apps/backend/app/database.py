@@ -14,6 +14,7 @@ import copy
 import logging
 import shutil
 import sqlite3
+import threading
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime, timedelta, timezone
@@ -21,13 +22,14 @@ from pathlib import Path
 from typing import Any, Literal
 from uuid import uuid4
 
-from sqlalchemy import and_, delete, func, or_, select, text, update
+from sqlalchemy import and_, delete, event, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import settings
 from app.db_engine import init_models_sync, make_async_engine, make_sync_engine
+from app.hosting import is_hosted
 from app.models import ApiKey, Application, Improvement, Job, Resume, TailoringPreview
 from app.preview import (
     PreviewBusyError,
@@ -37,6 +39,7 @@ from app.preview import (
     job_fingerprint,
     resume_fingerprint,
 )
+from app.tenant_database import TenantDatabaseProxy
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +102,10 @@ def _now() -> str:
 class Database:
     """Async SQLAlchemy facade for resume matcher data."""
 
-    def __init__(self, db_path: Path | None = None):
+    def __init__(self, db_path: Path | None = None, *, pooled: bool = True):
         self.db_path = db_path or settings.sqlite_path
+        self._pooled = pooled
+        self._initialization_lock = threading.RLock()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._async_engine = None
         self._async_session_factory: async_sessionmaker[AsyncSession] | None = None
@@ -117,14 +122,18 @@ class Database:
         and async (docs) paths see them immediately, without needing an event
         loop. Both engines point at the same file.
         """
+        with self._initialization_lock:
+            self._initialize_engines()
+
+    def _initialize_engines(self) -> None:
         if self._initialized:
             return
-        self._sync_engine = make_sync_engine(self.db_path)
+        self._sync_engine = make_sync_engine(self.db_path, pooled=self._pooled)
         self._sync_session_factory = sessionmaker(
             self._sync_engine, expire_on_commit=False
         )
         init_models_sync(self._sync_engine)
-        self._async_engine = make_async_engine(self.db_path)
+        self._async_engine = make_async_engine(self.db_path, pooled=self._pooled)
         self._async_session_factory = async_sessionmaker(
             self._async_engine, expire_on_commit=False
         )
@@ -148,6 +157,59 @@ class Database:
             async with self._session() as session:
                 await session.execute(text("BEGIN IMMEDIATE"))
                 yield session
+
+    @asynccontextmanager
+    async def _account_session(self) -> AsyncIterator[AsyncSession]:
+        """Commit a saved AI result and its credit settlement in both files.
+
+        SQLite's super-journal covers both persistent databases on this device.
+        Provider calls finish before entering this short write transaction.
+        """
+        from app.auth import get_auth_store
+        from app.credits import current_operation, settle_current_operation
+        from app.hosting import current_user_id
+        from app.tenant_database import TenantContextError
+
+        scope = current_operation.get()
+        if not is_hosted() or scope is None:
+            async with self._write_session() as session:
+                yield session
+            return
+        user_id = current_user_id.get()
+        expected = settings.data_dir / "users" / str(user_id) / "workspace.sqlite"
+        if scope.user_id != user_id or self.db_path.absolute() != expected.absolute():
+            raise TenantContextError("Billing transaction requires the current user's workspace")
+        if any(path.is_symlink() for path in (expected, expected.parent, expected.parent.parent)):
+            raise TenantContextError("Workspace symlinks are not supported")
+        self._ensure_initialized()
+        auth_path = get_auth_store().path
+        if auth_path.is_symlink() or auth_path.stat().st_dev != self.db_path.stat().st_dev:
+            raise TenantContextError("Billing and workspace must be persistent files on one device")
+        assert self._async_engine is not None
+        with _translate_write_errors():
+            async with self._async_engine.connect() as connection:
+                await connection.exec_driver_sql("ATTACH DATABASE ? AS billing", (str(auth_path),))
+                try:
+                    for schema in ("main", "billing"):
+                        mode = (await connection.exec_driver_sql(f"PRAGMA {schema}.journal_mode")).scalar()
+                        if mode != "delete":
+                            raise RuntimeError("Atomic billing requires rollback journals")
+                        await connection.exec_driver_sql(f"PRAGMA {schema}.synchronous=FULL")
+                    await connection.commit()
+                    async with AsyncSession(bind=connection, expire_on_commit=False) as session:
+                        def settle(sync_session):
+                            settle_current_operation(sync_session.connection().exec_driver_sql, schema="billing")
+
+                        event.listen(session.sync_session, "before_commit", settle)
+                        try:
+                            await session.execute(text("BEGIN IMMEDIATE"))
+                            yield session
+                        finally:
+                            event.remove(session.sync_session, "before_commit", settle)
+                finally:
+                    await connection.rollback()
+                    await connection.exec_driver_sql("DETACH DATABASE billing")
+                    await connection.commit()
 
     @property
     def _sync(self) -> sessionmaker[Session]:
@@ -192,6 +254,7 @@ class Database:
             "outreach_message": row.outreach_message,
             "interview_prep": row.interview_prep,
             "title": row.title,
+            "template_settings": row.template_settings,
             "created_at": row.created_at,
             "updated_at": row.updated_at,
         }
@@ -257,6 +320,7 @@ class Database:
         title: str | None = None,
         original_markdown: str | None = None,
         interview_prep: str | None = None,
+        template_settings: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Create a new resume entry.
 
@@ -275,8 +339,14 @@ class Database:
             interview_prep=interview_prep,
             title=title,
             original_markdown=original_markdown,
+            template_settings=template_settings,
         )
         async with self._write_session() as session:
+            if parent_id and template_settings is None:
+                parent = await session.get(Resume, parent_id)
+                row.template_settings = (
+                    copy.deepcopy(parent.template_settings) if parent else None
+                )
             session.add(row)
             await session.commit()
         return self._resume_to_dict(row)
@@ -299,6 +369,7 @@ class Database:
         original_markdown: str | None = None,
         title: str | None = None,
         interview_prep: str | None = None,
+        template_settings: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Create a resume and replace a failed master in one transaction."""
         async with self._write_session() as session:
@@ -327,6 +398,7 @@ class Database:
                 interview_prep=interview_prep,
                 title=title,
                 original_markdown=original_markdown,
+                template_settings=template_settings,
             )
             session.add(row)
             await session.commit()
@@ -348,7 +420,7 @@ class Database:
             return self._resume_to_dict(row) if row else None
 
     async def update_resume(
-        self, resume_id: str, updates: dict[str, Any]
+        self, resume_id: str, updates: dict[str, Any], *, settle_credits: bool = False
     ) -> dict[str, Any]:
         """Update resume by ID.
 
@@ -357,7 +429,8 @@ class Database:
                 ``ValueError``, so existing ``except ValueError`` callers are
                 unaffected.
         """
-        async with self._write_session() as session:
+        write_session = self._account_session if settle_credits else self._write_session
+        async with write_session() as session:
             row = await session.get(Resume, resume_id)
             if row is None:
                 raise ResumeNotFoundError(resume_id)
@@ -435,7 +508,8 @@ class Database:
             processed_data if processing_status == "ready" else None
         )
 
-        async with self._write_session() as session:
+        write_session = self._account_session if processing_status == "ready" else self._write_session
+        async with write_session() as session:
             result = await session.execute(
                 update(Resume)
                 .where(
@@ -533,6 +607,8 @@ class Database:
             for content in contents
         ]
         async with self._write_session() as session:
+            if is_hosted() and resume_id is not None and await session.get(Resume, resume_id) is None:
+                raise ResumeNotFoundError(resume_id)
             session.add_all(rows)
             await session.commit()
         return [self._job_to_dict(row) for row in rows]
@@ -630,7 +706,7 @@ class Database:
                 datetime.fromisoformat(now) + timedelta(seconds=ttl_seconds)
             ).isoformat(),
         )
-        async with self._write_session() as session:
+        async with self._account_session() as session:
             await self._validate_preview_inputs(session, row)
             await session.execute(
                 delete(TailoringPreview).where(
@@ -744,7 +820,7 @@ class Database:
         improvements: list[dict[str, Any]],
     ) -> dict[str, Any]:
         """Commit resume, required relation and replay snapshot atomically."""
-        async with self._write_session() as session:
+        async with self._account_session() as session:
             preview = await session.get(TailoringPreview, claim.preview_id)
             now = _now()
             if (
@@ -759,6 +835,11 @@ class Database:
                 )
             await self._validate_preview_inputs(session, preview)
             row = self._new_resume(**resume_fields)
+            if "template_settings" not in resume_fields:
+                source = await session.get(Resume, preview.source_id)
+                row.template_settings = (
+                    copy.deepcopy(source.template_settings) if source else None
+                )
             result = copy.deepcopy(response_data)
             result.update(
                 resume_id=row.resume_id,
@@ -797,7 +878,12 @@ class Database:
     ) -> dict[str, Any]:
         """Commit a direct tailoring result and its required relation together."""
         row = self._new_resume(**resume_fields)
-        async with self._write_session() as session:
+        async with self._account_session() as session:
+            if "template_settings" not in resume_fields:
+                source = await session.get(Resume, original_resume_id)
+                row.template_settings = (
+                    copy.deepcopy(source.template_settings) if source else None
+                )
             session.add(row)
             await session.flush()
             session.add(
@@ -924,7 +1010,9 @@ class Database:
         notes: str | None = None,
     ) -> dict[str, Any]:
         """Commit a pasted job and its tracker card together, or roll back both."""
-        async with self._write_session() as session:
+        async with self._account_session() as session:
+            if is_hosted() and await session.get(Resume, resume_id) is None:
+                raise ResumeNotFoundError(resume_id)
             job = Job(
                 job_id=str(uuid4()),
                 content=content,
@@ -1241,11 +1329,13 @@ class Database:
             await session.execute(delete(Resume))
             await session.commit()
 
-        uploads_dir = settings.data_dir / "uploads"
+        uploads_dir = self.db_path.parent / "uploads"
         if uploads_dir.exists():
             shutil.rmtree(uploads_dir)
             uploads_dir.mkdir(parents=True, exist_ok=True)
 
 
-# Global database instance
-db = Database()
+# Operator configuration and legacy local data never become a hosted user's data.
+operator_db = Database()
+
+db = TenantDatabaseProxy(operator_db, Database)

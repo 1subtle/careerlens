@@ -12,14 +12,19 @@ from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
 from typing import Any, Awaitable, NoReturn, Optional, TypeVar
+from urllib.parse import urlsplit
 
 from playwright.async_api import (
     Browser,
-    Error as PlaywrightError,
     Page,
     Playwright,
-    TimeoutError as PlaywrightTimeoutError,
     async_playwright,
+)
+from playwright.async_api import (
+    Error as PlaywrightError,
+)
+from playwright.async_api import (
+    TimeoutError as PlaywrightTimeoutError,
 )
 
 logger = logging.getLogger(__name__)
@@ -373,6 +378,7 @@ async def _render_page_to_pdf(
             asyncio.get_running_loop().time() + (_NAV_TIMEOUT_MS / 1000)
         )
 
+    await _authenticate_print_page(page, url, work_deadline)
     await _await_before_deadline(
         page.goto(
             url,
@@ -409,6 +415,63 @@ async def _render_page_to_pdf(
         work_deadline,
         "PDF generation",
     )
+
+
+async def _authenticate_print_page(page: Page, url: str, deadline: float) -> None:
+    """Forward one verified session only to the configured internal print origin."""
+    from app.config import settings
+    from app.hosting import current_session_cookie, current_user_id, is_hosted
+
+    if not is_hosted():
+        return
+    cookie = current_session_cookie.get()
+    if not current_user_id.get() or cookie is None:
+        raise PDFRenderError("Authenticated session required for PDF export")
+    target = urlsplit(url)
+    configured = urlsplit(settings.frontend_base_url)
+    origin = (configured.scheme, configured.netloc)
+    if (
+        (target.scheme, target.netloc) != origin
+        or not target.path.startswith(("/print/resumes/", "/print/cover-letter/"))
+        or configured.scheme not in {"http", "https"}
+    ):
+        raise PDFRenderError("Invalid authenticated print destination")
+
+    async def forward(route: Any) -> None:
+        request = route.request
+        destination = urlsplit(request.url)
+        if (destination.scheme, destination.netloc) != origin:
+            await route.abort()
+            return
+        if destination.path.startswith(("/print/resumes/", "/print/cover-letter/", "/api/v1/")):
+            # continue_(headers=...) carries credentials through redirects.
+            # Fetch once with redirects disabled, then fulfill the local page.
+            try:
+                response = await route.fetch(
+                    headers={**request.headers, "cookie": f"{cookie[0]}={cookie[1]}"},
+                    max_redirects=0,
+                    timeout=_stage_timeout_ms(deadline),
+                )
+            except PlaywrightError:
+                # Playwright fetch errors can include request headers in their
+                # call log. Abort without propagating the credential-bearing error.
+                await route.abort()
+                return
+            if 300 <= response.status < 400:
+                await route.abort()
+                return
+            await route.fulfill(
+                response=response,
+                headers={
+                    key: value
+                    for key, value in response.headers.items()
+                    if key.lower() != "set-cookie"
+                },
+            )
+            return
+        await route.continue_()
+
+    await _await_before_deadline(page.route("**/*", forward), deadline, "print authentication")
 
 
 async def _render_with_browser(

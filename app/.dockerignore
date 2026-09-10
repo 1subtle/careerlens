@@ -17,10 +17,14 @@
 **/.venv
 **/venv
 
-# Environment files (use UI to configure in Docker)
-**/.env
-**/.env.local
-**/.env.*.local
+# Environment files are supplied at runtime, never baked into the image.
+**/.env*
+!**/.env.example
+!**/.env.*.example
+!**/.env.sample
+**/*.db
+**/*.sqlite*
+**/uploads/
 
 # IDE
 .vscode

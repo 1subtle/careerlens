@@ -5,7 +5,22 @@
  */
 
 const DEFAULT_PUBLIC_API_URL = '/';
-const INTERNAL_API_ORIGIN = 'http://127.0.0.1:8000';
+const INTERNAL_API_ORIGIN = (process.env.BACKEND_ORIGIN || 'http://127.0.0.1:8000').replace(
+  /\/+$/,
+  ''
+);
+export const AUTH_EXPIRED_EVENT = 'careerlens:auth-expired';
+export const ACCOUNT_ACTIVITY_EVENT = 'careerlens:account-activity';
+let sessionGeneration = 0;
+const sessionRequests = new Set<AbortController>();
+
+export function resetApiSession(): void {
+  sessionGeneration++;
+  const reason = new Error('登录状态已改变，请重新打开工作区。');
+  reason.name = 'SessionChangedError';
+  for (const controller of sessionRequests) controller.abort(reason);
+  sessionRequests.clear();
+}
 
 function normalizeApiUrl(value: string): string {
   const trimmed = value.trim();
@@ -104,6 +119,9 @@ export async function apiFetch(
   const timeout = timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const callerSignal = options?.signal;
   const controller = new AbortController();
+  const generation = sessionGeneration;
+  const authRequest = /\/(?:api\/v1\/)?auth\//.test(normalizedEndpoint);
+  if (!authRequest) sessionRequests.add(controller);
   let timedOut = false;
   let rejectCancellation: (reason: unknown) => void = () => undefined;
   const cancellation = new Promise<never>((_resolve, reject) => {
@@ -137,9 +155,33 @@ export async function apiFetch(
   }, timeout);
 
   try {
-    const request = fetch(url, { ...options, signal: controller.signal }).then(bufferResponse);
+    const request = fetch(url, {
+      ...options,
+      credentials: options?.credentials ?? 'include',
+      cache: 'no-store',
+      signal: controller.signal,
+    }).then(async (response) => {
+      if (!authRequest && generation !== sessionGeneration)
+        throw createAbortError(controller.signal.reason);
+      if (!authRequest && response.status === 401 && typeof window !== 'undefined')
+        window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+      const buffered = await bufferResponse(response);
+      if (!authRequest && generation !== sessionGeneration)
+        throw createAbortError(controller.signal.reason);
+      // Also refresh after reads: polling can observe a completed background AI task.
+      if (!authRequest && typeof window !== 'undefined')
+        window.dispatchEvent(new Event(ACCOUNT_ACTIVITY_EVENT));
+      if (buffered.status === 402) {
+        const body = await buffered.json().catch(() => ({}));
+        throw new Error(
+          typeof body?.detail === 'string' ? body.detail : '积分已用完，暂时无法继续使用 AI 功能。'
+        );
+      }
+      return buffered;
+    });
     return await Promise.race([request, cancellation]);
   } catch (error) {
+    if (controller.signal.reason?.name === 'SessionChangedError') throw controller.signal.reason;
     if (error instanceof Error && error.name === 'AbortError') {
       if (callerSignal?.aborted) {
         throw createAbortError(callerSignal.reason);
@@ -149,6 +191,7 @@ export async function apiFetch(
     throw error;
   } finally {
     clearTimeout(timer);
+    sessionRequests.delete(controller);
     controller.signal.removeEventListener('abort', handleInternalAbort);
     callerSignal?.removeEventListener('abort', handleCallerAbort);
   }

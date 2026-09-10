@@ -152,6 +152,19 @@ class PersonalInfo(BaseModel):
     website: str | None = None
     linkedin: str | None = None
     github: str | None = None
+    photo: str | None = Field(
+        default=None, max_length=1_400_000, exclude_if=lambda value: value is None
+    )
+
+    @field_validator("photo")
+    @classmethod
+    def _validate_photo(cls, value: str | None) -> str | None:
+        if not value:
+            return None
+        from app.services.resume_photo import decode_resume_photo
+
+        decode_resume_photo(value)
+        return value
 
 
 class Experience(BaseModel):

@@ -17,6 +17,7 @@ import {
 import baseStyles from '@/components/resume/styles/_base.module.css';
 
 export interface PersonalInfo {
+  photo?: string | null;
   name?: string;
   title?: string;
   email?: string;

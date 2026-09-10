@@ -133,7 +133,7 @@ def get_api_keys_from_config() -> dict[str, str]:
         values (entries that fail to decrypt are omitted).
     """
     from app.crypto import decrypt
-    from app.database import db
+    from app.database import operator_db as db
 
     decrypted: dict[str, str] = {}
     for provider, ciphertext in db.get_api_key_ciphertexts().items():
@@ -150,7 +150,7 @@ def save_api_keys_to_config(api_keys: dict[str, str]) -> None:
     the config router reads-merges-saves the full map.
     """
     from app.crypto import encrypt
-    from app.database import db
+    from app.database import operator_db as db
 
     # Encrypt everything first, then swap in a single transaction, so a partial
     # failure (encryption error or DB write) can never wipe previously stored
@@ -161,14 +161,14 @@ def save_api_keys_to_config(api_keys: dict[str, str]) -> None:
 
 def delete_api_key_from_config(provider: str) -> None:
     """Delete a specific API key from the encrypted store."""
-    from app.database import db
+    from app.database import operator_db as db
 
     db.delete_api_key(provider)
 
 
 def clear_all_api_keys() -> None:
     """Clear all API keys from the encrypted store and any legacy config slots."""
-    from app.database import db
+    from app.database import operator_db as db
 
     db.clear_api_keys()
     # Defensively clear any legacy plaintext remnants from config.json.
@@ -196,7 +196,7 @@ def migrate_legacy_keys() -> None:
         return
 
     from app.crypto import encrypt
-    from app.database import db
+    from app.database import operator_db as db
 
     existing = set(db.get_api_key_ciphertexts().keys())
 

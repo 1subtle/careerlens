@@ -45,6 +45,7 @@ class Resume(Base):
     outreach_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     interview_prep: Mapped[str | None] = mapped_column(Text, nullable=True)
     title: Mapped[str | None] = mapped_column(String, nullable=True)
+    template_settings: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     # original_markdown has *absence* semantics in the TinyDB era: the key was
     # omitted entirely when None. The facade reproduces that by only emitting
     # the key when this column is non-null.
@@ -82,6 +83,7 @@ class Job(Base):
     resume_id: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
     metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
 
 
 class Improvement(Base):
@@ -202,3 +204,28 @@ class RewriteRecord(Base):
     status: Mapped[str] = mapped_column(String, default="draft")
     result_resume_id: Mapped[str | None] = mapped_column(ForeignKey("resumes.resume_id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
+
+
+class DirectionHistory(Base):
+    """Direction analysis with its own inputs, retained after material deletion."""
+
+    __tablename__ = "direction_history"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    resume_id: Mapped[str] = mapped_column(String, index=True)
+    resume_hash: Mapped[str] = mapped_column(String)
+    input_snapshot: Mapped[dict] = mapped_column(JSON)
+    input_hash: Mapped[str] = mapped_column(String)
+    result: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso, index=True)
+
+
+class MarketHistory(Base):
+    """A saved market sample and result, independent of the current JD library."""
+
+    __tablename__ = "market_history"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    source: Mapped[str] = mapped_column(String)
+    input_snapshot: Mapped[dict] = mapped_column(JSON)
+    input_hash: Mapped[str] = mapped_column(String)
+    result: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso, index=True)

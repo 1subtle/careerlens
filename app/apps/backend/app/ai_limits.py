@@ -15,6 +15,35 @@ class PromptSizeError(ValueError):
     """A rendered provider prompt exceeds the supported request size."""
 
 
+def without_resume_photo(value: Any) -> Any:
+    """Copy AI text input without embedded resume photos; leave stored data intact."""
+    if isinstance(value, str):
+        # Stored resume.content may itself be a JSON serialization of ResumeData.
+        if '"photo"' not in value:
+            return value
+        try:
+            parsed = json.loads(value)
+        except (ValueError, TypeError):
+            return value
+        if isinstance(parsed, (dict, list)):
+            return json.dumps(without_resume_photo(parsed), ensure_ascii=False)
+        return value
+    if isinstance(value, list):
+        return [without_resume_photo(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            key: {
+                field: without_resume_photo(item)
+                for field, item in child.items()
+                if field != "photo"
+            }
+            if key == "personalInfo" and isinstance(child, dict)
+            else without_resume_photo(child)
+            for key, child in value.items()
+        }
+    return value
+
+
 def validate_prompt_size(value: str) -> None:
     """Reject a rendered prompt with a client-actionable exception type."""
     if len(value) > MAX_PROMPT_CHARACTERS:
@@ -25,6 +54,7 @@ def validate_prompt_size(value: str) -> None:
 
 def validate_source_size(value: Any, limit: int = MAX_SOURCE_CHARACTERS) -> None:
     """Validate JSON/text source size for schemas and service boundaries."""
+    value = without_resume_photo(value)
     text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
     if len(text) > limit:
         raise ValueError(f"AI source exceeds the {limit}-character limit")

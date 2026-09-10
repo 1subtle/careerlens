@@ -31,6 +31,24 @@
   padding-bottom: calc(var(--item-gap) * 1.25);
 }
 
+.resume-header:has(.resume-photo) {
+  position: relative;
+  min-height: 40mm;
+  padding-right: 35mm;
+  break-inside: avoid;
+}
+
+.resume-photo {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: block;
+  width: 30mm;
+  height: 40mm;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
 .resume-name {
   font-size: calc(var(--font-size-base) * var(--header-scale));
   font-family: var(--header-font);

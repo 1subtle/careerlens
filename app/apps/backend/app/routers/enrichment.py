@@ -10,14 +10,20 @@ from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
 
-from app.ai_limits import MAX_ITEM_WORKERS, PromptSizeError, require_source_size
 from app.ai_budget import (
     AIOperationDeadlineExceeded,
     AIOperationRoute,
     remaining_timeout,
 )
+from app.ai_limits import (
+    MAX_ITEM_WORKERS,
+    PromptSizeError,
+    require_source_size,
+    without_resume_photo,
+)
 from app.config_cache import get_content_language
 from app.database import DatabaseBusyError, db
+from app.credits import CreditError
 from app.llm import complete_json
 from app.prompts.enrichment import (
     ANALYZE_RESUME_PROMPT,
@@ -31,16 +37,16 @@ from app.schemas.enrichment import (
     AnswerInput,
     ApplyEnhancementsRequest,
     EnhancedDescription,
-    EnhanceRequest,
     EnhancementItemError,
     EnhancementPreview,
+    EnhanceRequest,
     EnrichmentItem,
     EnrichmentQuestion,
+    RegeneratedItem,
     RegenerateItemError,
     RegenerateItemInput,
     RegenerateRequest,
     RegenerateResponse,
-    RegeneratedItem,
 )
 
 logger = logging.getLogger(__name__)
@@ -164,7 +170,7 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
     require_source_size(processed_data)
 
     # Build prompt with content language
-    resume_json = json.dumps(processed_data)
+    resume_json = json.dumps(without_resume_photo(processed_data))
     language = get_content_language()
     output_language = get_language_name(language)
     prompt = ANALYZE_RESUME_PROMPT.format(
@@ -214,7 +220,7 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
             analysis_summary=result.get("analysis_summary"),
         )
 
-    except PromptSizeError:
+    except (PromptSizeError, CreditError):
         raise
     except asyncio.TimeoutError:
         logger.error("Resume analysis timed out for resume %s", resume_id)
@@ -223,13 +229,13 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
             detail="Resume analysis timed out. Please try again with a shorter resume or a faster model.",
         )
     except ValueError as e:
-        logger.error("Resume analysis failed (content): %s", e)
+        logger.error("Resume analysis failed (content, %s)", type(e).__name__)
         raise HTTPException(
             status_code=422,
             detail="The AI returned an unreadable response. Please try again or switch models.",
         )
     except Exception as e:
-        logger.error("Resume analysis failed: %s", e)
+        logger.error("Resume analysis failed (%s)", type(e).__name__)
         raise HTTPException(
             status_code=500,
             detail="Failed to analyze resume. Please try again.",
@@ -280,7 +286,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
                 )
     else:
         # Legacy path — re-analyze to get question-to-item mapping
-        resume_json = json.dumps(processed_data)
+        resume_json = json.dumps(without_resume_photo(processed_data))
         language = get_content_language()
         output_language = get_language_name(language)
         analysis_prompt = ANALYZE_RESUME_PROMPT.format(
@@ -299,7 +305,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
                 timeout=remaining_timeout(),
             )
             analysis_result = _validate_analysis_result(analysis_result)
-        except PromptSizeError:
+        except (PromptSizeError, CreditError):
             raise
         except asyncio.TimeoutError:
             logger.error("Resume re-analysis timed out for resume %s", request.resume_id)
@@ -308,13 +314,13 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
                 detail="Resume analysis timed out. Please try again with a shorter resume or a faster model.",
             )
         except ValueError as e:
-            logger.error("Resume re-analysis failed (content): %s", e)
+            logger.error("Resume re-analysis failed (content, %s)", type(e).__name__)
             raise HTTPException(
                 status_code=422,
                 detail="The AI returned an unreadable response. Please try again or switch models.",
             )
         except Exception as e:
-            logger.error("Failed to re-analyze resume: %s", e)
+            logger.error("Failed to re-analyze resume (%s)", type(e).__name__)
             raise HTTPException(
                 status_code=500,
                 detail="Failed to process enhancements. Please try again.",
@@ -394,10 +400,10 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
                     enhanced_description=additional_bullets,  # These are NEW bullets to add
                 )
             )
-        except AIOperationDeadlineExceeded:
+        except (AIOperationDeadlineExceeded, CreditError):
             raise
         except Exception as e:
-            logger.warning("Failed to enhance item %s: %s", item_id, e, exc_info=e)
+            logger.warning("Failed to enhance item %s (%s)", item_id, type(e).__name__)
             message = "Failed to enhance this item. Please try again."
             if isinstance(e, PromptSizeError):
                 first_prompt_error = first_prompt_error or e
@@ -632,14 +638,13 @@ async def regenerate_items(request: RegenerateRequest) -> RegenerateResponse:
     for item, result in zip(request.items, results):
         if isinstance(
             result,
-            (asyncio.CancelledError, AIOperationDeadlineExceeded, PromptSizeError),
+            (asyncio.CancelledError, AIOperationDeadlineExceeded, PromptSizeError, CreditError),
         ):
             raise result
         if isinstance(result, Exception):
             logger.error(
-                "Failed to regenerate item. "
-                f"resume_id={request.resume_id} item_id={item.item_id} item_type={item.item_type}",
-                exc_info=result,
+                "Failed to regenerate item (%s): resume_id=%s item_id=%s item_type=%s",
+                type(result).__name__, request.resume_id, item.item_id, item.item_type,
             )
             errors.append(
                 RegenerateItemError(
