@@ -207,8 +207,27 @@ describe('CareerLens diagnosis actions and sources', () => {
       <MatchPanel {...props} state={{ ...state, resumes: [] }} resumeId="new" onResume={onResume} />
     );
     expect(screen.getByRole('status')).toHaveTextContent('请先保存一份简历，再进行诊断与优化。');
+    expect(screen.queryByLabelText('选择已保存的简历')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '诊断选项' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '多岗位横向比较' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('历史诊断')).not.toBeInTheDocument();
+    expect(screen.getByText('岗位方向分析历史')).toBeVisible();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: '创建第一份简历' }));
     expect(onResume).toHaveBeenCalledWith('new');
+  });
+
+  it('handles orphaned frozen match history returned by the workspace API', async () => {
+    const load = vi.spyOn(careerApi, 'getMatch').mockResolvedValue(match);
+    render(
+      <MatchPanel {...props} state={{ ...state, resumes: [], matches: [match] }} resumeId="" />
+    );
+    expect(screen.queryByLabelText('选择已保存的简历')).not.toBeInTheDocument();
+    const history = screen.getByLabelText('历史诊断');
+    fireEvent.change(history, { target: { value: 'm1' } });
+    await waitFor(() => expect(load).toHaveBeenCalledWith('m1'));
+    expect(await screen.findByRole('heading', { name: '岗位要求与简历证据' })).toBeVisible();
+    expect(screen.getByText('用户访谈')).toBeVisible();
   });
 
   it('analyzes directions without a JD and shows saved-job recommendations separately', async () => {
@@ -229,8 +248,8 @@ describe('CareerLens diagnosis actions and sources', () => {
     expect(screen.getByText('补充访谈方法和产出。')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: '查找相关实时岗位' }));
     expect(findJobs).toHaveBeenCalledWith('用户研究方向');
-    fireEvent.click(screen.getByRole('button', { name: '推荐已保存岗位' }));
-    await waitFor(() => expect(analyze).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole('button', { name: '推荐已保存岗位' })).not.toBeInTheDocument();
+    expect(analyze).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole('button', { name: '分析此岗位匹配度' }));
     await waitFor(() => expect(diagnose).toHaveBeenCalledWith('r1', 'j1', true, true));
   });
@@ -270,7 +289,7 @@ describe('CareerLens diagnosis actions and sources', () => {
       .mockResolvedValue({ ...match, ai_analysis: undefined });
     render(<MatchPanel {...props} useAi={false} />);
     expect(screen.getByRole('button', { name: '分析适合的岗位方向' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: '推荐已保存岗位' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: '推荐已保存岗位' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '分析目标 JD 匹配度' }));
     await waitFor(() => expect(diagnose).toHaveBeenCalledWith('r1', 'j1', true, false));
     expect(await screen.findByText('规则分析')).toBeVisible();

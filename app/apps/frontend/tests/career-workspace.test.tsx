@@ -39,17 +39,23 @@ vi.mock('@/components/career/resume-panel', () => ({
     onDirty,
     onSaved,
     resume,
+    run,
   }: {
     active: boolean;
     useAi: boolean;
     onDirty: () => void;
     onSaved: (resume: CareerState['resumes'][number]) => Promise<void>;
     resume: CareerState['resumes'][number];
+    run: (message: string, task: () => Promise<void>) => Promise<void>;
   }) => (
     <>
       <p>简历解析：{useAi ? 'AI' : '规则'}</p>
       <input aria-label="简历经历" onChange={onDirty} data-active={active} />
-      <button onClick={() => void onSaved({ ...resume, hash: 'saved-hash' })}>保存测试文档</button>
+      <button
+        onClick={() => void run('保存简历', () => onSaved({ ...resume, hash: 'saved-hash' }))}
+      >
+        保存测试文档
+      </button>
     </>
   ),
 }));
@@ -181,6 +187,34 @@ describe('CareerLens workspace defaults', () => {
     expect(input).toHaveValue('新简历尚未保存');
   });
 
+  it('collapses the desktop sidebar without discarding the mounted draft', async () => {
+    vi.spyOn(careerApi, 'state').mockResolvedValue(state);
+    render(<CareerWorkspace />);
+    const input = await screen.findByRole('textbox', { name: '简历经历' });
+    fireEvent.change(input, { target: { value: '折叠侧栏后继续编辑' } });
+    const sidebar = screen.getByRole('complementary', { name: '工作区侧栏' });
+    const collapse = screen.getByRole('button', { name: '收起侧栏' });
+
+    expect(collapse).not.toBeDisabled();
+    expect(collapse).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(collapse);
+
+    const expand = screen.getByRole('button', { name: '展开侧栏' });
+    expect(expand).not.toBeDisabled();
+    expect(expand).toHaveAttribute('aria-expanded', 'false');
+    expect(sidebar).toHaveAttribute('aria-hidden', 'true');
+    expect(sidebar).toHaveAttribute('inert');
+    expect(screen.queryByRole('navigation', { name: '工作区导航' })).not.toBeInTheDocument();
+    expect(input).toBeVisible();
+    expect(input).toHaveValue('折叠侧栏后继续编辑');
+
+    fireEvent.click(expand);
+    expect(screen.getByRole('navigation', { name: '工作区导航' })).toBeVisible();
+    expect(sidebar).not.toHaveAttribute('aria-hidden');
+    expect(sidebar).not.toHaveAttribute('inert');
+    expect(screen.getByRole('textbox', { name: '简历经历' })).toBe(input);
+  });
+
   it('keeps hosted account deep links out of local mode', async () => {
     vi.spyOn(careerApi, 'state').mockResolvedValue(state);
     vi.spyOn(authApi, 'session').mockResolvedValue({
@@ -217,12 +251,35 @@ describe('CareerLens workspace defaults', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: '保存测试文档' }));
     await waitFor(() => expect(getState).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole('status')).toHaveTextContent('保存简历完成');
     expect(screen.getByRole('textbox', { name: '简历经历' })).toBe(input);
     expect(input).toHaveValue('继续编辑的经历');
     expect(screen.getByRole('button', { name: '我的产品简历' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
+  });
+
+  it('offsets the sticky document toolbar by the measured status height', async () => {
+    let statusHeight = 42;
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (
+      this: HTMLElement
+    ) {
+      return this.getAttribute('role') === 'status' ? statusHeight : 0;
+    });
+    vi.spyOn(careerApi, 'state').mockResolvedValue(state);
+    render(<CareerWorkspace />);
+    await screen.findByRole('textbox', { name: '简历经历' });
+    fireEvent.click(screen.getByRole('button', { name: '保存测试文档' }));
+    const notice = await screen.findByRole('status');
+    const main = notice.parentElement!;
+    expect(main.style.getPropertyValue('--workspace-status-height')).toBe('42px');
+
+    statusHeight = 68;
+    fireEvent(window, new Event('resize'));
+    expect(main.style.getPropertyValue('--workspace-status-height')).toBe('68px');
+    fireEvent.click(screen.getByRole('button', { name: '关闭提示' }));
+    expect(main.style.getPropertyValue('--workspace-status-height')).toBe('');
   });
 
   it('keeps guarding a job draft when the selected JD is clicked again', async () => {

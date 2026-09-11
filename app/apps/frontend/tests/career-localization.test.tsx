@@ -39,7 +39,31 @@ const job: CareerJob = {
   requirements: [],
 };
 const state: CareerState = {
-  resumes: [],
+  resumes: [
+    {
+      id: 'resume',
+      title: '求职简历',
+      data: {
+        personalInfo: { name: '', title: '', email: '', phone: '', location: '' },
+        summary: '',
+        education: [],
+        workExperience: [],
+        personalProjects: [],
+        additional: {
+          technicalSkills: [],
+          languages: [],
+          certificationsTraining: [],
+          awards: [],
+        },
+      },
+      hash: 'resume-hash',
+      is_master: true,
+      parent_id: null,
+      source_text: '',
+      created_at: '',
+      updated_at: '',
+    },
+  ],
   jobs: [job],
   matches: [],
   model: { configured: true, model: 'test', provider: 'test' },
@@ -64,9 +88,11 @@ describe('CareerLens interface translations', () => {
     const view = render(<JobsPanel {...common} jobs={[job]} selected={job} onSelect={noop} />);
     const title = screen.getByRole('textbox', { name: 'Job title (required)' });
     expect(title).toHaveValue('数据分析实习生');
-    expect(screen.getByRole('textbox', { name: 'Full job description (required)' })).toHaveValue(
-      job.content
-    );
+    const description = screen.getByRole('textbox', {
+      name: 'Full job description (required)',
+    });
+    expect(description).toHaveValue(job.content);
+    expect(description).toHaveAttribute('maxlength', '300000');
     fireEvent.change(title, { target: { value: '我编辑的岗位名称' } });
     language.uiLanguage = 'zh';
     view.rerender(<JobsPanel {...common} jobs={[job]} selected={job} onSelect={noop} />);
@@ -81,7 +107,7 @@ describe('CareerLens interface translations', () => {
       <MatchPanel
         {...common}
         state={state}
-        resumeId=""
+        resumeId="resume"
         jobId="job"
         setResumeId={noop}
         setJobId={noop}

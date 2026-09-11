@@ -190,6 +190,10 @@ describe('CareerLens document panel', () => {
     expect(screen.queryByDisplayValue('林同学')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '导入' }));
     expect(screen.getByRole('textbox', { name: '简历原文' })).toHaveValue('原始经历');
+    expect(screen.getByRole('textbox', { name: '简历原文' })).toHaveAttribute(
+      'maxlength',
+      '300000'
+    );
     fireEvent.click(screen.getByRole('button', { name: '返回文档' }));
     expect(await screen.findByDisplayValue(longText)).toBeVisible();
     expect(props.onDirty).toHaveBeenCalledOnce();

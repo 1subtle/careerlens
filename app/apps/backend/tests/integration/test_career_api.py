@@ -1,14 +1,39 @@
 """Exercise real SQLite transactions through the CareerLens HTTP contracts."""
 
 import asyncio
+import base64
 import json
+import struct
+import zlib
 from collections.abc import AsyncIterator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from pydantic import ValidationError
 
+from app.ai_limits import MAX_SAVED_SOURCE_CHARACTERS, MAX_TEXT_INPUT_CHARACTERS
+from app.database import Database
 from app.main import app
+from app.schemas.career import ResumeInput, TextInput
 from app.services import career_ai
+
+
+def large_png_data_url() -> str:
+    image = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII="
+    )
+    offset = image.rfind(b"IEND") - 4
+    payload = b"Comment\0" + b"a" * 40_000
+    kind = b"tEXt"
+    chunk = (
+        struct.pack(">I", len(payload))
+        + kind
+        + payload
+        + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+    )
+    return "data:image/png;base64," + base64.b64encode(
+        image[:offset] + chunk + image[offset:]
+    ).decode()
 
 
 @pytest.fixture
@@ -33,6 +58,136 @@ async def seed(client: AsyncClient) -> tuple[dict, dict, dict]:
     )
     assert response.status_code == 200, response.text
     return resume, job, response.json()
+
+
+async def test_structured_resume_is_not_returned_as_source_text(
+    client: AsyncClient,
+    isolated_backend_state: Database,
+) -> None:
+    data = {
+        "personalInfo": {"name": "林同学", "photo": large_png_data_url()},
+        "summary": "",
+        "workExperience": [],
+        "education": [],
+        "personalProjects": [],
+        "additional": {},
+    }
+    response = await client.post(
+        "/api/v1/career/resumes",
+        json={"title": "项目经历草稿", "data": data, "source_text": ""},
+    )
+    assert response.status_code == 200, response.text
+    resume = response.json()
+    serialized = json.dumps(resume["data"], ensure_ascii=False)
+    assert len(serialized) > 30_000
+    assert resume["source_text"] == ""
+
+    # Old Career creates mislabeled structured content as Markdown.
+    await isolated_backend_state.update_resume(
+        resume["id"],
+        {"content": serialized, "content_type": "md", "original_markdown": None},
+    )
+    state = (await client.get("/api/v1/career/state")).json()
+    resume = next(item for item in state["resumes"] if item["id"] == resume["id"])
+    assert resume["source_text"] == ""
+
+    response = await client.patch(
+        f"/api/v1/resumes/{resume['id']}", json=resume["data"]
+    )
+    assert response.status_code == 200, response.text
+    state = (await client.get("/api/v1/career/state")).json()
+    resume = next(item for item in state["resumes"] if item["id"] == resume["id"])
+    assert resume["source_text"] == ""
+
+    resume["data"]["personalProjects"] = [
+        {
+            "id": 1,
+            "name": "仍在填写的项目",
+            "description": ["项目说明尚未完成"],
+        }
+    ]
+    response = await client.put(
+        f"/api/v1/career/resumes/{resume['id']}",
+        json={
+            "title": resume["title"],
+            "data": resume["data"],
+            "source_text": resume["source_text"],
+            "expected_revision": resume["revision"],
+        },
+    )
+    assert response.status_code == 200, response.text
+
+
+async def test_text_and_saved_source_limits_are_independent(
+    client: AsyncClient,
+) -> None:
+    data = {
+        "personalInfo": {"name": "林同学"},
+        "summary": "",
+        "workExperience": [],
+        "education": [],
+        "personalProjects": [],
+        "additional": {},
+    }
+    assert len(TextInput(text="项" * MAX_TEXT_INPUT_CHARACTERS).text) == 300_000
+    with pytest.raises(ValidationError):
+        TextInput(text="项" * (MAX_TEXT_INPUT_CHARACTERS + 1))
+
+    assert (
+        len(
+            ResumeInput(
+                data=data,
+                source_text="项" * MAX_SAVED_SOURCE_CHARACTERS,
+            ).source_text
+        )
+        == 3_000_000
+    )
+    with pytest.raises(ValidationError):
+        ResumeInput(
+            data=data,
+            source_text="项" * (MAX_SAVED_SOURCE_CHARACTERS + 1),
+        )
+
+    source_text = "项" * (MAX_TEXT_INPUT_CHARACTERS + 1)
+    response = await client.post(
+        "/api/v1/career/resumes",
+        json={"title": "导入的简历", "data": data, "source_text": source_text},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["source_text"] == source_text
+
+    response = await client.post(
+        "/api/v1/career/resumes",
+        json={
+            "title": "过长原文",
+            "data": data,
+            "source_text": "项" * (MAX_SAVED_SOURCE_CHARACTERS + 1),
+        },
+    )
+    assert response.status_code == 422
+    assert str(MAX_SAVED_SOURCE_CHARACTERS) in response.text
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/api/v1/career/resumes/parse", "/api/v1/career/jobs/parse"],
+)
+async def test_text_parse_endpoints_enforce_300k_boundary(
+    client: AsyncClient,
+    path: str,
+) -> None:
+    response = await client.post(
+        path,
+        json={"text": "项" * MAX_TEXT_INPUT_CHARACTERS, "use_ai": False},
+    )
+    assert response.status_code == 200, response.text
+
+    response = await client.post(
+        path,
+        json={"text": "项" * (MAX_TEXT_INPUT_CHARACTERS + 1), "use_ai": False},
+    )
+    assert response.status_code == 422
+    assert str(MAX_TEXT_INPUT_CHARACTERS) in response.text
 
 
 async def test_atomic_apply_and_immutable_history(client: AsyncClient) -> None:

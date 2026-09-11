@@ -86,20 +86,38 @@ def resume_data(row: Resume) -> dict[str, Any]:
     return ResumeData.model_validate(row.processed_data or {}).model_dump(mode="json")
 
 
+def _is_serialized_resume_data(value: str, data: dict[str, Any]) -> bool:
+    """Recognize legacy rows that stored canonical ResumeData as Markdown."""
+    try:
+        parsed = json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return False
+    return isinstance(parsed, dict) and parsed == data
+
+
+def resume_source_text(row: Resume, data: dict[str, Any]) -> str:
+    if row.original_markdown is not None:
+        return row.original_markdown
+    if row.content_type == "json":
+        return ""
+    return "" if _is_serialized_resume_data(row.content, data) else row.content
+
+
 def resume_view(row: Resume) -> dict[str, Any]:
     data = resume_data(row)
+    source_text = resume_source_text(row, data)
     return {
         "id": row.resume_id,
         "title": row.title or "我的简历",
         "template_settings": row.template_settings,
         "data": data,
-        "hash": fingerprint([data, row.content, row.title]),
-        "revision": fingerprint([data, row.content, row.title, row.template_settings]),
+        "hash": fingerprint([data, source_text, row.title]),
+        "revision": fingerprint([data, source_text, row.title, row.template_settings]),
         "is_master": row.is_master,
         "parent_id": row.parent_id,
         "created_at": row.created_at,
         "updated_at": row.updated_at,
-        "source_text": row.content,
+        "source_text": source_text,
     }
 
 
@@ -236,7 +254,8 @@ async def parse_file(file: UploadFile, use_ai: bool = Form(False)) -> dict[str, 
 async def create_resume(request: ResumeInput) -> dict[str, Any]:
     data = request.data.model_dump(mode="json")
     created = await db.create_resume_atomic_master(
-        content=request.source_text or json.dumps(data, ensure_ascii=False),
+        content=json.dumps(data, ensure_ascii=False),
+        content_type="json",
         processed_data=data,
         processing_status="ready",
         title=request.title,
@@ -266,10 +285,12 @@ async def update_resume(resume_id: str, request: ResumeInput) -> dict[str, Any]:
             and current["hash"] != request.expected_hash
         ):
             raise HTTPException(409, "简历已在其他页面修改，请重新载入后保存。")
-        row.processed_data = request.data.model_dump(mode="json")
+        data = request.data.model_dump(mode="json")
+        row.processed_data = data
+        row.content = json.dumps(data, ensure_ascii=False)
+        row.content_type = "json"
         if "source_text" in request.model_fields_set:
-            row.content = request.source_text
-            row.original_markdown = request.source_text
+            row.original_markdown = request.source_text or None
         row.title, row.updated_at = request.title, now()
         if "template_settings" in request.model_fields_set:
             row.template_settings = (
@@ -500,7 +521,10 @@ async def calculate_matches(
             analyze_all, timeout=180 if len(job_data) > 1 else 150
         )
     grouped = [
-        j.get("requirements", requirements_from_text(j["content"])) for j in job_data
+        j["requirements"]
+        if j.get("requirements") is not None
+        else requirements_from_text(j["content"])
+        for j in job_data
     ]
     requirements = [r for group in grouped for r in group]
     retrieved: list[list[dict]] = [[] for _ in requirements]
@@ -956,6 +980,7 @@ async def apply_rewrite(rewrite_id: str, request: ApplyInput) -> dict[str, Any]:
         result = Resume(
             resume_id=str(uuid4()),
             content=json.dumps(data, ensure_ascii=False),
+            content_type="json",
             processed_data=data,
             processing_status="ready",
             is_master=False,

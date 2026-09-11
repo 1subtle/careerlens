@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { act, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider, useLanguage } from '@/lib/context/language-context';
 import { useAuth } from '@/components/auth/auth-provider';
 import { accountApi, type AccountProfile } from '@/lib/api/account';
@@ -68,12 +68,30 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
+function stubMatchMedia(matches: boolean) {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((media: string) => ({
+      matches,
+      media,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }))
+  );
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
   authenticate('a');
   vi.mocked(accountApi.profile).mockResolvedValue(profile);
 });
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe('account language preferences', () => {
   it('loads hosted account preferences, changes the public UI and html lang, and never reads global language config', async () => {
@@ -87,6 +105,121 @@ describe('account language preferences', () => {
     await waitFor(() => expect(document.documentElement.lang).toBe('en'));
     expect(fetchLanguageConfig).not.toHaveBeenCalled();
     expect(accountApi.profile).toHaveBeenCalledOnce();
+  });
+
+  it('provides homepage anchors and a keyboard-operated translated product demo', async () => {
+    stubMatchMedia(true);
+    render(<Tree />);
+    await screen.findByText('a:en:zh');
+
+    const navigation = screen.getByRole('navigation', { name: 'Home page navigation' });
+    expect(within(navigation).getByRole('link', { name: 'Product demo' })).toHaveAttribute(
+      'href',
+      '#demo'
+    );
+    expect(within(navigation).getByRole('link', { name: 'Capabilities' })).toHaveAttribute(
+      'href',
+      '#features'
+    );
+    expect(within(navigation).getByRole('link', { name: 'How it works' })).toHaveAttribute(
+      'href',
+      '#process'
+    );
+    expect(
+      within(
+        screen.getByRole('region', {
+          name: 'Understand your experience. Find your next step.',
+        })
+      ).getByRole('link', { name: 'Product demo' })
+    ).toHaveAttribute('href', '#demo');
+
+    const demo = screen.getByRole('region', {
+      name: 'Try it once, without uploading your resume.',
+    });
+    const tabs = within(demo).getAllByRole('tab');
+    expect(tabs).toHaveLength(3);
+    expect(within(demo).getByRole('tablist', { name: 'Product demo' })).toHaveAttribute(
+      'aria-orientation',
+      'horizontal'
+    );
+    expect(within(demo).getAllByRole('tabpanel', { hidden: true })).toHaveLength(3);
+    tabs.forEach((tab) => {
+      expect(document.getElementById(tab.getAttribute('aria-controls')!)).toHaveAttribute(
+        'role',
+        'tabpanel'
+      );
+    });
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    const experience = within(demo).getByRole('textbox', { name: 'Sample experience' });
+    const editedExperience =
+      'Interviewed users, improved the registration process, and used SQL to review form data.';
+    fireEvent.change(experience, { target: { value: editedExperience } });
+
+    fireEvent.keyDown(tabs[0], { key: 'ArrowRight' });
+    expect(tabs[1]).toHaveFocus();
+    expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
+    expect(
+      within(demo).getByRole('heading', {
+        name: 'Review job requirements against your evidence',
+      })
+    ).toBeVisible();
+    expect(within(demo).getAllByText('Direct evidence found')).toHaveLength(2);
+    expect(
+      within(demo).getByText('This demo uses fixed keyword rules and does not call AI.')
+    ).toBeVisible();
+
+    fireEvent.click(tabs[2]);
+    expect(tabs[2]).toHaveAttribute('aria-selected', 'true');
+    const reviewPanel = within(demo).getByRole('tabpanel');
+    expect(within(reviewPanel).getByText(editedExperience)).toBeVisible();
+    expect(within(demo).getByRole('textbox', { name: 'Rule-based draft' })).toHaveValue(
+      `Targeted for the Product Operations Intern role: ${editedExperience}`
+    );
+    expect(
+      within(demo).getByText(
+        'The demo rules found evidence of user feedback, process improvement and SQL analysis.'
+      )
+    ).toBeVisible();
+
+    fireEvent.click(within(demo).getByRole('radio', { name: 'Keep original' }));
+    fireEvent.click(within(demo).getByRole('button', { name: 'Confirm sample choice' }));
+    expect(within(demo).getByRole('status')).toHaveTextContent(
+      'Original selected. This demo will not save anything.'
+    );
+    fireEvent.click(within(demo).getByRole('radio', { name: 'Use rule-based draft' }));
+    fireEvent.click(within(demo).getByRole('button', { name: 'Confirm sample choice' }));
+    expect(within(demo).getByRole('status')).toHaveTextContent(
+      'Rule-based draft selected. This demo will not save anything.'
+    );
+
+    vi.mocked(accountApi.updateProfile).mockResolvedValueOnce({ ...profile, ui_language: 'zh' });
+    await act(async () => language.setUiLanguage('zh'));
+    expect(within(demo).getByRole('tab', { name: '确认优化' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(within(demo).getByRole('textbox', { name: '演示整理稿' })).toHaveValue(
+      '面向产品运营实习生岗位整理：负责校园活动报名流程，访谈参与者后重写说明并调整表单字段，减少了重复咨询和无效提交。'
+    );
+  });
+
+  it('uses vertical arrow keys for the desktop product demo', async () => {
+    stubMatchMedia(false);
+    render(<Tree />);
+    await screen.findByText('a:en:zh');
+
+    const demo = screen.getByRole('region', {
+      name: 'Try it once, without uploading your resume.',
+    });
+    const tablist = within(demo).getByRole('tablist', { name: 'Product demo' });
+    const tabs = within(tablist).getAllByRole('tab');
+    expect(tablist).toHaveAttribute('aria-orientation', 'vertical');
+
+    fireEvent.keyDown(tabs[0], { key: 'ArrowRight' });
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(tabs[0], { key: 'ArrowDown' });
+    expect(tabs[1]).toHaveFocus();
+    expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
   });
 
   it('discards a late profile read when a different account signs in', async () => {

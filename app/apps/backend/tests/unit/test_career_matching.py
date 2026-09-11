@@ -1,7 +1,10 @@
 """Deterministic, manually computable CareerLens boundaries."""
 
+from datetime import date
+
 import pytest
 
+from app.schemas.career import JobInput
 from app.services.career_ai import validate_draft
 from app.services.demo import DEMO_RESUME
 from app.services.matching import (
@@ -44,6 +47,143 @@ def test_boundaries_negation_and_skill_statement() -> None:
     assert score == 16.7
 
 
+@pytest.mark.parametrize(
+    "text",
+    ["<" * 300_000, "![" * 150_000, "A" + " " * 299_998 + "Z"],
+)
+def test_rule_parser_handles_maximum_adversarial_plain_text(text: str) -> None:
+    assert parse_resume_local(text)["summary"] == text
+
+
+def test_rule_parser_handles_maximum_adversarial_role_title() -> None:
+    prefix = "项目经历\n2025.01 - 2025.02 A"
+    text = prefix + " " * (300_000 - len(prefix) - 1) + "Z"
+
+    assert len(text) == 300_000
+    assert parse_resume_local(text)["personalProjects"][0]["role"] == ""
+
+
+def test_rule_parser_bounds_items_in_maximum_multiline_input() -> None:
+    prefix = "项目经历\n"
+    text = (prefix + "甲项目\n" * 100_000)[:300_000]
+
+    assert len(text) == 300_000
+    assert len(parse_resume_local(text)["personalProjects"]) == 200
+
+
+@pytest.mark.parametrize("text", ["x" * 300_000, "1" * 300_000])
+def test_conditions_handle_maximum_adversarial_text(text: str) -> None:
+    conditions = conditions_for({}, text)
+
+    assert [condition["status"] for condition in conditions] == [
+        "not_stated",
+        "not_stated",
+        "not_stated",
+    ]
+
+
+def test_ai_style_requirement_names_match_resume_concepts() -> None:
+    requirements = [
+        {
+            "id": "q-sql",
+            "name": "SQL 或 Excel 搭建业务看板",
+            "source_text": "使用 SQL 或 Excel 搭建业务看板",
+            "priority": "required",
+        },
+        {
+            "id": "q-interview",
+            "name": "通过用户访谈发现转化问题",
+            "source_text": "结合用户访谈发现转化问题",
+            "priority": "required",
+        },
+        {
+            "id": "q-collaboration",
+            "name": "清晰的跨团队沟通能力",
+            "source_text": "具备清晰的跨团队沟通能力",
+            "priority": "required",
+        },
+        {
+            "id": "q-metrics",
+            "name": "用量化结果说明影响",
+            "source_text": "能够用量化结果说明影响",
+            "priority": "required",
+        },
+    ]
+    evidence = evidence_from_resume(
+        {
+            "workExperience": [
+                {
+                    "title": "产品运营",
+                    "description": [
+                        "使用 SQL 搭建报名漏斗周报。",
+                        "负责用户访谈并定位转化问题。",
+                        "协调产品、研发、设计与客服推进交付。",
+                        "围绕核心指标完成分析，留存率提升 6.2 个百分点。",
+                    ],
+                }
+            ]
+        }
+    )
+
+    details, score = match_requirements(requirements, evidence)
+
+    assert score == 100.0
+    assert [detail["status"] for detail in details] == ["supported"] * 4
+    assert [detail["evidence_ids"] for detail in details] == [
+        ["workExperience:0:0"],
+        ["workExperience:0:1"],
+        ["workExperience:0:2"],
+        ["workExperience:0:3"],
+    ]
+
+
+def test_maximum_jd_rule_requirements_fit_the_job_contract() -> None:
+    text = ("Python SQL " + "x" * 300_000)[:300_000]
+
+    requirements = requirements_from_text(text)
+    job = JobInput(title="数据分析", text=text, requirements=requirements)
+
+    assert [requirement["name"] for requirement in requirements] == ["Python", "SQL"]
+    assert all(
+        0 < len(requirement["source_text"]) <= 3_000
+        and requirement["source_text"] in text
+        for requirement in requirements
+    )
+    assert len(job.requirements or []) == 2
+
+
+def test_descriptive_requirements_remain_conservative() -> None:
+    requirements = [
+        {
+            "id": "q-sql",
+            "name": "熟练使用 SQL",
+            "source_text": "熟练使用 SQL",
+            "priority": "required",
+        },
+        {
+            "id": "q-process",
+            "name": "推动产品流程优化",
+            "source_text": "推动产品流程优化",
+            "priority": "required",
+        },
+    ]
+    evidence = evidence_from_resume(
+        {
+            "workExperience": [
+                {
+                    "title": "产品运营",
+                    "description": ["计划学习 SQL。", "推动产品按期发布。"],
+                }
+            ]
+        }
+    )
+
+    details, score = match_requirements(requirements, evidence)
+
+    assert score == 0.0
+    assert [detail["status"] for detail in details] == ["pending", "pending"]
+
+
 def test_degree_unknown_and_date_overlap() -> None:
     data = {
         "education": [{"degree": "本科"}],
@@ -52,6 +192,34 @@ def test_degree_unknown_and_date_overlap() -> None:
     assert work_months(data) == 9
     assert conditions_for(data, "本科及以上，硕士优先")[0]["status"] == "met"
     assert conditions_for({}, "本科及以上")[0]["status"] == "unknown"
+
+
+@pytest.mark.parametrize("marker", ["至今", "现在", "Present", "present"])
+def test_work_months_supports_open_ended_ranges(marker: str) -> None:
+    data = {
+        "workExperience": [
+            {"years": f"2024.07 - {marker}"},
+            {"years": "2023.06 - 2023.12"},
+        ]
+    }
+
+    assert work_months(data, today=date(2026, 9, 11)) == 34
+
+
+def test_work_months_ignores_invalid_and_future_months() -> None:
+    data = {
+        "workExperience": [
+            {"years": "2024.00 - Present"},
+            {"years": "2024.07 - 2024.13"},
+            {"years": "2025.05 - 2025.04"},
+            {"years": "Present - 2024.07"},
+            {"years": "2027.01 - Present"},
+            {"years": "2027.01 - 2027.06"},
+            {"years": "2025.10 - 2027.03"},
+        ]
+    }
+
+    assert work_months(data, today=date(2026, 9, 11)) == 12
 
 
 def test_salary_units_dedup_and_demo_exclusion() -> None:

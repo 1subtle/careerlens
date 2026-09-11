@@ -376,7 +376,7 @@ export function ResumePanel({
               <textarea
                 autoFocus
                 rows={16}
-                maxLength={30000}
+                maxLength={300000}
                 value={text}
                 disabled={busy}
                 onChange={(e) => {

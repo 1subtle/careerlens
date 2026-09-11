@@ -79,115 +79,113 @@ export function MatchPanel({
       if (directionHistory !== null) setDirectionHistory(await careerApi.directionHistory());
     });
   return (
-    <>
-      <section className={s.panel}>
-        <p id="diagnosis-resume-help" className={s.note} role="status">
-          {resume
-            ? tr('本次分析使用：{0}。可在下方切换简历版本。', resume.title)
-            : state.resumes.length === 0
-              ? tr('请先保存一份简历，再进行诊断与优化。')
-              : tr('请先选择本次要分析的简历。')}
-        </p>
-        {state.resumes.length === 0 && (
-          <div className={s.actions}>
-            <button className={s.button} disabled={busy} onClick={() => onResume('new')}>
-              {tr('创建第一份简历')}
-            </button>
-          </div>
-        )}
-        <div className={s.toolbar}>
-          <label className={s.field}>
-            <span>{tr('选择已保存的简历')}</span>
-            <select
-              value={resume?.id ?? ''}
-              aria-describedby="diagnosis-resume-help"
-              disabled={busy}
-              onChange={(e) => {
-                setResumeId(e.target.value);
-                setMatch(null);
-                setDirections(null);
-              }}
-            >
-              <option value="">{tr('请选择')}</option>
-              {state.resumes.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className={s.field}>
-            <span>{tr('目标 JD（岗位方向分析可不选）')}</span>
-            <select
-              value={jobId}
-              disabled={busy}
-              onChange={(e) => {
-                setJobId(e.target.value);
-                setMatch(null);
-              }}
-            >
-              <option value="">{tr('请选择')}</option>
-              {state.jobs.map((j) => (
-                <option key={j.job_id} value={j.job_id}>
-                  {j.title || tr('未命名')} · {j.company}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div className={s.diagnosticActions}>
-          <button
-            className={s.button}
-            disabled={busy || !resume || !useAi}
-            onClick={analyzeDirections}
-          >
-            {' '}
-            {tr('分析适合的岗位方向')}{' '}
-          </button>
+    <div className={s.diagnosisLayout}>
+      {state.resumes.length === 0 ? (
+        <section className={`${s.panel} ${s.diagnosisEmpty}`} aria-label={tr('诊断与优化')}>
+          <p className={s.diagnosisEmptyMessage} role="status">
+            {tr('请先保存一份简历，再进行诊断与优化。')}
+          </p>
           <button
             className={`${s.button} ${s.primary}`}
-            disabled={busy || !valid}
-            onClick={() => analyzeMatch(jobId)}
+            disabled={busy}
+            onClick={() => onResume('new')}
           >
-            {' '}
-            {tr('分析目标 JD 匹配度')}{' '}
+            {tr('创建第一份简历')}
           </button>
-          <button
-            className={s.button}
-            disabled={busy || !resume || !useAi || state.jobs.length === 0}
-            onClick={analyzeDirections}
-          >
-            {' '}
-            {tr('推荐已保存岗位')}{' '}
-          </button>
-        </div>
-        <section className={s.diagnosticSubsection}>
-          <h3>{tr('诊断选项')}</h3>
-          <p className={s.muted}>
-            {useAi
-              ? tr('AI 辅助已开启：分析岗位适合度、匹配理由和改进方向。')
-              : tr('AI 辅助已关闭：当前分析材料覆盖度；开启后可分析岗位方向和推荐岗位。')}
-            {useAi && !state.model.configured && (
-              <>
-                {' '}
-                <Link href="/settings">{hosted ? tr('查看服务信息') : tr('配置分析模型')}</Link>
-              </>
-            )}
-          </p>
-          <label className={s.check}>
-            <input
-              type="checkbox"
-              checked={useSemantic}
-              disabled={busy}
-              onChange={(e) => setUseSemantic(e.target.checked)}
-            />{' '}
-            {tr('查找语义相关的经历（辅助 JD 匹配与比较）')}{' '}
-          </label>
-          {!state.semantic?.ready && (
-            <p className={s.muted}>{tr('语义模型未就绪，仍可进行 AI 分析与关键词证据核对。')}</p>
-          )}
         </section>
-      </section>
+      ) : (
+        <section className={`${s.panel} ${s.diagnosisSetup}`}>
+          <p id="diagnosis-resume-help" className={`${s.note} ${s.diagnosisContext}`} role="status">
+            {resume
+              ? tr('本次分析使用：{0}。可在下方切换简历版本。', resume.title)
+              : tr('请先选择本次要分析的简历。')}
+          </p>
+          <div className={s.toolbar}>
+            <label className={s.field}>
+              <span>{tr('选择已保存的简历')}</span>
+              <select
+                value={resume?.id ?? ''}
+                aria-describedby="diagnosis-resume-help"
+                disabled={busy}
+                onChange={(e) => {
+                  setResumeId(e.target.value);
+                  setMatch(null);
+                  setDirections(null);
+                }}
+              >
+                <option value="">{tr('请选择')}</option>
+                {state.resumes.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className={s.field}>
+              <span>{tr('目标 JD（岗位方向分析可不选）')}</span>
+              <select
+                value={jobId}
+                disabled={busy}
+                onChange={(e) => {
+                  setJobId(e.target.value);
+                  setMatch(null);
+                }}
+              >
+                <option value="">{tr('请选择')}</option>
+                {state.jobs.map((j) => (
+                  <option key={j.job_id} value={j.job_id}>
+                    {j.title || tr('未命名')} · {j.company}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className={s.diagnosticActions}>
+            <button
+              className={s.button}
+              disabled={busy || !resume || !useAi}
+              onClick={analyzeDirections}
+            >
+              {' '}
+              {tr('分析适合的岗位方向')}{' '}
+            </button>
+            <button
+              className={`${s.button} ${s.primary}`}
+              disabled={busy || !valid}
+              onClick={() => analyzeMatch(jobId)}
+            >
+              {' '}
+              {tr('分析目标 JD 匹配度')}{' '}
+            </button>
+          </div>
+          <section className={s.diagnosticSubsection}>
+            <h2>{tr('诊断选项')}</h2>
+            <p className={s.muted}>
+              {useAi
+                ? tr('AI 辅助已开启：分析岗位适合度、匹配理由和改进方向。')
+                : tr('AI 辅助已关闭：当前分析材料覆盖度；开启后可分析岗位方向和推荐岗位。')}
+              {useAi && !state.model.configured && (
+                <>
+                  {' '}
+                  <Link href="/settings">{hosted ? tr('查看服务信息') : tr('配置分析模型')}</Link>
+                </>
+              )}
+            </p>
+            <label className={s.check}>
+              <input
+                type="checkbox"
+                checked={useSemantic}
+                disabled={busy}
+                onChange={(e) => setUseSemantic(e.target.checked)}
+              />{' '}
+              {tr('查找语义相关的经历（辅助 JD 匹配与比较）')}{' '}
+            </label>
+            {!state.semantic?.ready && (
+              <p className={s.muted}>{tr('语义模型未就绪，仍可进行 AI 分析与关键词证据核对。')}</p>
+            )}
+          </section>
+        </section>
+      )}
       <details
         className={s.section}
         onToggle={(event) => {
@@ -285,235 +283,247 @@ export function MatchPanel({
           )}
         </>
       )}
-      {!match ? (
-        !directions && (
-          <p className={s.muted}>
-            {tr('选择简历后可以先分析岗位方向，或选择目标 JD 查看匹配证据。')}
-          </p>
-        )
-      ) : (
-        <>
-          {match.stale && (
-            <p className={s.note}>
-              {' '}
-              {tr(
-                '这是一份历史快照，原简历或岗位已修改。可以回看原记录；采纳新建议前请重新诊断。'
-              )}{' '}
-            </p>
-          )}
-          {match.retrieval?.mode === 'unavailable' && (
-            <p className={s.note}>{match.retrieval.message}</p>
-          )}
-          {match.retrieval?.mode === 'vector' && (
+      {(state.resumes.length > 0 || match) &&
+        (!match ? (
+          !directions && (
             <p className={s.muted}>
-              {tr('语义检索已完成。候选经历列在对应要求下，核对后可保存结果。')}
+              {tr('选择简历后可以先分析岗位方向，或选择目标 JD 查看匹配证据。')}
             </p>
-          )}
-          {match.ai_analysis ? (
-            <AiMatchResults analysis={match.ai_analysis} evidence={match.evidence} />
-          ) : (
-            <AnalysisSource mode="rules" analyzed_at={match.created_at} />
-          )}
-          <div className={s.scoreRow}>
-            <div>
-              <p className={s.eyebrow}>
-                {match.job.category || tr('目标岗位')} / {match.job.city || tr('城市未说明')}
+          )
+        ) : (
+          <>
+            {match.stale && (
+              <p className={s.note}>
+                {' '}
+                {tr(
+                  '这是一份历史快照，原简历或岗位已修改。可以回看原记录；采纳新建议前请重新诊断。'
+                )}{' '}
               </p>
-              <h2 style={{ marginTop: 12, marginBottom: 12 }}>
-                {match.job.title || tr('岗位诊断')}
-              </h2>
+            )}
+            {match.retrieval?.mode === 'unavailable' && (
+              <p className={s.note}>{match.retrieval.message}</p>
+            )}
+            {match.retrieval?.mode === 'vector' && (
               <p className={s.muted}>
-                {match.score === null
-                  ? tr('请先补充岗位要求。')
-                  : tr('看看已有的亮点，以及可以补充的经历。')}
+                {tr('语义检索已完成。候选经历列在对应要求下，核对后可保存结果。')}
               </p>
+            )}
+            {match.ai_analysis ? (
+              <AiMatchResults analysis={match.ai_analysis} evidence={match.evidence} />
+            ) : (
+              <AnalysisSource mode="rules" analyzed_at={match.created_at} />
+            )}
+            <div className={s.scoreRow}>
+              <div>
+                <p className={s.eyebrow}>
+                  {match.job.category || tr('目标岗位')} / {match.job.city || tr('城市未说明')}
+                </p>
+                <h2 style={{ marginTop: 12, marginBottom: 12 }}>
+                  {match.job.title || tr('岗位诊断')}
+                </h2>
+                <p className={s.muted}>
+                  {match.score === null
+                    ? tr('请先补充岗位要求。')
+                    : tr('看看已有的亮点，以及可以补充的经历。')}
+                </p>
+              </div>
+              <div className={s.score}>
+                {scoreText(match.score)}
+                <small>{tr('材料覆盖度 / 100')}</small>
+              </div>
             </div>
-            <div className={s.score}>
-              {scoreText(match.score)}
-              <small>{tr('材料覆盖度 / 100')}</small>
+            <div className={s.actions} style={{ marginBottom: 20 }}>
+              {Object.entries(labels).map(([key, label]) => (
+                <span key={key} className={s.stateTag} data-state={key}>
+                  {tr(label)}
+                </span>
+              ))}
             </div>
-          </div>
-          <div className={s.actions} style={{ marginBottom: 20 }}>
-            {Object.entries(labels).map(([key, label]) => (
-              <span key={key} className={s.stateTag} data-state={key}>
-                {tr(label)}
-              </span>
-            ))}
-          </div>
-          <section className={s.diagnosticEvidenceList} aria-label={tr('岗位要求与简历证据')}>
-            <h2>{tr('岗位要求与简历证据')}</h2>
-            {match.details.map((item) => (
-              <article className={s.diagnosticRequirement} key={item.id}>
-                <header className={s.diagnosticHeading}>
-                  <h3>{item.name}</h3>
-                  <span className={s.stateTag} data-state={item.status}>
-                    {tr(labels[item.status])}
-                  </span>
-                  <span className={s.muted}>
-                    {item.priority === 'preferred' ? tr('优先 / 加分') : tr('普通要求')}{' '}
-                    {tr('· 权重')} {item.weight}
-                    {' · '}
-                    {tr('材料贡献')} {item.contribution.toFixed(1)} {tr('分')}{' '}
-                  </span>
-                </header>
-                <p className={s.muted}>{tr('JD 原文')}</p>
-                <blockquote className={s.evidence}>{item.source_text}</blockquote>
-                <p>{item.reason}</p>
-                {item.evidence_ids.map((id) => {
-                  const evidence = match.evidence.find((e) => e.id === id);
-                  return evidence ? (
-                    <blockquote key={id} className={s.evidence}>
-                      <strong>
-                        {tr('简历原文 ·')} {evidence.title}
-                      </strong>
-                      <br />
-                      {evidence.text}
-                    </blockquote>
-                  ) : null;
-                })}
-                {!!item.candidates?.length && (
-                  <section className={s.diagnosticSubsection}>
-                    <h3>
-                      {tr('语义检索找到')} {item.candidates.length} {tr('段待核对经历')}
-                    </h3>
-                    <p className={s.muted}>{tr('候选尚未计入覆盖度，可在下方确认关联。')}</p>
-                    {item.candidates.map((candidate) => {
-                      const evidence = match.evidence.find((e) => e.id === candidate.evidence_id);
-                      return evidence ? (
-                        <blockquote className={s.evidence} key={evidence.id}>
-                          <strong>{evidence.title}</strong>
-                          <br />
-                          {evidence.text}
-                        </blockquote>
-                      ) : null;
-                    })}
-                  </section>
-                )}
-                <section className={s.diagnosticSubsection}>
-                  <h3>{tr('核对 / 修正此项')}</h3>
-                  <ReviewControl
-                    key={`${match.id}:${item.id}`}
-                    item={item}
-                    evidence={match.evidence}
-                    busy={busy || !!match.stale}
-                    onSave={(status, ids) =>
-                      void run(tr('保存核对结果'), async () => {
-                        setMatch(await careerApi.review(match.id, item.id, status, ids));
-                        await refresh();
-                      })
-                    }
-                  />
-                </section>
-              </article>
-            ))}
-          </section>
-          <section className={s.diagnosticSubsection}>
-            <h3>{tr('评分口径与导出')}</h3>
-            <p className={s.muted}>
-              {' '}
-              {tr(
-                '覆盖度 = 100 × Σ（权重 × 支持系数）/ Σ 权重。具体应用记 1，仅提及记 0.5，待确认或本人确认缺口记 0；总分保留一位小数。此分数衡量材料支持程度，AI 岗位适合度另列。'
-              )}{' '}
-            </p>
-            <button
-              className={s.button}
-              style={{ marginTop: 16 }}
-              onClick={() => saveJson(match, tr('CareerLens-诊断-{0}.json', match.id.slice(0, 8)))}
-            >
-              {' '}
-              {tr('导出含证据的诊断 JSON')}{' '}
-            </button>
-          </section>
-          <section className={s.section}>
-            <h2>{tr('单独核对的条件')}</h2>
-            <div className={s.conditions}>
-              {match.conditions.map((item) => (
-                <div className={s.condition} key={item.name}>
-                  <h3>{item.name}</h3>
-                  <span className={s.tag}>{tr(conditionLabels[item.status] || item.status)}</span>
-                  <p>{item.requirement}</p>
-                  <p className={s.muted}>{item.observed}</p>
-                  {item.confirmed_by === 'user' && (
-                    <p className={s.muted}>{tr('已由本人确认并保存')}</p>
+            <section className={s.diagnosticEvidenceList} aria-label={tr('岗位要求与简历证据')}>
+              <h2>{tr('岗位要求与简历证据')}</h2>
+              {match.details.map((item) => (
+                <article className={s.diagnosticRequirement} key={item.id}>
+                  <header className={s.diagnosticHeading}>
+                    <h3>{item.name}</h3>
+                    <span className={s.stateTag} data-state={item.status}>
+                      {tr(labels[item.status])}
+                    </span>
+                    <span className={s.muted}>
+                      {item.priority === 'preferred' ? tr('优先 / 加分') : tr('普通要求')}{' '}
+                      {tr('· 权重')} {item.weight}
+                      {' · '}
+                      {tr('材料贡献')} {item.contribution.toFixed(1)} {tr('分')}{' '}
+                    </span>
+                  </header>
+                  <p className={s.muted}>{tr('JD 原文')}</p>
+                  <blockquote className={s.evidence}>{item.source_text}</blockquote>
+                  <p>{item.reason}</p>
+                  {item.evidence_ids.map((id) => {
+                    const evidence = match.evidence.find((e) => e.id === id);
+                    return evidence ? (
+                      <blockquote key={id} className={s.evidence}>
+                        <strong>
+                          {tr('简历原文 ·')} {evidence.title}
+                        </strong>
+                        <br />
+                        {evidence.text}
+                      </blockquote>
+                    ) : null;
+                  })}
+                  {!!item.candidates?.length && (
+                    <section className={s.diagnosticSubsection}>
+                      <h3>
+                        {tr('语义检索找到')} {item.candidates.length} {tr('段待核对经历')}
+                      </h3>
+                      <p className={s.muted}>{tr('候选尚未计入覆盖度，可在下方确认关联。')}</p>
+                      {item.candidates.map((candidate) => {
+                        const evidence = match.evidence.find((e) => e.id === candidate.evidence_id);
+                        return evidence ? (
+                          <blockquote className={s.evidence} key={evidence.id}>
+                            <strong>{evidence.title}</strong>
+                            <br />
+                            {evidence.text}
+                          </blockquote>
+                        ) : null;
+                      })}
+                    </section>
                   )}
-                  {item.status !== 'not_stated' && (
-                    <ConditionControl
-                      key={`${match.id}:${item.name}`}
+                  <section className={s.diagnosticSubsection}>
+                    <h3>{tr('核对 / 修正此项')}</h3>
+                    <ReviewControl
+                      key={`${match.id}:${item.id}`}
                       item={item}
+                      evidence={match.evidence}
                       busy={busy || !!match.stale}
-                      onSave={(status, observed) =>
-                        void run(tr('保存条件确认'), async () => {
-                          setMatch(
-                            await careerApi.confirmCondition(match.id, item.name, status, observed)
-                          );
+                      onSave={(status, ids) =>
+                        void run(tr('保存核对结果'), async () => {
+                          setMatch(await careerApi.review(match.id, item.id, status, ids));
                           await refresh();
                         })
                       }
                     />
-                  )}
-                </div>
+                  </section>
+                </article>
               ))}
-            </div>
-          </section>
-          <RewritePanel
-            key={match.id}
-            match={match}
-            busy={busy}
-            useAi={useAi}
-            run={run}
-            refresh={refresh}
-            onResume={onResume}
-          />
-        </>
+            </section>
+            <section className={s.diagnosticSubsection}>
+              <h3>{tr('评分口径与导出')}</h3>
+              <p className={s.muted}>
+                {' '}
+                {tr(
+                  '覆盖度 = 100 × Σ（权重 × 支持系数）/ Σ 权重。具体应用记 1，仅提及记 0.5，待确认或本人确认缺口记 0；总分保留一位小数。此分数衡量材料支持程度，AI 岗位适合度另列。'
+                )}{' '}
+              </p>
+              <button
+                className={s.button}
+                style={{ marginTop: 16 }}
+                onClick={() =>
+                  saveJson(match, tr('CareerLens-诊断-{0}.json', match.id.slice(0, 8)))
+                }
+              >
+                {' '}
+                {tr('导出含证据的诊断 JSON')}{' '}
+              </button>
+            </section>
+            <section className={s.section}>
+              <h2>{tr('单独核对的条件')}</h2>
+              <div className={s.conditions}>
+                {match.conditions.map((item) => (
+                  <div className={s.condition} key={item.name}>
+                    <h3>{item.name}</h3>
+                    <span className={s.tag}>{tr(conditionLabels[item.status] || item.status)}</span>
+                    <p>{item.requirement}</p>
+                    <p className={s.muted}>{item.observed}</p>
+                    {item.confirmed_by === 'user' && (
+                      <p className={s.muted}>{tr('已由本人确认并保存')}</p>
+                    )}
+                    {item.status !== 'not_stated' && (
+                      <ConditionControl
+                        key={`${match.id}:${item.name}`}
+                        item={item}
+                        busy={busy || !!match.stale}
+                        onSave={(status, observed) =>
+                          void run(tr('保存条件确认'), async () => {
+                            setMatch(
+                              await careerApi.confirmCondition(
+                                match.id,
+                                item.name,
+                                status,
+                                observed
+                              )
+                            );
+                            await refresh();
+                          })
+                        }
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+            <RewritePanel
+              key={match.id}
+              match={match}
+              busy={busy}
+              useAi={useAi}
+              run={run}
+              refresh={refresh}
+              onResume={onResume}
+            />
+          </>
+        ))}
+      {state.resumes.length > 0 && (
+        <ComparePanel
+          key={resumeId}
+          state={state}
+          resumeId={resumeId}
+          busy={busy}
+          useSemantic={useSemantic}
+          useAi={useAi}
+          run={run}
+          refresh={refresh}
+          reviewedMatch={match}
+          onOpen={(value) => {
+            setMatch(value);
+            setJobId(value.job_id);
+          }}
+        />
       )}
-      <ComparePanel
-        key={resumeId}
-        state={state}
-        resumeId={resumeId}
-        busy={busy}
-        useSemantic={useSemantic}
-        useAi={useAi}
-        run={run}
-        refresh={refresh}
-        reviewedMatch={match}
-        onOpen={(value) => {
-          setMatch(value);
-          setJobId(value.job_id);
-        }}
-      />
-      <section className={s.section}>
-        <h3>{tr('历史诊断')}</h3>
-        <div className={s.actions}>
-          <label className={`${s.field} ${s.history}`} style={{ marginBottom: 0 }}>
-            <span>{tr('选择一次诊断')}</span>
-            <select
-              aria-label={tr('历史诊断')}
-              value={match?.id ?? ''}
-              disabled={busy}
-              onChange={(e) => {
-                const id = e.target.value;
-                if (id)
-                  void run(tr('读取历史诊断'), async () => {
-                    const value = await careerApi.getMatch(id);
-                    setMatch(value);
-                    setDirections(null);
-                    setResumeId(value.resume_id);
-                    setJobId(value.job_id);
-                  });
-              }}
-            >
-              <option value="">{tr('选择历史记录')}</option>
-              {state.matches.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {tr.date(m.created_at)} · {state.jobs.find((j) => j.job_id === m.job_id)?.title} ·{' '}
-                  {scoreText(m.score)}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </section>
-    </>
+      {(state.resumes.length > 0 || state.matches.length > 0) && (
+        <section className={s.section}>
+          <h2>{tr('历史诊断')}</h2>
+          <div className={s.actions}>
+            <label className={`${s.field} ${s.history}`} style={{ marginBottom: 0 }}>
+              <span>{tr('选择一次诊断')}</span>
+              <select
+                aria-label={tr('历史诊断')}
+                value={match?.id ?? ''}
+                disabled={busy}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  if (id)
+                    void run(tr('读取历史诊断'), async () => {
+                      const value = await careerApi.getMatch(id);
+                      setMatch(value);
+                      setDirections(null);
+                      setResumeId(value.resume_id);
+                      setJobId(value.job_id);
+                    });
+                }}
+              >
+                <option value="">{tr('选择历史记录')}</option>
+                {state.matches.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {tr.date(m.created_at)} · {state.jobs.find((j) => j.job_id === m.job_id)?.title}{' '}
+                    · {scoreText(m.score)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
 

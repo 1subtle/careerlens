@@ -14,6 +14,7 @@ from app.services.parser import (
     _extract_markdown_dates,
     has_meaningful_resume_content,
     parse_resume_to_json,
+    restore_contacts_from_markdown,
     restore_dates_from_markdown,
 )
 
@@ -217,3 +218,43 @@ class TestMeaningfulResumeContent:
         mock_complete_json.return_value = {"workExperience": [{}]}
         with pytest.raises(ValueError, match="empty structured resume"):
             await parse_resume_to_json("Jane Doe")
+
+
+class TestParseResumeContacts:
+    def test_handles_maximum_source_without_contact_tokens(self):
+        parsed = {"personalInfo": {"name": "林妍", "email": "", "phone": ""}}
+
+        assert restore_contacts_from_markdown(parsed, "项" * 300_000) == parsed
+
+    @pytest.mark.asyncio
+    @patch("app.services.parser.complete_json", new_callable=AsyncMock)
+    async def test_restores_contacts_omitted_by_llm(self, mock_complete_json):
+        mock_complete_json.return_value = {
+            "personalInfo": {"name": "林妍", "email": "", "phone": ""},
+            "summary": "数据分析师",
+        }
+
+        parsed = await parse_resume_to_json(
+            "姓名：林妍\n邮箱：linyan.test@example.com\n电话：138-0000-1234"
+        )
+
+        assert parsed["personalInfo"]["email"] == "linyan.test@example.com"
+        assert parsed["personalInfo"]["phone"] == "138-0000-1234"
+
+    @pytest.mark.asyncio
+    @patch("app.services.parser.complete_json", new_callable=AsyncMock)
+    async def test_keeps_contacts_returned_by_llm(self, mock_complete_json):
+        mock_complete_json.return_value = {
+            "personalInfo": {
+                "name": "林妍",
+                "email": "preferred@example.com",
+                "phone": "+86 139 1111 2222",
+            }
+        }
+
+        parsed = await parse_resume_to_json(
+            "邮箱：source@example.com\n电话：138-0000-1234"
+        )
+
+        assert parsed["personalInfo"]["email"] == "preferred@example.com"
+        assert parsed["personalInfo"]["phone"] == "+86 139 1111 2222"

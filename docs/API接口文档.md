@@ -129,7 +129,7 @@
 | --- | --- | --- |
 | `GET /api/v1/career/state` | 无 | `resumes,jobs,matches,model,semantic,rule_version`；诊断摘要最多 100 条 |
 | `POST /api/v1/career/demo` | 无 | 显式载入虚构示例后的 state；不覆盖个人材料 |
-| `POST /api/v1/career/resumes/parse` | `text` 1—30,000 字符、非纯空白；`use_ai=false` | `{data,source_text,mode}`；返回草稿，不入库 |
+| `POST /api/v1/career/resumes/parse` | `text` 1—300,000 字符、非纯空白；`use_ai=false` | `{data,source_text,mode}`；返回草稿，不入库 |
 | `POST /api/v1/career/resumes/file` | multipart `file,use_ai=false`；PDF/DOCX/TXT/MD，5 MiB | 同 parse；非积分 AI 失败可返回 rules + warning；积分错误直接返回 |
 | `POST /api/v1/career/resumes` | `ResumeInput` | 创建后的简历对象 |
 | `PUT /api/v1/career/resumes/{resume_id}` | `ResumeInput`，建议带 `expected_revision` | 更新后的简历对象；冲突 409 |
@@ -141,18 +141,18 @@ state 的 `resumes` 为 Resume[]，`jobs` 为 Job[]，均按创建时间倒序�
 
 | 模型/字段 | 类型 | 必填 | 默认、上限与语义 |
 | --- | --- | --- | --- |
-| TextInput.text | string | 是 | 1—30,000；去首尾空格，拒绝纯空白；用于简历/JD 解析 |
+| TextInput.text | string | 是 | 1—300,000；去首尾空格，拒绝纯空白；用于简历/JD 解析 |
 | TextInput.use_ai | boolean | 否 | false；true 调用模型，网站计积分 |
 | 文件 file | binary / multipart | 是 | 文件名扩展 PDF/DOCX/TXT/MD；最大 5×1024×1024 字节；TXT/MD 以 UTF-8 解码 |
 | 文件 use_ai | boolean / multipart | 否 | false；不要把文件改用 JSON Base64 提交 |
 | ResumeInput.title | string | 否 | “我的简历”；1—120 字符 |
 | ResumeInput.data | ResumeData | 是 | 完整结构化对象；缺少章节按其 schema 补默认 |
-| ResumeInput.source_text | string | 否 | 空字符串；最多 30,000；创建时空值改用序列化结构正文保存，更新时显式空值会清空原文 |
+| ResumeInput.source_text | string | 否 | 空字符串；最多 3,000,000；仅保存导入或粘贴的原文，不包含序列化的结构数据；更新时显式空值会清空原文 |
 | ResumeInput.expected_hash | string/null | 否 | null；更新兼容条件；不包含版式；无长度上限声明 |
 | ResumeInput.expected_revision | string/null | 否 | null；更新时优先；覆盖版式；无长度上限声明 |
 | ResumeInput.template_settings | TemplateSettings/null | 否 | null；创建时不提供则存 null，更新省略则保留，显式 null 清除 |
 
-`ResumeInput` 包含 `title`（1—120，默认“我的简历”）、`data:ResumeData`、可选 `source_text`（最多 30,000）、`expected_hash`、`expected_revision` 和 `template_settings`。更新时 `expected_revision` 优先于 `expected_hash`；前者覆盖排版，后者不包含排版。两个条件都省略时不检查这一编辑冲突。更新时省略原文或排版则保留，显式 `template_settings:null` 则清空已存排版。
+`ResumeInput` 包含 `title`（1—120，默认“我的简历”）、`data:ResumeData`、可选 `source_text`（最多 3,000,000）、`expected_hash`、`expected_revision` 和 `template_settings`。结构化 `data` 始终序列化到 `content`，导入或粘贴的原文独立保存于 `original_markdown`；新记录的 `source_text` 只返回后者，无原文的结构化简历返回空字符串。旧 `md` 记录没有独立原文时才回退读取 `content`，误标为 `md` 的 JSON 不会被当作原文。更新时 `expected_revision` 优先于 `expected_hash`；前者覆盖排版，后者不包含排版。两个条件都省略时不检查这一编辑冲突。更新时省略原文或排版则保留，显式空原文或 `template_settings:null` 分别清空已存原文或排版。
 
 `ResumeData` 包括 `personalInfo,summary,workExperience,education,personalProjects,additional,sectionMeta,customSections`，未提供的章节按 schema 默认值填充。照片字段 `personalInfo.photo` 仅接收有效 PNG/JPEG data URL，解码后上限 1 MiB，最长边 1,600，总像素 200 万；无独立“上传照片”后端路由。
 
@@ -169,7 +169,7 @@ state 的 `resumes` 为 Resume[]，`jobs` 为 Job[]，均按创建时间倒序�
 | sectionMeta[] | 默认 []；非空项需 `id,key,displayName,sectionType`；`isDefault=true,isVisible=true,order=0` |
 | customSections | 默认 {}；字典值为 CustomSection，按 `sectionType` 保存 text/strings/items，详见 [models.py](../app/apps/backend/app/schemas/models.py) |
 
-描述行样式与描述数组由模型规范化对齐。上述大多文字字段没有单独的 max_length 声明，不能将 30,000 字符的原文限制推定为整个嵌套 JSON 的统一限制；通用 AI 层另检查提示词大小。Career 常规模型默认忽略未知字段，TemplateSettings 与认证模型明确禁止额外字段。
+描述行样式与描述数组由模型规范化对齐。上述大多文字字段没有单独的 max_length 声明，不能将原文的 3,000,000 字符限制推定为整个嵌套 JSON 的统一限制；粘贴解析输入与 JD 正文限制为 300,000 字符，通用 AI 层另检查提示词大小。Career 常规模型默认忽略未知字段，TemplateSettings 与认证模型明确禁止额外字段。
 
 创建请求示例：
 
@@ -216,7 +216,7 @@ state 的 `resumes` 为 Resume[]，`jobs` 为 Job[]，均按创建时间倒序�
 
 | 字段 | 类型 | 必填 | 默认与限制 |
 | --- | --- | --- | --- |
-| text | string | 是 | 1—30,000，去首尾空格、拒绝空白；响应改名 content |
+| text | string | 是 | 1—300,000，去首尾空格、拒绝空白；响应改名 content |
 | title | string | 是 | 1—120 |
 | use_ai | boolean | 否 | false；为继承字段，保存本身不据此调用 AI，应先调用 jobs/parse |
 | company | string | 否 | 空字符串，最多 120 |
@@ -318,7 +318,7 @@ state 的 `resumes` 为 Resume[]，`jobs` 为 Job[]，均按创建时间倒序�
 ```json
 {
   "score": 100.0,
-  "rule_version": "career-1.1",
+  "rule_version": "career-1.2",
   "ai_analysis": null,
   "details": [{
     "id": "q1", "name": "Python", "source_text": "使用 Python 清洗数据",
@@ -403,7 +403,7 @@ AI 输出使用 [career_diagnosis.py](../app/apps/backend/app/services/career_di
     {"name": "到岗与实习时长", "requirement": "<规则提取说明>", "status": "not_stated", "observed": "<规则说明>"}
   ],
   "score": 100.0,
-  "rule_version": "career-1.1",
+  "rule_version": "career-1.2",
   "created_at": "2026-09-09T00:00:00+00:00",
   "retrieval": {"mode": "off"}
 }

@@ -113,7 +113,7 @@ export function JobsPanel({
           <span>{tr('粘贴 JD 原文（必填）')}</span>
           <textarea
             rows={10}
-            maxLength={30000}
+            maxLength={300000}
             value={job.text}
             onChange={(e) => update('text', e.target.value)}
             placeholder={tr('把岗位职责、任职要求等完整内容粘贴到这里。')}

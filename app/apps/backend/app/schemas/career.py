@@ -5,6 +5,11 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.ai_limits import (
+    MAX_REQUIREMENT_SOURCE_CHARACTERS,
+    MAX_SAVED_SOURCE_CHARACTERS,
+    MAX_TEXT_INPUT_CHARACTERS,
+)
 from app.schemas.models import ResumeData
 from app.schemas.template_settings import TemplateSettings
 
@@ -12,7 +17,7 @@ EvidenceStatus = Literal["supported", "mentioned", "pending", "gap"]
 
 
 class TextInput(BaseModel):
-    text: str = Field(min_length=1, max_length=30000)
+    text: str = Field(min_length=1, max_length=MAX_TEXT_INPUT_CHARACTERS)
     use_ai: bool = False
 
     @field_validator("text")
@@ -26,7 +31,7 @@ class TextInput(BaseModel):
 class ResumeInput(BaseModel):
     title: str = Field(default="我的简历", min_length=1, max_length=120)
     data: ResumeData
-    source_text: str = Field(default="", max_length=30000)
+    source_text: str = Field(default="", max_length=MAX_SAVED_SOURCE_CHARACTERS)
     expected_hash: str | None = None
     expected_revision: str | None = None
     template_settings: TemplateSettings | None = None
@@ -35,7 +40,10 @@ class ResumeInput(BaseModel):
 class Requirement(BaseModel):
     id: str = Field(min_length=1, max_length=100)
     name: str = Field(min_length=1, max_length=100)
-    source_text: str = Field(min_length=1, max_length=3000)
+    source_text: str = Field(
+        min_length=1,
+        max_length=MAX_REQUIREMENT_SOURCE_CHARACTERS,
+    )
     priority: Literal["required", "preferred"] = "required"
 
     @field_validator("name")

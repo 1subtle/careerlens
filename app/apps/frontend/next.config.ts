@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   experimental: {
     proxyTimeout: REQUEST_TIMEOUT_MS,
+    proxyClientMaxBodySize: '48mb',
     // Tree-shake barrel imports — saves ~200-800ms cold start per route
     optimizePackageImports: [
       'lucide-react',

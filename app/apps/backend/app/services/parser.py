@@ -487,6 +487,35 @@ _MONTH_RE = re.compile(
     r"|Dec(?:ember)?)",
     re.IGNORECASE,
 )
+_EMAIL_RE = re.compile(
+    r"(?<![A-Za-z0-9_.+-])[A-Za-z0-9_.+-]{1,64}"
+    r"@[A-Za-z0-9.-]{1,253}\.[A-Za-z]{2,63}"
+)
+_CHINESE_MOBILE_RE = re.compile(
+    r"(?<!\d)(?:\+?86[ \t-]?)?1[3-9]\d(?:[ \t-]?\d){8}(?!\d)"
+)
+
+
+def restore_contacts_from_markdown(
+    parsed_data: dict[str, Any],
+    markdown: str,
+) -> dict[str, Any]:
+    """Fill missing email and phone fields from explicit source text."""
+    personal_info = parsed_data.get("personalInfo")
+    if not isinstance(personal_info, dict):
+        return parsed_data
+
+    if not str(personal_info.get("email") or "").strip():
+        email = _EMAIL_RE.search(markdown)
+        if email:
+            personal_info["email"] = email.group(0)
+
+    if not str(personal_info.get("phone") or "").strip():
+        phone = _CHINESE_MOBILE_RE.search(markdown)
+        if phone:
+            personal_info["phone"] = phone.group(0)
+
+    return parsed_data
 
 
 def _extract_markdown_dates(markdown: str) -> list[str]:
@@ -841,6 +870,10 @@ async def parse_resume_to_json(markdown_text: str) -> dict[str, Any]:
         retries=3,
         response_validator=_validate_parsed_resume,
     )
+
+    # Contact details are factual source fields; restore obvious values when
+    # a provider omits them, while keeping any value it did return.
+    result = restore_contacts_from_markdown(result, markdown_text)
 
     # Patch dates: restore months the LLM may have dropped
     result = restore_dates_from_markdown(result, markdown_text)

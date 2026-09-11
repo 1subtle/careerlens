@@ -5,12 +5,14 @@ import html
 import json
 import re
 from collections import Counter, defaultdict
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
+from functools import lru_cache
 from typing import Any
 
+from app.ai_limits import MAX_REQUIREMENT_SOURCE_CHARACTERS
 from app.schemas.models import ResumeData
 
-RULE_VERSION = "career-1.1"
+RULE_VERSION = "career-1.2"
 # ponytail: a curated vocabulary covers the teaching dataset; grow it from reviewed JD errors.
 SKILLS = {
     "Python": ["python"],
@@ -22,6 +24,7 @@ SKILLS = {
     "Power BI": ["power bi", "powerbi"],
     "数据可视化": ["数据可视化", "可视化", "data visualization"],
     "数据分析": ["数据分析", "data analysis"],
+    "指标分析": ["核心指标", "量化结果", "key metrics", "metrics"],
     "数据清洗": ["数据清洗", "data cleaning"],
     "A/B Testing": ["a/b testing", "a/b test", "a/b测试", "ab测试", "ab testing"],
     "机器学习": ["机器学习", "machine learning"],
@@ -52,17 +55,32 @@ SKILLS = {
     "Figma": ["figma"],
     "需求分析": ["需求分析", "requirements analysis"],
     "需求调研": ["需求调研", "需求访谈", "需求调查", "requirements research"],
-    "用户研究": ["用户研究", "用户访谈", "user research"],
+    "用户研究": ["用户研究", "用户访谈", "访谈", "user research"],
     "原型设计": ["原型设计", "prototyping"],
     "产品设计": ["产品设计", "product design"],
     "功能设计": ["功能设计", "feature design"],
     "项目管理": ["项目管理", "project management"],
-    "沟通协作": ["沟通协作", "沟通能力", "团队协作", "communication"],
+    "沟通协作": [
+        "沟通协作",
+        "沟通能力",
+        "团队协作",
+        "跨团队协作",
+        "跨团队沟通",
+        "协作",
+        "协调",
+        "communication",
+    ],
 }
+_EMAIL_RE = re.compile(
+    r"(?<![A-Za-z0-9_.+-])[A-Za-z0-9_.+-]{1,64}"
+    r"@[A-Za-z0-9.-]{1,253}\.[A-Za-z]{2,63}"
+)
+_MAX_LOCAL_SECTION_ITEMS = 200
+_MAX_LOCAL_LIST_ITEMS = 1_000
 
 
 def plain(value: str) -> str:
-    return html.unescape(re.sub(r"<[^>]+>", "", value)).strip()
+    return html.unescape(re.sub(r"<[^<>]+>", "", value)).strip()
 
 
 def fingerprint(value: Any) -> str:
@@ -73,6 +91,7 @@ def fingerprint(value: Any) -> str:
     ).hexdigest()
 
 
+@lru_cache(maxsize=256)
 def skill_pattern(name: str) -> re.Pattern[str]:
     aliases = SKILLS.get(name, [name])
     # ASCII boundaries preserve Chinese adjacency while distinguishing Java/JavaScript and R/React.
@@ -92,10 +111,24 @@ def clauses(text: str) -> list[str]:
     ]
 
 
+def source_window(text: str, start: int, end: int) -> str:
+    if len(text) <= MAX_REQUIREMENT_SOURCE_CHARACTERS:
+        return text
+    padding = MAX_REQUIREMENT_SOURCE_CHARACTERS - (end - start)
+    window_start = max(0, start - padding // 2)
+    window_start = min(
+        window_start,
+        len(text) - MAX_REQUIREMENT_SOURCE_CHARACTERS,
+    )
+    return text[window_start : window_start + MAX_REQUIREMENT_SOURCE_CHARACTERS]
+
+
 def requirements_from_text(text: str) -> list[dict[str, str]]:
     found: dict[str, dict[str, str]] = {}
     for part in clauses(text):
         for name in skills_in(part):
+            match = skill_pattern(name).search(part)
+            assert match is not None
             priority = (
                 "preferred"
                 if re.search(
@@ -107,7 +140,7 @@ def requirements_from_text(text: str) -> list[dict[str, str]]:
                 found[name] = {
                     "id": "q-" + fingerprint(name)[:10],
                     "name": name,
-                    "source_text": part,
+                    "source_text": source_window(part, match.start(), match.end()),
                     "priority": priority,
                 }
     return list(found.values())
@@ -118,7 +151,7 @@ def parse_resume_local(text: str) -> dict[str, Any]:
     data = ResumeData().model_dump(mode="json")
     lines = [
         re.sub(r"\*\*|__", "", plain(line)).strip("#*•- \t|")
-        for line in re.sub(r"!\[[^\]]*\]\([^\n]*\)", "", text).splitlines()
+        for line in re.sub(r"!\[[^\[\]\n]*\]\([^()\n]*\)", "", text).splitlines()
         if plain(line).strip() and not re.fullmatch(r"[| :\-]+", line)
     ]
     lines = [line for line in lines if line]
@@ -146,12 +179,14 @@ def parse_resume_local(text: str) -> dict[str, Any]:
         lines[0],
     )
     first = re.sub(r"^(姓名|name)\s*[:：]\s*", "", name_line, flags=re.IGNORECASE)
-    first = re.split(r"\s+求职意向[:：]?", first)[0].strip()
+    first = re.split(r"(?<!\s)\s+求职意向[:：]?", first, maxsplit=1)[0].strip()
     if len(first) <= 20 and not re.search(
         r"简历|resume|经历|教育|技能|优势|奖项|@|：", first, re.IGNORECASE
     ):
         data["personalInfo"]["name"] = first
     summaries: list[str] = []
+    education_institutions: set[str] = set()
+    education_descriptions: dict[int, list[str]] = {}
     for line in lines:
         heading = next(
             (
@@ -171,7 +206,7 @@ def parse_resume_local(text: str) -> dict[str, Any]:
             if intent:
                 data["personalInfo"]["title"] = intent[1]
             continue
-        email = re.search(r"[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}", line)
+        email = _EMAIL_RE.search(line)
         phone = re.search(r"(?<!\d)1[3-9]\d{9}(?!\d)", line)
         if email or phone:
             if email:
@@ -185,16 +220,22 @@ def parse_resume_local(text: str) -> dict[str, Any]:
                 inline[1]
             )
             if destination:
-                data["additional"][destination].extend(
-                    (skills_in(inline[2]) if inline[1] == "技能" else []) or [inline[2]]
+                values = (
+                    (skills_in(inline[2]) if inline[1] == "技能" else [])
+                    or [inline[2]]
                 )
+                remaining = _MAX_LOCAL_LIST_ITEMS - len(
+                    data["additional"][destination]
+                )
+                data["additional"][destination].extend(values[: max(0, remaining)])
             else:
                 summaries.append(inline[2])
             continue
         if re.search(
             r"一等奖|二等奖|三等奖|金奖|银奖|奖学金|三好学生|国家级结题|H奖|亚军", line
         ):
-            data["additional"]["awards"].append(line)
+            if len(data["additional"]["awards"]) < _MAX_LOCAL_LIST_ITEMS:
+                data["additional"]["awards"].append(line)
             continue
         dates = date_range.search(line)
         school = re.search(r"大学|学院|university|college", line, re.IGNORECASE)
@@ -206,7 +247,10 @@ def parse_resume_local(text: str) -> dict[str, Any]:
             institution = re.sub(
                 r"^在读院校[:：]\s*", "", date_range.sub("", line)
             ).strip(" |｜")
-            if not any(institution in e["institution"] for e in data["education"]):
+            if (
+                institution not in education_institutions
+                and len(data["education"]) < _MAX_LOCAL_SECTION_ITEMS
+            ):
                 data["education"].append(
                     {
                         "id": len(data["education"]) + 1,
@@ -218,6 +262,7 @@ def parse_resume_local(text: str) -> dict[str, Any]:
                         "years": dates[0] if dates else "",
                     }
                 )
+                education_institutions.add(institution)
             section = "education"
             continue
         if (
@@ -242,23 +287,33 @@ def parse_resume_local(text: str) -> dict[str, Any]:
             )
             items = data[section]
             title = date_range.sub("", line).strip(" |｜")
-            role = re.search(r"\s+(项目负责人|主要成员|团队成员|负责人|组长)$", title)
-            name = title[: role.start()].strip() if role else title
-            items.append(
-                {
-                    "id": len(items) + 1,
-                    "years": dates[0],
-                    "description": [],
-                    **(
-                        {"name": name, "role": role[1] if role else ""}
-                        if section == "personalProjects"
-                        else {"title": name, "company": ""}
-                    ),
-                }
+            role = re.search(
+                r"(?<!\s)\s+(项目负责人|主要成员|团队成员|负责人|组长)$",
+                title,
             )
+            name = title[: role.start()].strip() if role else title
+            if len(items) < _MAX_LOCAL_SECTION_ITEMS:
+                items.append(
+                    {
+                        "id": len(items) + 1,
+                        "years": dates[0],
+                        "description": [],
+                        **(
+                            {"name": name, "role": role[1] if role else ""}
+                            if section == "personalProjects"
+                            else {"title": name, "company": ""}
+                        ),
+                    }
+                )
             continue
         if section == "skills":
-            data["additional"]["technicalSkills"].extend(skills_in(line) or [line])
+            values = skills_in(line) or [line]
+            remaining = _MAX_LOCAL_LIST_ITEMS - len(
+                data["additional"]["technicalSkills"]
+            )
+            data["additional"]["technicalSkills"].extend(
+                values[: max(0, remaining)]
+            )
         elif section == "education" and data["education"]:
             item = data["education"][-1]
             degree = next(
@@ -268,11 +323,12 @@ def parse_resume_local(text: str) -> dict[str, Any]:
                 item["degree"] = degree
             if dates:
                 item["years"] = dates[0]
-            item["description"] = "\n".join(
-                filter(None, [item.get("description"), line])
-            )
+            descriptions = education_descriptions.setdefault(item["id"], [])
+            if len(descriptions) < _MAX_LOCAL_LIST_ITEMS:
+                descriptions.append(line)
         elif section == "awards":
-            data["additional"]["awards"].append(line)
+            if len(data["additional"]["awards"]) < _MAX_LOCAL_LIST_ITEMS:
+                data["additional"]["awards"].append(line)
         elif section in ("personalProjects", "workExperience"):
             items = data[section]
             if not items or (len(line) <= 40 and re.search(r"项目$|实习$", line)):
@@ -286,11 +342,16 @@ def parse_resume_local(text: str) -> dict[str, Any]:
                     if section == "personalProjects"
                     else {"title": line, "company": ""}
                 )
-                items.append(item)
-            else:
+                if len(items) < _MAX_LOCAL_SECTION_ITEMS:
+                    items.append(item)
+            elif len(items[-1]["description"]) < _MAX_LOCAL_LIST_ITEMS:
                 items[-1]["description"].append(line.lstrip("-• "))
         else:
             summaries.append(line)
+    for item in data["education"]:
+        descriptions = education_descriptions.get(item["id"])
+        if descriptions:
+            item["description"] = "\n".join(descriptions)
     data["summary"] = "\n".join(summaries)
     data["additional"]["technicalSkills"] = list(
         dict.fromkeys(data["additional"]["technicalSkills"])
@@ -359,7 +420,7 @@ def evidence_value(name: str, item: dict[str, Any]) -> float:
         if negative or re.search(r"^(?:\s)*(?:尚未|不会|未掌握|待学习)", after):
             values.append(0.0)
         elif item["kind"] == "experience" and re.search(
-            r"使用|利用|完成|实现|开发|构建|分析|设计|负责|搭建|清洗|编写|built|developed|used|implemented|analy[sz]ed",
+            r"使用|利用|完成|实现|开发|构建|分析|设计|负责|搭建|清洗|编写|协调|built|developed|used|implemented|analy[sz]ed",
             part,
             re.IGNORECASE,
         ):
@@ -383,8 +444,12 @@ def match_requirements(
 ) -> tuple[list[dict[str, Any]], float | None]:
     details = []
     for requirement in requirements:
+        terms = skills_in(
+            f"{requirement['name']} {requirement.get('source_text', '')}"
+        ) or [requirement["name"]]
         candidates = [
-            (evidence_value(requirement["name"], item), item) for item in evidence
+            (max(evidence_value(term, item) for term in terms), item)
+            for item in evidence
         ]
         value = max((v for v, _ in candidates), default=0)
         ids = [item["id"] for v, item in candidates if v == value and v > 0]
@@ -409,16 +474,35 @@ def match_requirements(
     return details, score_details(details)
 
 
-def work_months(data: dict[str, Any]) -> int:
+def work_months(data: dict[str, Any], *, today: date | None = None) -> int:
+    today = today or datetime.now(UTC).date()
+    current = today.year * 12 + today.month
     months: set[int] = set()
     for item in data.get("workExperience", []):
-        dates = re.findall(r"(20\d{2})[./年-](\d{1,2})", item.get("years", ""))
-        if len(dates) != 2:
+        years = item.get("years", "")
+        date_matches = list(re.finditer(r"(20\d{2})[./年-](\d{1,2})", years))
+        dates = [match.groups() for match in date_matches]
+        open_ended = len(dates) == 1 and bool(
+            re.search(
+                r"至今|现在|\bpresent\b",
+                years[date_matches[0].end() :],
+                re.IGNORECASE,
+            )
+        )
+        if len(dates) != 2 and not (len(dates) == 1 and open_ended):
             continue
-        (y1, m1), (y2, m2) = [(int(y), int(m)) for y, m in dates]
-        if not (1 <= m1 <= 12 and 1 <= m2 <= 12):
+        parsed = [(int(y), int(m)) for y, m in dates]
+        y1, m1 = parsed[0]
+        if not 1 <= m1 <= 12:
             continue
-        start, end = y1 * 12 + m1, y2 * 12 + m2
+        start = y1 * 12 + m1
+        if len(parsed) == 1:
+            end = current
+        else:
+            y2, m2 = parsed[1]
+            if not 1 <= m2 <= 12:
+                continue
+            end = min(y2 * 12 + m2, current)
         if 0 <= end - start <= 600:
             months.update(range(start, end + 1))
     return len(months)
@@ -460,7 +544,10 @@ def conditions_for(data: dict[str, Any], text: str) -> list[dict[str, str]]:
             "observed": education or "简历未填写学历",
         }
     ]
-    years = re.search(r"(\d+)\s*年(?:以上)?[^\n。]{0,8}(?:经验|经历)", text)
+    years = re.search(
+        r"(?<!\d)(\d{1,2})(?!\d)\s*年(?:以上)?[^\n。]{0,8}(?:经验|经历)",
+        text,
+    )
     months = work_months(data)
     result.append(
         {
@@ -470,11 +557,26 @@ def conditions_for(data: dict[str, Any], text: str) -> list[dict[str, str]]:
             "observed": f"明确工作区间去重后 {months} 个月；岗位相关性需确认",
         }
     )
-    onsite = re.search(r"[^\n。]*(?:每周.{0,8}天|到岗|实习.{0,8}个月)[^\n。]*", text)
+    onsite_marker = re.search(r"每周.{0,8}天|到岗|实习.{0,8}个月", text)
+    onsite = None
+    if onsite_marker:
+        start = max(
+            text.rfind("\n", 0, onsite_marker.start()),
+            text.rfind("。", 0, onsite_marker.start()),
+        ) + 1
+        ends = [
+            boundary
+            for boundary in (
+                text.find("\n", onsite_marker.end()),
+                text.find("。", onsite_marker.end()),
+            )
+            if boundary >= 0
+        ]
+        onsite = text[start : min(ends) if ends else len(text)].strip()
     result.append(
         {
             "name": "到岗与实习时长",
-            "requirement": onsite.group() if onsite else "JD 未说明",
+            "requirement": onsite or "JD 未说明",
             "status": "unknown" if onsite else "not_stated",
             "observed": "由本人根据课程和时间安排确认",
         }
@@ -595,15 +697,26 @@ def market_summary(
         )
     ]
     skills: Counter[str] = Counter()
-    categories: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    categories: dict[
+        str,
+        list[tuple[dict[str, Any], set[str]]],
+    ] = defaultdict(list)
     salaries = []
+    prepared: list[tuple[dict[str, Any], set[str]]] = []
     for job in selected:
+        stored_requirements = job.get("requirements")
+        requirements = (
+            stored_requirements
+            if stored_requirements is not None
+            else requirements_from_text(job["content"])
+        )
         names = {
             r["name"]
-            for r in job.get("requirements", requirements_from_text(job["content"]))
+            for r in requirements
         }
+        prepared.append((job, names))
         skills.update(names)
-        categories[job.get("category") or "其他"].append(job)
+        categories[job.get("category") or "其他"].append((job, names))
         salary = parse_salary(job.get("salary_text", ""))
         if salary["mid"] is not None:
             salaries.append(
@@ -620,12 +733,8 @@ def market_summary(
             "value": count,
             "job_ids": [
                 j["job_id"]
-                for j in selected
-                if name
-                in {
-                    r["name"]
-                    for r in j.get("requirements", requirements_from_text(j["content"]))
-                }
+                for j, names in prepared
+                if name in names
             ],
         }
         for name, count in skills.most_common(30)
@@ -633,15 +742,8 @@ def market_summary(
     distribution = []
     for category, items in categories.items():
         counts: Counter[str] = Counter()
-        for job in items:
-            counts.update(
-                {
-                    r["name"]
-                    for r in job.get(
-                        "requirements", requirements_from_text(job["content"])
-                    )
-                }
-            )
+        for _, names in items:
+            counts.update(names)
         distribution.append(
             {
                 "category": category,

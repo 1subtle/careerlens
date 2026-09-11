@@ -2,12 +2,21 @@
 
 import { useCareerText } from '@/lib/i18n/career';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AccountCenter } from '@/components/account/account-center';
 import type { AccountSection } from '@/lib/account-sections';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FileText, BriefcaseBusiness, ScanText, Search, Plus, Settings2 } from 'lucide-react';
+import {
+  FileText,
+  BriefcaseBusiness,
+  ScanText,
+  Search,
+  Plus,
+  Settings2,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from 'lucide-react';
 import { careerApi, type CareerState } from '@/lib/api/career';
 import { ResumePanel } from './resume-panel';
 import { JobsPanel } from './jobs-panel';
@@ -51,7 +60,9 @@ export default function CareerWorkspace({
   const [error, setError] = useState(false);
   const [useAi, setUseAi] = useState(true);
   const [dirty, setDirty] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const content = useRef<HTMLDivElement>(null);
+  const status = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (content.current) content.current.scrollTop = 0;
   }, [page, accountSection]);
@@ -64,6 +75,35 @@ export default function CareerWorkspace({
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
   }, [dirty, accountDirty]);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const mobile = window.matchMedia('(max-width: 760px)');
+    const showMobileNavigation = () => {
+      if (mobile.matches) setSidebarCollapsed(false);
+    };
+    showMobileNavigation();
+    mobile.addEventListener('change', showMobileNavigation);
+    return () => mobile.removeEventListener('change', showMobileNavigation);
+  }, []);
+  useLayoutEffect(() => {
+    const main = content.current;
+    const bar = status.current;
+    if (!main || !bar) {
+      main?.style.removeProperty('--workspace-status-height');
+      return;
+    }
+    const syncHeight = () =>
+      main.style.setProperty('--workspace-status-height', `${bar.offsetHeight}px`);
+    syncHeight();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(syncHeight);
+    observer?.observe(bar);
+    window.addEventListener('resize', syncHeight);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', syncHeight);
+      main.style.removeProperty('--workspace-status-height');
+    };
+  }, [notice, accountSection]);
   const showAccount = (section: AccountSection | null) => {
     setAccountSection(section);
     const url = new URL(window.location.href);
@@ -158,8 +198,19 @@ export default function CareerWorkspace({
   const selectedResume = state?.resumes.find((item) => item.id === resumeId);
   const selectedJob = state?.jobs.find((item) => item.job_id === jobId);
   return (
-    <div className={s.workspace} data-hosted={hosted} data-account={!!accountSection}>
-      <aside className={s.sidebar} aria-label={tr('工作区侧栏')}>
+    <div
+      className={s.workspace}
+      data-hosted={hosted}
+      data-account={!!accountSection}
+      data-sidebar-collapsed={sidebarCollapsed}
+    >
+      <aside
+        id="workspace-sidebar"
+        className={s.sidebar}
+        aria-label={tr('工作区侧栏')}
+        aria-hidden={sidebarCollapsed || undefined}
+        inert={sidebarCollapsed}
+      >
         <div className={s.brand}>
           <Image src="/illustrations/careerlens-icon.webp" width={44} height={44} alt="" priority />
           <span className={s.brandName}>
@@ -296,9 +347,26 @@ export default function CareerWorkspace({
       </aside>
       <div ref={content} className={s.main} aria-busy={busy}>
         <header className={s.topbar}>
-          <div className={s.topbarTitle}>
-            <h1>{tr(current.name)}</h1>
-            <p>{tr(current.hint)}</p>
+          <div className={s.topbarLead}>
+            <button
+              type="button"
+              className={s.sidebarToggle}
+              aria-controls="workspace-sidebar"
+              aria-expanded={!sidebarCollapsed}
+              aria-label={tr(sidebarCollapsed ? '展开侧栏' : '收起侧栏')}
+              title={tr(sidebarCollapsed ? '展开侧栏' : '收起侧栏')}
+              onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+            >
+              {sidebarCollapsed ? (
+                <PanelLeftOpen size={18} aria-hidden="true" />
+              ) : (
+                <PanelLeftClose size={18} aria-hidden="true" />
+              )}
+            </button>
+            <div className={s.topbarTitle}>
+              <h1>{tr(current.name)}</h1>
+              <p>{tr(current.hint)}</p>
+            </div>
           </div>
           <div className={s.topbarMeta}>
             <div className={s.accountMeta}>
@@ -323,6 +391,7 @@ export default function CareerWorkspace({
               }
               width={76}
               height={54}
+              loading="eager"
               alt=""
             />
           </div>
@@ -335,7 +404,12 @@ export default function CareerWorkspace({
           </p>
         )}
         {notice && !accountSection && (
-          <div className={s.status} role={error ? 'alert' : 'status'} data-error={error}>
+          <div
+            ref={status}
+            className={s.status}
+            role={error ? 'alert' : 'status'}
+            data-error={error}
+          >
             <span>{tr(notice)}</span>
             {!busy && (
               <button onClick={() => setNotice('')} aria-label={tr('关闭提示')}>
