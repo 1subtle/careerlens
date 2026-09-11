@@ -27,7 +27,7 @@ cd careerlens
 docker compose up --build -d
 ```
 
-打开 **http://127.0.0.1:3000**。首次构建会下载依赖、字体、Chromium 和语义检索模型，需要联网。容器内包含前端、后端与 PDF 运行环境，数据保存在 Docker 卷中。
+打开 [http://127.0.0.1:3000](http://127.0.0.1:3000)。首次构建会下载依赖、字体、Chromium 和语义检索模型，需要联网。容器内包含前端、后端与 PDF 运行环境，数据保存在 Docker 卷中。
 
 ### 本地源码
 
@@ -38,7 +38,7 @@ bash scripts/setup.sh
 bash scripts/dev.sh
 ```
 
-打开 **http://127.0.0.1:3000**；API 文档位于 **http://127.0.0.1:8000/docs**。按 Ctrl+C 停止服务。Linux 系统依赖、Windows WSL2、端口调整和故障处理见[运行指南](docs/系统运行说明.md)。
+打开 [http://127.0.0.1:3000](http://127.0.0.1:3000)；API 文档位于 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)。按 Ctrl+C 停止服务。Linux 系统依赖、Windows WSL2、端口调整和故障处理见[运行指南](docs/系统运行说明.md)。
 
 本地 AI 配置入口为侧栏“模型设置”。网站部署由运营者通过环境变量配置模型、邮件和认证服务，参见[网站部署指南](docs/网站部署指南.md)。
 
