@@ -24,3 +24,8 @@ deploy/secrets/
 *.pfx
 id_rsa
 id_ed25519
+
+# Local build, delivery and backup outputs
+dist/
+backups/
+.ruff_cache/

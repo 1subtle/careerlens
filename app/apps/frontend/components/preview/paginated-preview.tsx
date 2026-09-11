@@ -41,6 +41,9 @@ export function PaginatedPreview({
   const [zoom, setZoom] = useState(0.6);
   const [showMargins, setShowMargins] = useState(false);
   const [autoZoom, setAutoZoom] = useState(true);
+  useEffect(() => {
+    containerRef.current?.scrollTo?.({ top: 0 });
+  }, [settings.template]);
   const resumeSettings: TemplateSettings = {
     ...settings,
     margins: { top: 0, bottom: 0, left: 0, right: 0 },
@@ -119,7 +122,10 @@ export function PaginatedPreview({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Controls bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-steel-grey bg-secondary shrink-0">
+      <div
+        data-preview-controls
+        className="flex items-center justify-between px-4 py-2 border-b border-steel-grey bg-secondary shrink-0"
+      >
         <div className="flex items-center gap-2">
           {/* Zoom controls */}
           <Button

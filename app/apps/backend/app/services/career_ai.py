@@ -31,6 +31,7 @@ class CareerAIOutputError(ValueError):
             "invalid_citation",
             "unsupported_claim",
             "invalid_review",
+            "unchanged_draft",
         ],
         feedback: str,
     ):
@@ -48,7 +49,7 @@ def model_info() -> dict[str, Any]:
     }
 
 
-async def ask_json(prompt: str, validator: Any = None) -> dict[str, Any]:
+async def ask_json(prompt: str, validator: Any = None, *, max_output_tokens: int = 3000) -> dict[str, Any]:
     if not model_info()["configured"]:
         raise ValueError("请先在设置中配置模型；也可以使用规则模式。")
 
@@ -78,7 +79,7 @@ async def ask_json(prompt: str, validator: Any = None) -> dict[str, Any]:
                 raise ValueError("CareerLens 输出未通过来源或结构校验") from None
 
         feedback = ""
-        max_tokens = 3000
+        max_tokens = max_output_tokens
         for attempt in range(2):
             failure = None
             rejected = None
@@ -179,7 +180,18 @@ async def rewrite(
         "还希望补充哪些数据规模、产出或结果？",
     ]
     if use_ai:
-        validate = lambda value: validate_draft(value, sources, require_star=True)
+        retried = False
+        def validate(value: dict) -> dict:
+            nonlocal retried
+            result = validate_draft(value, sources, require_star=True)
+            if nearly_unchanged(evidence["text"], result["draft"]):
+                retried = True
+                raise CareerAIOutputError(
+                    "unchanged_draft",
+                    "正文仍与原文一致或改动过少。请重组叙述顺序或句式，不能仅替换标点、连接词或个别词语，输出直接可用的改写正文；"
+                    "保留原有事实与参与程度，同步更新 claims 和 reason，不添加新事实。",
+                )
+            return result
         prompt = build_rewrite_prompt(sources, requirements, job)
         payload = validate(await ask_json(prompt, validate))
         payload["fact_check"] = {
@@ -190,7 +202,7 @@ async def rewrite(
         improvement = {
             "status": "unchanged" if unchanged else "improved",
             "summary": payload["reason"],
-            "retried": False,
+            "retried": retried,
         }
         mode = "ai"
     else:

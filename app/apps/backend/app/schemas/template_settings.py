@@ -41,6 +41,11 @@ class TemplateSettings(PrintOptions):
         "latex",
         "clean",
         "vivid",
+        "campus",
+        "ledger",
+        "timeline",
+        "fresh",
+        "sidebar",
     ] = "swiss-single"
     pageSize: Literal["A4", "LETTER"] = "A4"
     margins: Margins = Field(default_factory=Margins)

@@ -108,7 +108,7 @@ describe('continuous resume document', () => {
     expect(saved.customSections?.customList.strings).toEqual(['原有条目', '', '新条目']);
     expect(saved.sectionMeta?.find((section) => section.id === 'education')).toMatchObject({
       isVisible: false,
-      order: 2,
+      order: 1,
     });
     expect(screen.getByDisplayValue('教育经历原文')).toBeVisible();
   });

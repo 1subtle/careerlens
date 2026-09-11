@@ -141,7 +141,12 @@ function parseTemplate(value: string | undefined): TemplateType {
     value === 'modern-two-column' ||
     value === 'latex' ||
     value === 'clean' ||
-    value === 'vivid'
+    value === 'vivid' ||
+    value === 'campus' ||
+    value === 'ledger' ||
+    value === 'timeline' ||
+    value === 'fresh' ||
+    value === 'sidebar'
   ) {
     return value;
   }

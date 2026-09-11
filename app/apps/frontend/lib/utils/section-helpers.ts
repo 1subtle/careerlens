@@ -30,7 +30,7 @@ export const DEFAULT_SECTION_META: SectionMeta[] = [
     sectionType: 'text',
     isDefault: true,
     isVisible: true,
-    order: 1,
+    order: 2,
   },
   {
     id: 'workExperience',
@@ -39,7 +39,7 @@ export const DEFAULT_SECTION_META: SectionMeta[] = [
     sectionType: 'itemList',
     isDefault: true,
     isVisible: true,
-    order: 2,
+    order: 3,
   },
   {
     id: 'education',
@@ -48,7 +48,7 @@ export const DEFAULT_SECTION_META: SectionMeta[] = [
     sectionType: 'itemList',
     isDefault: true,
     isVisible: true,
-    order: 3,
+    order: 1,
   },
   {
     id: 'personalProjects',
@@ -128,7 +128,26 @@ export function withLocalizedDefaultSections(
  * Get section metadata from resume data, falling back to defaults.
  */
 export function getSectionMeta(resumeData: ResumeData): SectionMeta[] {
-  return resumeData.sectionMeta?.length ? resumeData.sectionMeta : DEFAULT_SECTION_META;
+  if (!resumeData.sectionMeta?.length) return DEFAULT_SECTION_META;
+  const sections = resumeData.sectionMeta;
+  // Upgrade the former default order, while retaining manually arranged sections.
+  const formerOrder = [
+    'personalInfo',
+    'summary',
+    'workExperience',
+    'education',
+    'personalProjects',
+    'additional',
+  ];
+  const usesFormerDefault =
+    sections.length === formerOrder.length &&
+    sections.every((section) => section.isDefault && formerOrder[section.order] === section.key);
+  return usesFormerDefault
+    ? sections.map((section) => ({
+        ...section,
+        order: DEFAULT_SECTION_META.find((item) => item.key === section.key)!.order,
+      }))
+    : sections;
 }
 
 /**

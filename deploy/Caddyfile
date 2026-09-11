@@ -17,7 +17,3 @@
         header_up X-Forwarded-Proto https
     }
 }
-
-www.careerlens.cc, careerlens-studio.japaneast.cloudapp.azure.com {
-    redir https://{$CAREERLENS_DOMAIN}{uri} permanent
-}

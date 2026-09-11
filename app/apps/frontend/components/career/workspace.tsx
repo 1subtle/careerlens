@@ -345,7 +345,7 @@ export default function CareerWorkspace({
           )}
         </div>
       </aside>
-      <div ref={content} className={s.main} aria-busy={busy}>
+      <div ref={content} className={s.main} aria-busy={busy} data-workspace-main>
         <header className={s.topbar}>
           <div className={s.topbarLead}>
             <button

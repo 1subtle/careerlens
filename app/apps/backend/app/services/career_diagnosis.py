@@ -38,12 +38,21 @@ class Action(Finding):
     action_type: Literal["expression", "verify_fact", "practice"]
 
 
+class RequirementMatch(Output):
+    requirement_id: str = Field(min_length=1, max_length=200)
+    status: Literal["matched", "partial", "missing"]
+    reason: str = Field(min_length=1, max_length=500)
+    resume_refs: list[ResumeRef] = Field(default_factory=list, max_length=3)
+    suggestion: str = Field(default="", max_length=500)
+
+
 class Assessment(Output):
     fit_score: float = Field(ge=0, le=100, allow_inf_nan=False)
     summary: str = Field(min_length=1, max_length=2000)
     strengths: list[Finding] = Field(max_length=5)
     gaps: list[Gap] = Field(max_length=5)
     actions: list[Action] = Field(min_length=1, max_length=5)
+    requirement_matches: list[RequirementMatch] = Field(default_factory=list, max_length=80)
 
 
 class Direction(Output):
@@ -156,8 +165,8 @@ action_type 使用 expression 表示仅重组现有事实的表达调整；verif
 """
 
 
-async def _structured_answer(prompt: str, validate: Any) -> dict:
-    candidate = validate(await career_ai.ask_json(prompt, validate))
+async def _structured_answer(prompt: str, validate: Any, *, max_output_tokens: int = 3000) -> dict:
+    candidate = validate(await career_ai.ask_json(prompt, validate, max_output_tokens=max_output_tokens))
     return {
         **candidate,
         "fact_check": {
@@ -178,6 +187,7 @@ async def _structured_answer(prompt: str, validate: Any) -> dict:
 
 async def analyze_match(evidence: list[dict], job: dict) -> dict[str, Any]:
     by_id = {item["id"]: item for item in evidence}
+    requirements = job.get("requirements") or []
 
     def validate(value: dict) -> dict:
         parsed = Assessment.model_validate(value)
@@ -185,6 +195,17 @@ async def analyze_match(evidence: list[dict], job: dict) -> dict[str, Any]:
             for finding in group:
                 _resume_refs(finding.resume_refs, by_id)
                 _jd_refs(finding.jd_refs, job["content"])
+        if requirements:
+            expected = {item["id"] for item in requirements}
+            actual = [item.requirement_id for item in parsed.requirement_matches]
+            if set(actual) != expected or len(actual) != len(expected):
+                raise ValueError("requirement_matches 须逐项覆盖所有给定岗位要求，ID 不重复、不遗漏。")
+        for item in parsed.requirement_matches:
+            _resume_refs(item.resume_refs, by_id)
+            if item.status != "missing" and not item.resume_refs:
+                raise ValueError("已匹配或部分匹配的要求须提供简历原文引用。")
+            if item.status != "matched" and not item.suggestion:
+                raise ValueError("部分匹配或未体现的要求须指出具体补充内容及建议填写的位置。")
         return parsed.model_dump()
 
     prompt = (
@@ -193,7 +214,12 @@ async def analyze_match(evidence: list[dict], job: dict) -> dict[str, Any]:
 综合职责、业务场景、项目/工作经验、技能和教育背景，不要只数关键词。可迁移能力说明与岗位的关联。
 核心职责与必需条件决定主要判断，优先条件作为加分项；明显不匹配的岗位优先说明更合适的入门方向和准备路径。
 fit_score 为0–100的模型判断，非规则覆盖度或录用概率：0–24证据很少、25–49少量相关、50–69部分匹配、70–84多数核心要求有依据、85–100核心职责及条件证据充分。分数必须与优势/缺口一致。
-返回 {fit_score,summary,strengths,gaps,actions}。每项为 {title,detail,resume_refs,jd_refs}，actions每项另需action_type:'expression'|'verify_fact'|'practice'。
+返回 {fit_score,summary,strengths,gaps,actions,requirement_matches}。strengths/gaps/actions每项为 {title,detail,resume_refs,jd_refs}，actions每项另需action_type:'expression'|'verify_fact'|'practice'。
+requirement_matches 按给定 requirements 逐项返回 {requirement_id,status,reason,resume_refs,suggestion}。
+先遍历全部简历材料，理解同义表达、项目背景和可迁移能力，再逐项判断，不能要求简历照抄JD。
+status: matched 表示该项已有充分经历支撑，partial 表示部分职责或可迁移能力有依据，missing 表示查阅后仍未体现。
+复合要求需要逐项考虑：做过调研但没有功能设计应为partial，不能因一个关键词把整项判为matched。
+reason不超过60字，引用最多2段，每段quote不超过80字；suggestion不超过70字，说明在哪段经历补充什么职责、工具、交付物或结果，已有充分依据时可为空。不要泛泛要求补充相关经历，不得将未体现判断为本人不会。
 各列表最多3项，每个detail不超过180字，优先最影响申请的判断与行动；summary不超过200字。
 给出相关简历和JD的参考引用，没有对应简历内容时resume_refs可为空。
 至少一项行动说明应修改哪段经历、怎样突出贡献，或提供具体的补充建议。
@@ -201,12 +227,13 @@ fit_score 为0–100的模型判断，非规则覆盖度或录用概率：0–24
         + json.dumps(
             {
                 "evidence": evidence,
+                "requirements": requirements,
                 "job": {"title": job.get("title", ""), "content": job["content"]},
             },
             ensure_ascii=False,
         )
     )
-    result = await _structured_answer(prompt, validate)
+    result = await _structured_answer(prompt, validate, max_output_tokens=6000)
     labels = {
         "expression": "表达调整",
         "verify_fact": "补充建议",

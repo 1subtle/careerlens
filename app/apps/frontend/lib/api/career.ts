@@ -49,6 +49,7 @@ export interface Evidence {
 }
 export type EvidenceStatus = 'supported' | 'mentioned' | 'pending' | 'gap';
 export interface MatchDetail extends Requirement {
+  confirmed_by?: 'user';
   status: EvidenceStatus;
   weight: number;
   value: number;
@@ -85,6 +86,13 @@ export interface AiMatchAnalysis {
   gaps: AnalysisFinding[];
   actions: AnalysisFinding[];
   score_note: string;
+  requirement_matches?: {
+    requirement_id: string;
+    status: 'matched' | 'partial' | 'missing';
+    reason: string;
+    resume_refs: ResumeReference[];
+    suggestion: string;
+  }[];
 }
 export interface CareerDirections {
   history_id?: string;

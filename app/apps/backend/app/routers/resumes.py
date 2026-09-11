@@ -9,6 +9,7 @@ import unicodedata
 from collections.abc import Awaitable
 from pathlib import Path
 from typing import Any, NoReturn
+from urllib.parse import urlencode
 from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
@@ -60,6 +61,8 @@ from app.schemas import (
     UpdateTitleRequest,
     normalize_resume_data,
 )
+from app.schemas.template_settings import TemplateSettings
+
 from app.services.parser import (
     DocumentResourceLimitError,
     MAX_EXTRACTED_TEXT_BYTES,
@@ -1962,6 +1965,7 @@ async def update_resume_endpoint(
 @router.get("/{resume_id}/pdf")
 async def download_resume_pdf(
     resume_id: str,
+    request: Request,
     template: str = Query("swiss-single"),
     pageSize: str = Query("A4", pattern="^(A4|LETTER)$"),
     marginTop: int = Query(10, ge=5, le=25),
@@ -2001,40 +2005,38 @@ async def download_resume_pdf(
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    # Build print URL with all settings
-    params = (
-        f"template={template}"
-        f"&pageSize={pageSize}"
-        f"&marginTop={marginTop}"
-        f"&marginBottom={marginBottom}"
-        f"&marginLeft={marginLeft}"
-        f"&marginRight={marginRight}"
-        f"&sectionSpacing={sectionSpacing}"
-        f"&itemSpacing={itemSpacing}"
-        f"&lineHeight={lineHeight}"
-        f"&fontSize={fontSize}"
-        f"&headerScale={headerScale}"
-        f"&headerFont={headerFont}"
-        f"&bodyFont={bodyFont}"
-        f"&compactMode={str(compactMode).lower()}"
-        f"&showContactIcons={str(showContactIcons).lower()}"
-        f"&accentColor={accentColor}"
-    )
-    if lang:
-        params = f"{params}&lang={lang}"
-    url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
-
-    # Use the exact margins provided; compact mode only affects spacing.
-    pdf_margins = {
-        "top": marginTop,
-        "right": marginRight,
-        "bottom": marginBottom,
-        "left": marginLeft,
+    print_options = {
+        "template": template, "pageSize": pageSize,
+        "marginTop": marginTop, "marginBottom": marginBottom,
+        "marginLeft": marginLeft, "marginRight": marginRight,
+        "sectionSpacing": sectionSpacing, "itemSpacing": itemSpacing, "lineHeight": lineHeight,
+        "fontSize": fontSize, "headerScale": headerScale,
+        "headerFont": headerFont, "bodyFont": bodyFont,
+        "compactMode": compactMode, "showContactIcons": showContactIcons, "accentColor": accentColor,
     }
+    if resume.get("template_settings"):
+        saved = TemplateSettings.model_validate(resume["template_settings"])
+        saved_options = {
+            "template": saved.template, "pageSize": saved.pageSize,
+            "marginTop": saved.margins.top, "marginBottom": saved.margins.bottom,
+            "marginLeft": saved.margins.left, "marginRight": saved.margins.right,
+            "sectionSpacing": saved.spacing.section, "itemSpacing": saved.spacing.item,
+            "lineHeight": saved.spacing.lineHeight, "fontSize": saved.fontSize.base,
+            "headerScale": saved.fontSize.headerScale, "headerFont": saved.fontSize.headerFont,
+            "bodyFont": saved.fontSize.bodyFont, "compactMode": saved.compactMode,
+            "showContactIcons": saved.showContactIcons, "accentColor": saved.accentColor,
+        }
+        # Quick exports inherit the saved layout; explicit preview settings take precedence.
+        print_options.update({key: value for key, value in saved_options.items() if key not in request.query_params})
+    params = {key: str(value).lower() if isinstance(value, bool) else value for key, value in print_options.items()}
+    if lang:
+        params["lang"] = lang
+    url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{urlencode(params)}"
+    pdf_margins = {side: print_options[f"margin{side.title()}"] for side in ("top", "right", "bottom", "left")}
 
     # Render PDF with margins applied to every page
     try:
-        pdf_bytes = await render_resume_pdf(url, pageSize, margins=pdf_margins)
+        pdf_bytes = await render_resume_pdf(url, print_options["pageSize"], margins=pdf_margins)
     except PDFRenderError as e:
         raise HTTPException(status_code=503, detail=str(e))
 

@@ -2,7 +2,7 @@
 
 import { useCareerText } from '@/lib/i18n/career';
 
-import { useRef, useState } from 'react';
+import { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   careerApi,
@@ -60,11 +60,20 @@ export function MatchPanel({
 }: Props) {
   const tr = useCareerText();
   const hosted = useAuth()?.session?.mode === 'hosted';
+  const rewriteRef = useRef<{ generate: (id: string) => void }>(null);
   const [match, setMatch] = useState<Match | null>(null);
   const [directions, setDirections] = useState<CareerDirections | null>(null);
   const [directionHistory, setDirectionHistory] = useState<DirectionHistoryItem[] | null>(null);
   const [useSemantic, setUseSemantic] = useState(state.semantic?.ready ?? false);
   const resume = state.resumes.find((item) => item.id === resumeId);
+  const associationStatuses =
+    match?.details.map((item) =>
+      item.confirmed_by === 'user'
+        ? { supported: 'matched', mentioned: 'partial', pending: 'missing', gap: 'missing' }[
+            item.status
+          ]
+        : match.ai_analysis?.requirement_matches?.find((r) => r.requirement_id === item.id)?.status
+    ) ?? [];
   const valid = !!resume && state.jobs.some((job) => job.job_id === jobId);
   const analyzeMatch = (targetId: string) =>
     void run(tr('分析目标岗位匹配度'), async () => {
@@ -309,105 +318,196 @@ export function MatchPanel({
               </p>
             )}
             {match.ai_analysis ? (
-              <AiMatchResults analysis={match.ai_analysis} evidence={match.evidence} />
+              <AiMatchResults
+                analysis={match.ai_analysis}
+                evidence={match.evidence}
+                busy={busy || !!match.stale}
+                onRewrite={(id) => rewriteRef.current?.generate(id)}
+              />
             ) : (
               <AnalysisSource mode="rules" analyzed_at={match.created_at} />
             )}
-            <div className={s.scoreRow}>
-              <div>
-                <p className={s.eyebrow}>
-                  {match.job.category || tr('目标岗位')} / {match.job.city || tr('城市未说明')}
-                </p>
-                <h2 style={{ marginTop: 12, marginBottom: 12 }}>
-                  {match.job.title || tr('岗位诊断')}
-                </h2>
-                <p className={s.muted}>
-                  {match.score === null
-                    ? tr('请先补充岗位要求。')
-                    : tr('看看已有的亮点，以及可以补充的经历。')}
-                </p>
-              </div>
-              <div className={s.score}>
-                {scoreText(match.score)}
-                <small>{tr('材料覆盖度 / 100')}</small>
+            <div className={s.matchIntro}>
+              <p className={s.eyebrow}>{tr('经历与岗位要求')}</p>
+              <h2>{tr('已有经历如何匹配，还需要补充什么')}</h2>
+              <p className={s.muted}>
+                {tr('逐项查看已关联的经历，直接改写相关段落，或按提示补充具体信息。')}
+              </p>
+              <div className={s.actions}>
+                {match.ai_analysis?.requirement_matches?.length ? (
+                  <>
+                    <span className={s.stateTag} data-state="supported">
+                      {tr('已匹配')}{' '}
+                      {associationStatuses.filter((status) => status === 'matched').length}
+                    </span>
+                    <span className={s.stateTag} data-state="mentioned">
+                      {tr('可进一步完善')}{' '}
+                      {associationStatuses.filter((status) => status === 'partial').length}
+                    </span>
+                    <span className={s.stateTag} data-state="pending">
+                      {tr('尚未体现')}{' '}
+                      {associationStatuses.filter((status) => status === 'missing').length}
+                    </span>
+                  </>
+                ) : (
+                  <p>
+                    {tr('当前为关键词关联结果。重新运行 AI 匹配，可逐项分析同义表达与可迁移经历。')}
+                  </p>
+                )}
               </div>
             </div>
-            <div className={s.actions} style={{ marginBottom: 20 }}>
-              {Object.entries(labels).map(([key, label]) => (
-                <span key={key} className={s.stateTag} data-state={key}>
-                  {tr(label)}
-                </span>
-              ))}
-            </div>
+            <RewritePanel
+              key={match.id}
+              rewriteRef={rewriteRef}
+              match={match}
+              busy={busy}
+              useAi={useAi}
+              run={run}
+              refresh={refresh}
+              onResume={onResume}
+            />
             <section className={s.diagnosticEvidenceList} aria-label={tr('岗位要求与简历证据')}>
               <h2>{tr('岗位要求与简历证据')}</h2>
-              {match.details.map((item) => (
-                <article className={s.diagnosticRequirement} key={item.id}>
-                  <header className={s.diagnosticHeading}>
-                    <h3>{item.name}</h3>
-                    <span className={s.stateTag} data-state={item.status}>
-                      {tr(labels[item.status])}
-                    </span>
-                    <span className={s.muted}>
-                      {item.priority === 'preferred' ? tr('优先 / 加分') : tr('普通要求')}{' '}
-                      {tr('· 权重')} {item.weight}
-                      {' · '}
-                      {tr('材料贡献')} {item.contribution.toFixed(1)} {tr('分')}{' '}
-                    </span>
-                  </header>
-                  <p className={s.muted}>{tr('JD 原文')}</p>
-                  <blockquote className={s.evidence}>{item.source_text}</blockquote>
-                  <p>{item.reason}</p>
-                  {item.evidence_ids.map((id) => {
-                    const evidence = match.evidence.find((e) => e.id === id);
-                    return evidence ? (
-                      <blockquote key={id} className={s.evidence}>
-                        <strong>
-                          {tr('简历原文 ·')} {evidence.title}
-                        </strong>
-                        <br />
-                        {evidence.text}
-                      </blockquote>
-                    ) : null;
-                  })}
-                  {!!item.candidates?.length && (
-                    <section className={s.diagnosticSubsection}>
-                      <h3>
-                        {tr('语义检索找到')} {item.candidates.length} {tr('段待核对经历')}
-                      </h3>
-                      <p className={s.muted}>{tr('候选尚未计入覆盖度，可在下方确认关联。')}</p>
-                      {item.candidates.map((candidate) => {
-                        const evidence = match.evidence.find((e) => e.id === candidate.evidence_id);
-                        return evidence ? (
-                          <blockquote className={s.evidence} key={evidence.id}>
-                            <strong>{evidence.title}</strong>
-                            <br />
-                            {evidence.text}
-                          </blockquote>
-                        ) : null;
-                      })}
-                    </section>
-                  )}
-                  <section className={s.diagnosticSubsection}>
-                    <h3>{tr('核对 / 修正此项')}</h3>
-                    <ReviewControl
-                      key={`${match.id}:${item.id}`}
-                      item={item}
-                      evidence={match.evidence}
-                      busy={busy || !!match.stale}
-                      onSave={(status, ids) =>
-                        void run(tr('保存核对结果'), async () => {
-                          setMatch(await careerApi.review(match.id, item.id, status, ids));
-                          await refresh();
-                        })
-                      }
-                    />
-                  </section>
-                </article>
-              ))}
+              {match.details.map((item) => {
+                const ai =
+                  item.confirmed_by === 'user'
+                    ? undefined
+                    : match.ai_analysis?.requirement_matches?.find(
+                        (r) => r.requirement_id === item.id
+                      );
+                const ids = ai ? ai.resume_refs.map((r) => r.evidence_id) : item.evidence_ids;
+                const editable = ids.find((id) =>
+                  match.evidence.some(
+                    (e) => e.id === id && ['experience', 'summary'].includes(e.kind)
+                  )
+                );
+                return (
+                  <article className={s.diagnosticRequirement} key={item.id}>
+                    <header className={s.diagnosticHeading}>
+                      <h3>{item.name}</h3>
+                      <span
+                        className={s.stateTag}
+                        data-state={
+                          ai
+                            ? { matched: 'supported', partial: 'mentioned', missing: 'pending' }[
+                                ai.status
+                              ]
+                            : item.status
+                        }
+                      >
+                        {ai
+                          ? tr(
+                              { matched: '已匹配', partial: '可进一步完善', missing: '尚未体现' }[
+                                ai.status
+                              ]
+                            )
+                          : tr(labels[item.status])}
+                      </span>
+                      <span className={s.muted}>
+                        {item.priority === 'preferred' ? tr('优先 / 加分') : tr('普通要求')}{' '}
+                      </span>
+                    </header>
+                    <p className={s.muted}>{tr('JD 原文')}</p>
+                    <blockquote className={s.evidence}>{item.source_text}</blockquote>
+                    <p>{ai?.reason ?? item.reason}</p>
+                    {ids.map((id) => {
+                      const evidence = match.evidence.find((e) => e.id === id);
+                      return evidence ? (
+                        <blockquote key={id} className={s.evidence}>
+                          <strong>
+                            {tr('简历原文 ·')} {evidence.title}
+                          </strong>
+                          <br />
+                          {evidence.text}
+                        </blockquote>
+                      ) : null;
+                    })}
+                    {ai?.suggestion && (
+                      <p className={s.supplementNote}>
+                        <strong>{tr('建议补充')} · </strong>
+                        {ai.suggestion}
+                      </p>
+                    )}
+                    <div className={s.actions}>
+                      {editable && (
+                        <button
+                          className={`${s.button} ${s.primary}`}
+                          disabled={busy || !!match.stale}
+                          onClick={() => rewriteRef.current?.generate(editable)}
+                        >
+                          {tr('直接改写这段经历')}
+                        </button>
+                      )}
+                      <button
+                        className={s.button}
+                        disabled={busy}
+                        onClick={() => onResume(match.resume_id)}
+                      >
+                        {tr('到简历中补充')}
+                      </button>
+                    </div>
+                    {!ai && !!item.candidates?.length && (
+                      <section className={s.diagnosticSubsection}>
+                        <h3>
+                          {tr('语义检索找到')} {item.candidates.length} {tr('段待核对经历')}
+                        </h3>
+                        <p className={s.muted}>{tr('候选尚未计入覆盖度，可在下方确认关联。')}</p>
+                        {item.candidates.map((candidate) => {
+                          const evidence = match.evidence.find(
+                            (e) => e.id === candidate.evidence_id
+                          );
+                          return evidence ? (
+                            <blockquote className={s.evidence} key={evidence.id}>
+                              <strong>{evidence.title}</strong>
+                              <br />
+                              {evidence.text}
+                            </blockquote>
+                          ) : null;
+                        })}
+                      </section>
+                    )}
+                    <details className={s.diagnosticSubsection}>
+                      <summary>{tr('核对 / 修正此项')}</summary>
+                      <ReviewControl
+                        key={`${match.id}:${item.id}`}
+                        item={
+                          ai
+                            ? {
+                                ...item,
+                                evidence_ids: ai.status === 'missing' ? [] : ids,
+                                status:
+                                  ai.status === 'missing'
+                                    ? 'pending'
+                                    : ai.status === 'matched' &&
+                                        ids.some((id) =>
+                                          match.evidence.some(
+                                            (e) => e.id === id && e.kind === 'experience'
+                                          )
+                                        )
+                                      ? 'supported'
+                                      : 'mentioned',
+                              }
+                            : item
+                        }
+                        evidence={match.evidence}
+                        busy={busy || !!match.stale}
+                        onSave={(status, ids) =>
+                          void run(tr('保存核对结果'), async () => {
+                            setMatch(await careerApi.review(match.id, item.id, status, ids));
+                            await refresh();
+                          })
+                        }
+                      />
+                    </details>
+                  </article>
+                );
+              })}
             </section>
-            <section className={s.diagnosticSubsection}>
-              <h3>{tr('评分口径与导出')}</h3>
+            <details className={s.diagnosticSubsection}>
+              <summary>{tr('关键词核对详情与导出')}</summary>
+              <p>
+                {tr('关键词材料覆盖度')}：{scoreText(match.score)} / 100
+              </p>
               <p className={s.muted}>
                 {' '}
                 {tr(
@@ -424,7 +524,7 @@ export function MatchPanel({
                 {' '}
                 {tr('导出含证据的诊断 JSON')}{' '}
               </button>
-            </section>
+            </details>
             <section className={s.section}>
               <h2>{tr('单独核对的条件')}</h2>
               <div className={s.conditions}>
@@ -461,15 +561,6 @@ export function MatchPanel({
                 ))}
               </div>
             </section>
-            <RewritePanel
-              key={match.id}
-              match={match}
-              busy={busy}
-              useAi={useAi}
-              run={run}
-              refresh={refresh}
-              onResume={onResume}
-            />
           </>
         ))}
       {state.resumes.length > 0 && (
@@ -514,8 +605,8 @@ export function MatchPanel({
                 <option value="">{tr('选择历史记录')}</option>
                 {state.matches.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {tr.date(m.created_at)} · {state.jobs.find((j) => j.job_id === m.job_id)?.title}{' '}
-                    · {scoreText(m.score)}
+                    {tr.date(m.created_at)} ·{' '}
+                    {state.jobs.find((j) => j.job_id === m.job_id)?.title}{' '}
                   </option>
                 ))}
               </select>
@@ -652,6 +743,7 @@ function ReviewControl({
 }
 
 function RewritePanel({
+  rewriteRef,
   match,
   busy,
   useAi,
@@ -659,6 +751,7 @@ function RewritePanel({
   refresh,
   onResume,
 }: {
+  rewriteRef: React.Ref<{ generate: (id: string) => void }>;
   match: Match;
   busy: boolean;
   useAi: boolean;
@@ -678,13 +771,44 @@ function RewritePanel({
     typeof draft?.model === 'object' && draft.model
       ? draft.model
       : { provider: draft?.provider, model: draft?.model ?? undefined };
+  const panel = useRef<HTMLElement>(null);
+  const output = useRef<HTMLDivElement>(null);
+  const revealDraft = useRef(false);
+  useEffect(() => {
+    if (revealDraft.current) {
+      output.current?.scrollIntoView({ behavior: 'instant', block: 'start' });
+      revealDraft.current = false;
+    }
+  }, [draft?.id]);
+  const generate = (id: string, supplements = facts) => {
+    setSectionId(id);
+    setFacts(supplements);
+    panel.current?.scrollIntoView({ behavior: 'instant', block: 'start' });
+    void run(useAi ? tr('直接改写经历') : tr('整理内容草稿'), async () => {
+      const next = await careerApi.rewrite(
+        match.id,
+        id,
+        supplements
+          .split('\n')
+          .map((x) => x.trim())
+          .filter(Boolean),
+        useAi
+      );
+      revealDraft.current = true;
+      setDraft(next);
+      setAfter(null);
+    });
+  };
+  useImperativeHandle(rewriteRef, () => ({
+    generate: (id) => generate(id, id === sectionId ? facts : ''),
+  }));
   return (
-    <section className={s.section}>
-      <h2>{tr('把一段经历写清楚')}</h2>
+    <section ref={panel} className={`${s.section} ${s.rewriteWorkbench}`}>
+      <h2>{tr('AI 直接改写')}</h2>
       <p className={s.muted}>
         {' '}
         {tr(
-          '结合岗位要求，按情境、任务、行动和结果整理这一段经历。可补充背景或说明希望调整的内容。'
+          '选择一段经历，AI 会结合岗位要求直接生成可用正文。补充信息可留空，生成后可采纳为定向版简历。'
         )}{' '}
       </p>
       <div className={s.split} style={{ marginTop: 24 }}>
@@ -716,24 +840,9 @@ function RewritePanel({
           <button
             className={`${s.button} ${s.primary}`}
             disabled={busy || !sectionId || match.stale}
-            onClick={() =>
-              void run(useAi ? tr('生成 STAR 建议') : tr('整理内容草稿'), async () => {
-                setDraft(
-                  await careerApi.rewrite(
-                    match.id,
-                    sectionId,
-                    facts
-                      .split('\n')
-                      .map((x) => x.trim())
-                      .filter(Boolean),
-                    useAi
-                  )
-                );
-                setAfter(null);
-              })
-            }
+            onClick={() => generate(sectionId)}
           >
-            {useAi ? tr('生成 STAR 定向建议') : tr('生成整理草稿')}
+            {useAi ? tr('直接生成改写正文') : tr('生成整理草稿')}
           </button>
         </div>
         <aside className={s.note}>
@@ -774,7 +883,7 @@ function RewritePanel({
         </label>
       )}
       {draft && (
-        <div className={s.section}>
+        <div ref={output} className={s.section} style={{ scrollMarginTop: 24 }}>
           <div className={s.actions} style={{ marginBottom: 24 }}>
             <span className={s.tag}>{draft.mode === 'ai' ? tr('AI 改写') : tr('内容整理')}</span>
             <span className={s.tag}>
@@ -792,18 +901,51 @@ function RewritePanel({
             analyzed_at={draft.analyzed_at}
           />
           <RewriteComparison before={beforeText ?? ''} after={draft.draft} />
+          {draft.status === 'draft' && (
+            <>
+              <div className={s.actions}>
+                <button
+                  className={`${s.button} ${s.primary}`}
+                  disabled={busy || match.stale}
+                  onClick={() =>
+                    void run(tr('采纳并创建定向版'), async () => {
+                      const result = await careerApi.apply(draft.id);
+                      setDraft(result.rewrite);
+                      await refresh();
+                    })
+                  }
+                >
+                  {' '}
+                  {tr('采纳并生成独立版本')}{' '}
+                </button>
+                <button
+                  className={s.button}
+                  disabled={busy}
+                  onClick={() =>
+                    void run(tr('拒绝建议'), async () => setDraft(await careerApi.reject(draft.id)))
+                  }
+                >
+                  {' '}
+                  {tr('拒绝建议')}{' '}
+                </button>
+              </div>
+            </>
+          )}
           {draft.improvement && draft.improvement.summary !== draft.reason && (
             <p className={s.muted}>{draft.improvement.summary}</p>
           )}
           <h3 className={s.diagnosticSubsection}>{tr('改进理由')}</h3>
           <p>{draft.reason}</p>
-          <RewriteGuidance
-            draft={draft}
-            onSupplement={() => {
-              setSectionId(draft.section_id);
-              factsInput.current?.focus();
-            }}
-          />
+          <details className={s.diagnosticSubsection}>
+            <summary>{tr('查看 STAR 分析与补充建议')}</summary>
+            <RewriteGuidance
+              draft={draft}
+              onSupplement={() => {
+                setSectionId(draft.section_id);
+                factsInput.current?.focus();
+              }}
+            />
+          </details>
           {!!draft.changes?.length && (
             <div className={s.section}>
               <h3>{tr('本次修改类型')}</h3>
@@ -847,36 +989,6 @@ function RewritePanel({
               ))}
             </ul>
           </section>
-          {draft.status === 'draft' && (
-            <>
-              <div className={s.actions}>
-                <button
-                  className={`${s.button} ${s.primary}`}
-                  disabled={busy || match.stale}
-                  onClick={() =>
-                    void run(tr('采纳并创建定向版'), async () => {
-                      const result = await careerApi.apply(draft.id);
-                      setDraft(result.rewrite);
-                      await refresh();
-                    })
-                  }
-                >
-                  {' '}
-                  {tr('采纳并生成独立版本')}{' '}
-                </button>
-                <button
-                  className={s.button}
-                  disabled={busy}
-                  onClick={() =>
-                    void run(tr('拒绝建议'), async () => setDraft(await careerApi.reject(draft.id)))
-                  }
-                >
-                  {' '}
-                  {tr('拒绝建议')}{' '}
-                </button>
-              </div>
-            </>
-          )}
           {draft.status === 'accepted' && draft.result_resume_id && (
             <>
               <div className={s.actions} style={{ marginTop: 24 }}>
@@ -907,7 +1019,7 @@ function RewritePanel({
                   }
                 >
                   {' '}
-                  {tr('比较修改前后的覆盖度')}{' '}
+                  {tr('复评定向版')}{' '}
                 </button>
                 <button
                   className={s.button}
@@ -924,10 +1036,16 @@ function RewritePanel({
               </div>
               {after && (
                 <p className={s.note} style={{ marginTop: 20 }}>
-                  {' '}
-                  {tr('同一 JD、同一规则：原版')} {scoreText(match.score)} {tr('→ 定向版')}{' '}
-                  {scoreText(after.score)}{' '}
-                  {tr('。表达改善后分数可能保持不变；新增支持分来自可以定位的材料证据。')}{' '}
+                  {after.ai_analysis ? (
+                    <>
+                      {tr('定向版 AI 岗位适合度')}：{scoreText(after.ai_analysis.fit_score)} / 100。
+                      {after.ai_analysis.summary}
+                    </>
+                  ) : (
+                    <>
+                      {tr('定向版关键词材料覆盖度')}：{scoreText(after.score)} / 100。
+                    </>
+                  )}
                 </p>
               )}
             </>

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MatchPanel } from '@/components/career/match-panel';
 import { RewriteComparison } from '@/components/career/rewrite-comparison';
 import {
@@ -152,6 +152,9 @@ const props = {
   refresh: async () => {},
   onResume: vi.fn(),
 };
+beforeEach(() => {
+  Element.prototype.scrollIntoView = vi.fn();
+});
 afterEach(() => vi.restoreAllMocks());
 
 describe('CareerLens diagnosis actions and sources', () => {
@@ -175,6 +178,8 @@ describe('CareerLens diagnosis actions and sources', () => {
     });
     render(<MatchPanel {...props} />);
     fireEvent.click(screen.getByRole('button', { name: '分析目标 JD 匹配度' }));
+    const toggle = await screen.findByText('查看 STAR 分析与补充建议');
+    toggle.closest('details')!.open = true;
     const guidance = await screen.findByRole('region', { name: 'STAR 与岗位表达建议' });
     expect(within(guidance).getAllByText('待补充')).toHaveLength(3);
     expect(within(guidance).getByText('已有依据')).toBeVisible();
@@ -268,11 +273,14 @@ describe('CareerLens diagnosis actions and sources', () => {
     expect(analysis).toHaveTextContent('AI 岗位适合度');
     expect(analysis).toHaveTextContent('openai / test-model');
     expect(analysis.querySelector('time')).toHaveAttribute('datetime', source.analyzed_at);
+    within(analysis).getByText('适合的理由 · 1').closest('details')!.open = true;
+    within(analysis).getByText('查看简历与岗位原文').closest('details')!.open = true;
     expect(within(analysis).getByText(data.summary)).toBeVisible();
     expect(within(analysis).getByText(state.jobs[0].content)).toBeVisible();
-    expect(screen.getByText('材料覆盖度 / 100')).toBeVisible();
-    expect(screen.getByRole('heading', { name: '核对 / 修正此项' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: '生成 STAR 定向建议' }));
+    expect(screen.queryByText('材料覆盖度 / 100')).not.toBeInTheDocument();
+    expect(screen.getByText('关键词核对详情与导出').closest('details')).not.toHaveAttribute('open');
+    expect(screen.getByText('核对 / 修正此项')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: '直接生成改写正文' }));
     await waitFor(() => expect(revise).toHaveBeenCalledWith('m1', 's1', [], true));
     expect(await screen.findByText(rewrite.reason)).toBeVisible();
     expect(screen.getByText('openai / rewrite-model')).toBeVisible();
@@ -360,3 +368,48 @@ it('loads a saved direction analysis after its source resume has been deleted', 
 vi.mock('@/lib/context/language-context', () => ({
   useLanguage: () => ({ uiLanguage: 'zh', accountProfile: null }),
 }));
+
+it('uses AI-linked experience despite zero keyword matches and directly rewrites the chosen passage', async () => {
+  const second = {
+    id: 'project:1',
+    kind: 'experience',
+    title: '产品调研',
+    text: '整理问卷与访谈资料。',
+    source_hash: 'h2',
+  };
+  vi.spyOn(careerApi, 'match').mockResolvedValue({
+    ...match,
+    score: 0,
+    evidence: [...evidence, second],
+    details: [
+      { ...match.details[0], status: 'pending', evidence_ids: [], value: 0, contribution: 0 },
+    ],
+    ai_analysis: {
+      ...match.ai_analysis!,
+      requirement_matches: [
+        {
+          requirement_id: 'q1',
+          status: 'partial',
+          reason: '问卷与访谈经验可以迁移。',
+          resume_refs: [{ evidence_id: second.id, quote: second.text }],
+          suggestion: '在产品调研中补充访谈对象与问题清单。',
+        },
+      ],
+    },
+  });
+  const revised = { ...rewrite, section_id: second.id, draft: '归纳问卷内容，整理访谈资料。' };
+  const generate = vi.spyOn(careerApi, 'rewrite').mockResolvedValue(revised);
+  render(<MatchPanel {...props} />);
+  fireEvent.click(screen.getByRole('button', { name: '分析目标 JD 匹配度' }));
+  await screen.findByText('问卷与访谈经验可以迁移。');
+  expect(screen.getByText('在产品调研中补充访谈对象与问题清单。')).toBeVisible();
+  fireEvent.change(screen.getByLabelText('补充信息（每行一项，可留空）'), {
+    target: { value: '属于其他段落的信息' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: '直接改写这段经历' }));
+  await waitFor(() => expect(generate).toHaveBeenCalledWith('m1', 'project:1', [], true));
+  expect(screen.getByLabelText('选择需要优化的段落')).toHaveValue('project:1');
+  expect(screen.getByLabelText('补充信息（每行一项，可留空）')).toHaveValue('');
+  expect(await screen.findByRole('region', { name: '改写后' })).toHaveTextContent(revised.draft);
+  expect(screen.getByRole('button', { name: '采纳并生成独立版本' })).toBeVisible();
+});

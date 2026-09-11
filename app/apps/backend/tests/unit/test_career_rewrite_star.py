@@ -71,7 +71,8 @@ async def test_missing_star_uses_existing_single_structure_correction(monkeypatc
 
     async def complete(prompt, **kwargs):
         calls.append((prompt, kwargs))
-        value = DRAFT if len(calls) == 1 else {**DRAFT, "star": STAR}
+        changed = {**DRAFT, "draft": "使用 Excel 协助整理周报。", "claims": [{"text": "使用 Excel 协助整理周报。", "source_ids": ["e1"]}]}
+        value = changed if len(calls) == 1 else {**changed, "star": STAR}
         return kwargs["response_validator"](value)
 
     monkeypatch.setattr(career_ai, "complete_json", complete)
@@ -89,3 +90,21 @@ def test_prompt_uses_adapted_star_guidance_at_runtime(monkeypatch):
     result = json.loads(build_rewrite_prompt(SOURCES, [], None))
     assert result["STAR建议"] == ["source-adapted-star-guidance"]
     assert [item["stage"] for item in result["输出结构"]["star"]] == list("STAR")
+
+
+async def test_unchanged_body_is_corrected_before_returning_a_usable_rewrite(monkeypatch):
+    from app.services import career_ai
+    monkeypatch.setattr(career_ai, 'model_info', lambda: {'configured': True})
+    calls = []
+    revised = '使用 Excel 协助整理周报。'
+    async def complete(prompt, **kwargs):
+        calls.append(prompt)
+        value = {**DRAFT, 'star': STAR}
+        if len(calls) == 2:
+            value.update(draft=revised, claims=[{'text': revised, 'source_ids': ['e1']}])
+        return kwargs['response_validator'](value)
+    monkeypatch.setattr(career_ai, 'complete_json', complete)
+    result = await rewrite(SOURCES[0], [], [], True)
+    assert result['draft'] == revised
+    assert result['improvement']['retried'] is True
+    assert len(calls) == 2

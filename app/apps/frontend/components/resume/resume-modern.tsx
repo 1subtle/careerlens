@@ -1,6 +1,7 @@
 import React from 'react';
+import { ResumeContacts } from './resume-contacts';
 import { ResumePhoto } from './resume-photo';
-import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
+import { Github, ExternalLink } from 'lucide-react';
 import type {
   ResumeData,
   SectionMeta,
@@ -15,6 +16,7 @@ import styles from './styles/modern.module.css';
 interface ResumeModernProps {
   data: ResumeData;
   showContactIcons?: boolean;
+  locale?: string;
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
 }
 
@@ -30,65 +32,13 @@ interface ResumeModernProps {
 export const ResumeModern: React.FC<ResumeModernProps> = ({
   data,
   showContactIcons = false,
+  locale,
   additionalSectionLabels,
 }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
 
   // Get sorted visible sections
   const sortedSections = getSortedSections(data);
-
-  // Icon mapping for contact types
-  const contactIcons: Record<string, React.ReactNode> = {
-    Email: <Mail size={12} />,
-    Phone: <Phone size={12} />,
-    Location: <MapPin size={12} />,
-    Website: <Globe size={12} />,
-    LinkedIn: <Linkedin size={12} />,
-    GitHub: <Github size={12} />,
-  };
-
-  // Helper function to render contact details
-  const renderContactDetail = (label: string, value?: string, hrefPrefix: string = '') => {
-    if (!value) return null;
-
-    let finalHrefPrefix = hrefPrefix;
-    if (
-      ['Website', 'LinkedIn', 'GitHub'].includes(label) &&
-      !value.startsWith('http') &&
-      !value.startsWith('//')
-    ) {
-      finalHrefPrefix = 'https://';
-    }
-
-    const href = finalHrefPrefix + value;
-    const isLink =
-      finalHrefPrefix.startsWith('http') ||
-      finalHrefPrefix.startsWith('mailto:') ||
-      finalHrefPrefix.startsWith('tel:');
-
-    let displayText = value;
-    if (isLink && (label === 'LinkedIn' || label === 'GitHub' || label === 'Website')) {
-      displayText = value.replace(/^https?:\/\//, '').replace(/^www\./, '');
-    }
-
-    return (
-      <span className="inline-flex items-center gap-1">
-        {showContactIcons && contactIcons[label]}
-        {isLink ? (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${baseStyles['resume-link']} hover:underline`}
-          >
-            {displayText}
-          </a>
-        ) : (
-          <span style={{ color: 'var(--resume-text-primary)' }}>{displayText}</span>
-        )}
-      </span>
-    );
-  };
 
   // Render a section based on its key
   const renderSection = (section: SectionMeta) => {
@@ -286,42 +236,14 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({
             </h2>
           )}
 
-          {/* Contact - Own line, centered */}
-          <div
-            className={`flex flex-wrap justify-center gap-x-1 gap-y-1 ${baseStyles['resume-meta']}`}
-          >
-            {renderContactDetail('Email', personalInfo.email, 'mailto:')}
-            {personalInfo.phone && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('Phone', personalInfo.phone, 'tel:')}
-              </>
-            )}
-            {personalInfo.location && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('Location', personalInfo.location)}
-              </>
-            )}
-            {personalInfo.website && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('Website', personalInfo.website)}
-              </>
-            )}
-            {personalInfo.linkedin && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('LinkedIn', personalInfo.linkedin)}
-              </>
-            )}
-            {personalInfo.github && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('GitHub', personalInfo.github)}
-              </>
-            )}
-          </div>
+          <ResumeContacts
+            personalInfo={personalInfo}
+            education={
+              sortedSections.some((section) => section.key === 'education') ? education : []
+            }
+            locale={locale}
+            showContactIcons={showContactIcons}
+          />
         </header>
       )}
 

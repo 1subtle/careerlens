@@ -1,6 +1,7 @@
 import React from 'react';
+import { ResumeContacts } from './resume-contacts';
 import { ResumePhoto } from './resume-photo';
-import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
+import { Github, ExternalLink } from 'lucide-react';
 import type {
   ResumeData,
   SectionMeta,
@@ -15,6 +16,7 @@ import styles from './styles/clean.module.css';
 interface ResumeCleanProps {
   data: ResumeData;
   showContactIcons?: boolean;
+  locale?: string;
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
 }
 
@@ -33,71 +35,12 @@ interface ResumeCleanProps {
 export const ResumeClean: React.FC<ResumeCleanProps> = ({
   data,
   showContactIcons = false,
+  locale,
   additionalSectionLabels,
 }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
 
   const sortedSections = getSortedSections(data);
-
-  const contactIcons: Record<string, React.ReactNode> = {
-    Email: <Mail size={12} />,
-    Phone: <Phone size={12} />,
-    Location: <MapPin size={12} />,
-    Website: <Globe size={12} />,
-    LinkedIn: <Linkedin size={12} />,
-    GitHub: <Github size={12} />,
-  };
-
-  const renderContactDetail = (label: string, value?: string, hrefPrefix: string = '') => {
-    if (!value) return null;
-
-    let finalHrefPrefix = hrefPrefix;
-    if (
-      ['Website', 'LinkedIn', 'GitHub'].includes(label) &&
-      !value.startsWith('http') &&
-      !value.startsWith('//')
-    ) {
-      finalHrefPrefix = 'https://';
-    }
-
-    const href = finalHrefPrefix + value;
-    const isLink =
-      finalHrefPrefix.startsWith('http') ||
-      finalHrefPrefix.startsWith('mailto:') ||
-      finalHrefPrefix.startsWith('tel:');
-
-    let displayText = value;
-    if (isLink && (label === 'LinkedIn' || label === 'GitHub' || label === 'Website')) {
-      displayText = value.replace(/^https?:\/\//, '').replace(/^www\./, '');
-    }
-
-    return (
-      <span className="inline-flex items-center gap-1">
-        {showContactIcons && contactIcons[label]}
-        {isLink ? (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${baseStyles['resume-link']} hover:underline`}
-          >
-            {displayText}
-          </a>
-        ) : (
-          <span>{displayText}</span>
-        )}
-      </span>
-    );
-  };
-
-  const contactItems = [
-    renderContactDetail('Location', personalInfo?.location),
-    renderContactDetail('Phone', personalInfo?.phone, 'tel:'),
-    renderContactDetail('Email', personalInfo?.email, 'mailto:'),
-    renderContactDetail('LinkedIn', personalInfo?.linkedin),
-    renderContactDetail('GitHub', personalInfo?.github),
-    renderContactDetail('Website', personalInfo?.website),
-  ].filter(Boolean);
 
   // Single-line entry header: COMPANY | Role (left), Location | Dates (right).
   const renderEntryHeader = (
@@ -284,18 +227,14 @@ export const ResumeClean: React.FC<ResumeCleanProps> = ({
           {personalInfo.title && (
             <div className={`${styles.tagline} mb-1`}>{personalInfo.title}</div>
           )}
-          {contactItems.length > 0 && (
-            <div
-              className={`flex flex-wrap justify-center items-center gap-x-2 gap-y-1 ${styles.contactRow}`}
-            >
-              {contactItems.map((item, index) => (
-                <React.Fragment key={index}>
-                  {index > 0 && <span className={styles.sep}>|</span>}
-                  {item}
-                </React.Fragment>
-              ))}
-            </div>
-          )}
+          <ResumeContacts
+            personalInfo={personalInfo}
+            education={
+              sortedSections.some((section) => section.key === 'education') ? education : []
+            }
+            locale={locale}
+            showContactIcons={showContactIcons}
+          />
         </header>
       )}
 

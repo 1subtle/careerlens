@@ -30,7 +30,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (keep .env.sample as template)
+# env files (keep .env.example as template)
 .env
 .env.local
 .env.*.local

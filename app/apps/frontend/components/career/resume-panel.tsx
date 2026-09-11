@@ -16,6 +16,8 @@ import {
   SlidersHorizontal,
   UploadCloud,
   X,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import { getAllSections, withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
@@ -89,6 +91,7 @@ export function ResumePanel({
   const [title, setTitle] = useState(resume?.title ?? tr('我的简历'));
   const [text, setText] = useState(resume?.source_text ?? '');
   const [view, setView] = useState<'edit' | 'preview' | 'import' | 'layout'>('edit');
+  const [focused, setFocused] = useState(false);
   const [layout, setLayout] = useState<TemplateSettings>(
     resume?.template_settings ?? CAREER_LAYOUT_DEFAULTS
   );
@@ -175,9 +178,35 @@ export function ResumePanel({
     return () => window.removeEventListener('keydown', handleSave);
   }, [active, save]);
 
+  useEffect(() => {
+    if (!focused || !active) return;
+    viewport.current?.closest('[data-workspace-main]')?.scrollTo?.({ top: 0 });
+    const restore = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setFocused(false);
+    };
+    window.addEventListener('keydown', restore);
+    return () => window.removeEventListener('keydown', restore);
+  }, [focused, active]);
+
   return (
-    <div className={s.panel}>
+    <div className={s.panel} data-resume-focus={focused}>
       <header className={s.toolbar} aria-label={tr('简历文档工具栏')}>
+        {(view === 'layout' || view === 'preview') && (
+          <button
+            type="button"
+            className={`${s.button} ${s.focusToggle}`}
+            aria-expanded={!focused}
+            onClick={() => setFocused(!focused)}
+            title={focused ? tr('展开工具栏，也可按 Esc') : undefined}
+          >
+            {focused ? (
+              <ChevronDown size={16} aria-hidden="true" />
+            ) : (
+              <ChevronUp size={16} aria-hidden="true" />
+            )}
+            {tr(focused ? '展开上方工具栏' : '收起上方工具栏')}
+          </button>
+        )}
         <input
           className={s.title}
           aria-label={tr('版本名称')}
@@ -223,7 +252,7 @@ export function ResumePanel({
             disabled={busy}
             onClick={() => setView('layout')}
           >
-            <SlidersHorizontal size={15} aria-hidden="true" /> {tr('排版')}{' '}
+            <SlidersHorizontal size={15} aria-hidden="true" /> {tr('模板与排版')}{' '}
           </button>
           <button
             className={s.button}

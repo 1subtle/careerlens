@@ -363,7 +363,7 @@ DEFAULT_SECTION_META: list[dict[str, Any]] = [
         "sectionType": SectionType.TEXT,
         "isDefault": True,
         "isVisible": True,
-        "order": 1,
+        "order": 2,
     },
     {
         "id": "workExperience",
@@ -372,7 +372,7 @@ DEFAULT_SECTION_META: list[dict[str, Any]] = [
         "sectionType": SectionType.ITEM_LIST,
         "isDefault": True,
         "isVisible": True,
-        "order": 2,
+        "order": 3,
     },
     {
         "id": "education",
@@ -381,7 +381,7 @@ DEFAULT_SECTION_META: list[dict[str, Any]] = [
         "sectionType": SectionType.ITEM_LIST,
         "isDefault": True,
         "isVisible": True,
-        "order": 3,
+        "order": 1,
     },
     {
         "id": "personalProjects",
@@ -414,6 +414,14 @@ def normalize_resume_data(data: dict[str, Any]) -> dict[str, Any]:
         # Use deepcopy to avoid shared mutable reference bug
         # Without this, all resumes would share the same list reference
         data["sectionMeta"] = copy.deepcopy(DEFAULT_SECTION_META)
+    former_order = ["personalInfo", "summary", "workExperience", "education", "personalProjects", "additional"]
+    sections = data["sectionMeta"]
+    if len(sections) == len(former_order) and all(
+        item.get("isDefault") and item.get("order") == former_order.index(item.get("key"))
+        for item in sections if item.get("key") in former_order
+    ) and {item.get("key") for item in sections} == set(former_order):
+        orders = {item["key"]: item["order"] for item in DEFAULT_SECTION_META}
+        data["sectionMeta"] = [{**item, "order": orders[item["key"]]} for item in sections]
     if "customSections" not in data:
         data["customSections"] = {}
     return data

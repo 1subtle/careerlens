@@ -2,6 +2,7 @@
 
 from html.parser import HTMLParser
 from io import BytesIO
+import re
 from typing import Any
 
 from docx import Document
@@ -402,11 +403,21 @@ def render_resume_docx(
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         for run in p.runs:
             run.font.size = Pt(base * 1.15)
-    contacts = [
-        _plain(getattr(personal, key))
-        for key in ("email", "phone", "location", "website", "linkedin", "github")
-        if getattr(personal, key)
-    ]
+    if any(item['key'] == 'education' and item['isVisible'] for item in raw['sectionMeta']):
+        def education_rank(item):
+            years = item.years or ''
+            return 9999 if re.search(r'至今|在读|present|current', years, re.I) else max([0] + [int(year) for year in re.findall(r'(?:19|20)\d{2}', years)])
+        education = sorted(resume.education, key=education_rank, reverse=True)
+        if education:
+            school = education[0]
+            labels = ('院校', '学历 / 专业') if lang.startswith('zh') else ('School', 'Degree')
+            text = '  |  '.join(f'{label}：{_plain(value)}' for label, value in zip(labels, [school.institution, school.degree]) if value)
+            if text:
+                p = header.add_paragraph(text)
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    contact_labels = [('email', '邮箱', 'Email'), ('phone', '电话', 'Phone'), ('location', '所在地', 'Location'), ('website', '个人网站', 'Website'), ('linkedin', 'LinkedIn', 'LinkedIn'), ('github', 'GitHub', 'GitHub')]
+    contacts = [f'{zh if lang.startswith("zh") else en}：{_plain(getattr(personal, key))}'
+                for key, zh, en in contact_labels if getattr(personal, key)]
     if contacts:
         p = header.add_paragraph(" | ".join(contacts))
         p.paragraph_format.space_after = Pt(gap * 1.25)

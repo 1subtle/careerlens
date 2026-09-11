@@ -195,7 +195,7 @@
   flex: 1;
   flex-direction: column;
   min-width: 0;
-  height: max(720px, calc(100dvh - 84px));
+  height: max(540px, calc(100dvh - 210px));
 }
 .layoutControls {
   flex-shrink: 0;
@@ -203,29 +203,32 @@
   border: 0;
   border-bottom: 1px solid var(--line, #ded6c7);
 }
-.layoutIntro {
+.layoutQuickBar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
 }
-.layoutIntro > div {
-  flex: 1;
-  min-width: 160px;
-}
-.layoutIntro strong {
-  font-size: 14px;
-}
-.layoutIntro span {
-  display: block;
+.layoutQuickBar > label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   color: var(--muted, #6f647d);
-  margin-top: 3px;
+}
+.layoutQuickBar select {
+  max-width: 128px;
+  height: 36px;
+  border: 1px solid var(--line, #ded6c7);
+  border-radius: 6px;
+  padding: 3px 6px;
+  background: white;
+  color: var(--ink, #292237);
+  font-size: 13px;
 }
 .layoutFields {
   display: grid;
-  grid-template-columns: 1.7fr repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px 12px;
 }
 .layoutFields label {
@@ -373,7 +376,7 @@
 }
 @media (max-width: 760px) {
   .layout {
-    min-height: 850px;
+    min-height: 620px;
   }
   .layoutFields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -427,4 +430,102 @@
   .next {
     transition: none;
   }
+}
+
+.templateGallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+  padding: 4px;
+  max-height: min(38dvh, 310px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.templateCard {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid #cec7d8;
+  border-radius: 8px;
+  background: white;
+  color: #30283f;
+  text-align: left;
+  cursor: pointer;
+}
+.templateCard[aria-pressed='true'] {
+  border: 2px solid #7952c0;
+  padding: 9px;
+  background: #f5f0ff;
+}
+.templateCard:focus-visible {
+  outline: 3px solid #7952c0;
+  outline-offset: 2px;
+}
+.templateCard:hover {
+  border-color: #7952c0;
+}
+.templateCard strong {
+  font-size: 13px;
+}
+.templateCard small {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #655b70;
+}
+.templateThumbnail {
+  display: block;
+  align-self: center;
+  width: auto;
+  height: 140px;
+  object-fit: contain;
+  background: white;
+  box-shadow: 0 2px 8px #30283f18;
+}
+.layoutAdvanced {
+  max-height: 230px;
+  overflow-y: auto;
+  padding-top: 14px;
+  margin-top: 10px;
+  border-top: 1px solid var(--line, #ded6c7);
+}
+@media (max-width: 760px) {
+  .templateGallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: 240px;
+  }
+  .layoutQuickBar > button:first-child {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+  .layoutQuickBar :is(button, select) {
+    min-height: 40px;
+  }
+}
+
+/* Keep the existing preview mounted so collapsing tools preserves page and settings. */
+.panel[data-resume-focus='true'] {
+  flex: 1 1 0;
+  overflow: hidden;
+}
+.panel[data-resume-focus='true'] .toolbar {
+  top: 0;
+  padding: 4px 12px;
+}
+.panel[data-resume-focus='true'] .toolbar > :not(.focusToggle),
+.panel[data-resume-focus='true'] .layoutControls,
+.panel[data-resume-focus='true'] .layoutNotice[role='status'],
+.panel[data-resume-focus='true'] .previewHint,
+.panel[data-resume-focus='true'] .note[role='status'],
+.panel[data-resume-focus='true'] [data-preview-controls] {
+  display: none;
+}
+.panel[data-resume-focus='true'] .viewport {
+  flex: 1 1 0;
+  overflow: auto;
+}
+.panel[data-resume-focus='true'] .layout {
+  height: 100%;
+  min-height: 0;
 }

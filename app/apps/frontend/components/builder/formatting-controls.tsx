@@ -198,7 +198,10 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                       ? 'border-blue-700 bg-white shadow-[2px_2px_0px_0px_#1D4ED8]'
                       : 'border-black bg-white hover:bg-paper-tint hover:shadow-sw-xs'
                   }`}
-                  title={templateLabels[template.id].description}
+                  title={
+                    templateLabels[template.id as keyof typeof templateLabels]?.description ??
+                    template.description
+                  }
                 >
                   <div className="w-12 h-16 mb-1.5 flex items-center justify-center">
                     <TemplateThumbnail
@@ -211,7 +214,8 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                       settings.template === template.id ? 'text-blue-700' : 'text-ink-soft'
                     }`}
                   >
-                    {templateLabels[template.id].name}
+                    {templateLabels[template.id as keyof typeof templateLabels]?.name ??
+                      template.name}
                   </span>
                 </button>
               ))}

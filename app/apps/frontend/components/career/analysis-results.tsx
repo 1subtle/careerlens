@@ -72,9 +72,13 @@ function EvidenceReferences({
 export function AiMatchResults({
   analysis,
   evidence,
+  onRewrite,
+  busy,
 }: {
   analysis: AiMatchAnalysis;
   evidence: Evidence[];
+  onRewrite?: (id: string) => void;
+  busy?: boolean;
 }) {
   const tr = useCareerText();
   return (
@@ -96,8 +100,10 @@ export function AiMatchResults({
           [tr('下一步改进'), analysis.actions],
         ] as const
       ).map(([title, findings]) => (
-        <section className={s.diagnosticSubsection} key={title}>
-          <h3>{title}</h3>
+        <details className={s.diagnosticSubsection} key={title}>
+          <summary>
+            {title} · {findings.length}
+          </summary>
           {findings.length === 0 ? (
             <p className={s.muted}>{tr('本次未列出此类建议。')}</p>
           ) : (
@@ -105,15 +111,42 @@ export function AiMatchResults({
               <article className={s.analysisFinding} key={index}>
                 <h4>{finding.title}</h4>
                 <p>{finding.detail}</p>
-                <EvidenceReferences
-                  resumeRefs={finding.resume_refs}
-                  jdRefs={finding.jd_refs}
-                  evidence={evidence}
-                />
+                {onRewrite &&
+                  finding.resume_refs.some((r) =>
+                    evidence.some(
+                      (e) => e.id === r.evidence_id && ['experience', 'summary'].includes(e.kind)
+                    )
+                  ) && (
+                    <button
+                      type="button"
+                      className={s.button}
+                      disabled={busy}
+                      onClick={() =>
+                        onRewrite(
+                          finding.resume_refs.find((r) =>
+                            evidence.some(
+                              (e) =>
+                                e.id === r.evidence_id && ['experience', 'summary'].includes(e.kind)
+                            )
+                          )!.evidence_id
+                        )
+                      }
+                    >
+                      {tr('改写相关经历')}
+                    </button>
+                  )}
+                <details className={s.diagnosticSubsection}>
+                  <summary>{tr('查看简历与岗位原文')}</summary>
+                  <EvidenceReferences
+                    resumeRefs={finding.resume_refs}
+                    jdRefs={finding.jd_refs}
+                    evidence={evidence}
+                  />
+                </details>
               </article>
             ))
           )}
-        </section>
+        </details>
       ))}
     </section>
   );

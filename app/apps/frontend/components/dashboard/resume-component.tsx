@@ -191,10 +191,23 @@ const Resume: React.FC<ResumeProps> = ({
     >
       {mergedSettings.template === 'swiss-single' && (
         <ResumeSingleColumn
+          locale={locale}
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
         />
+      )}
+      {(['campus', 'ledger', 'timeline', 'fresh', 'sidebar'] as const).map((variant) =>
+        mergedSettings.template === variant ? (
+          <ResumeSingleColumn
+            key={variant}
+            variant={variant}
+            locale={locale}
+            data={resumeData}
+            showContactIcons={mergedSettings.showContactIcons}
+            additionalSectionLabels={additionalSectionLabels}
+          />
+        ) : null
       )}
       {mergedSettings.template === 'swiss-two-column' && (
         <ResumeTwoColumn
@@ -205,6 +218,7 @@ const Resume: React.FC<ResumeProps> = ({
       )}
       {mergedSettings.template === 'modern' && (
         <ResumeModern
+          locale={locale}
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
@@ -220,6 +234,7 @@ const Resume: React.FC<ResumeProps> = ({
       )}
       {mergedSettings.template === 'latex' && (
         <ResumeLatex
+          locale={locale}
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
@@ -227,6 +242,7 @@ const Resume: React.FC<ResumeProps> = ({
       )}
       {mergedSettings.template === 'clean' && (
         <ResumeClean
+          locale={locale}
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
@@ -234,6 +250,7 @@ const Resume: React.FC<ResumeProps> = ({
       )}
       {mergedSettings.template === 'vivid' && (
         <ResumeVivid
+          locale={locale}
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           sectionHeadings={sectionHeadings}

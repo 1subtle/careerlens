@@ -81,7 +81,7 @@ export function ComparePanel({
         {' '}
         {tr('选择 2—5 个已保存岗位，比较')}
         {useAi ? tr(' AI 岗位适合度与') : ''}
-        {tr('材料覆盖度。')}{' '}
+        {tr('经历匹配情况。')}{' '}
       </p>
       <fieldset disabled={busy}>
         <legend>{tr('选择比较岗位（已选 {0} / 5）', ids.length)}</legend>
@@ -124,7 +124,7 @@ export function ComparePanel({
           <p className={s.muted}>
             {' '}
             {tr('本次结果 ·')} {comparison.rule_version}{' '}
-            {tr('· 覆盖度衡量材料支持程度，岗位之间的要求不同。')}{' '}
+            {tr('· 对照各岗位要求，查看可用经历与需要补充的信息。')}{' '}
           </p>
           {changed && (
             <p className={s.note}>
@@ -138,7 +138,7 @@ export function ComparePanel({
                 <tr>
                   <th scope="col">{tr('岗位')}</th>
                   <th scope="col">{tr('AI 岗位适合度')}</th>
-                  <th scope="col">{tr('材料覆盖度')}</th>
+                  <th scope="col">{tr('经历匹配')}</th>
                   <th scope="col">{tr('要求核对')}</th>
                   <th scope="col">{tr('条件状态')}</th>
                   <th scope="col">{tr('操作')}</th>
@@ -170,16 +170,49 @@ export function ComparePanel({
                       )}
                     </td>
                     <td>
-                      <strong>{scoreText(m.score)}</strong>
-                      <p className={s.muted}>/ 100</p>
+                      {m.ai_analysis?.requirement_matches?.length ? (
+                        <>
+                          <p>
+                            {tr('已匹配')}{' '}
+                            {
+                              m.ai_analysis.requirement_matches.filter(
+                                (r) => r.status === 'matched'
+                              ).length
+                            }
+                          </p>
+                          <p>
+                            {tr('可进一步完善')}{' '}
+                            {
+                              m.ai_analysis.requirement_matches.filter(
+                                (r) => r.status === 'partial'
+                              ).length
+                            }
+                          </p>
+                          <p>
+                            {tr('尚未体现')}{' '}
+                            {
+                              m.ai_analysis.requirement_matches.filter(
+                                (r) => r.status === 'missing'
+                              ).length
+                            }
+                          </p>
+                        </>
+                      ) : (
+                        <span>{tr('查看关键词核对')}</span>
+                      )}
                     </td>
                     <td>
-                      {' '}
-                      {tr('有证据')} {m.details.filter((d) => d.status === 'supported').length}
-                      <br /> {tr('仅提及')}{' '}
-                      {m.details.filter((d) => d.status === 'mentioned').length}
-                      <br /> {tr('待确认')} {m.details.filter((d) => d.status === 'pending').length}
-                      <br /> {tr('已确认缺口')} {m.details.filter((d) => d.status === 'gap').length}
+                      <details>
+                        <summary>{tr('关键词核对')}</summary>
+                        <p>{scoreText(m.score)} / 100</p>
+                        {tr('有证据')} {m.details.filter((d) => d.status === 'supported').length}
+                        <br /> {tr('仅提及')}{' '}
+                        {m.details.filter((d) => d.status === 'mentioned').length}
+                        <br /> {tr('待确认')}{' '}
+                        {m.details.filter((d) => d.status === 'pending').length}
+                        <br /> {tr('已确认缺口')}{' '}
+                        {m.details.filter((d) => d.status === 'gap').length}
+                      </details>
                     </td>
                     <td>
                       {m.conditions.map((c) => (

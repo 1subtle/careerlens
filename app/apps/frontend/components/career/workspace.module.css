@@ -1409,3 +1409,49 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+.matchIntro {
+  margin: 32px 0 20px;
+}
+.matchIntro h2 {
+  margin: 8px 0;
+}
+.rewriteWorkbench {
+  padding: 24px;
+  border: 1px solid var(--border, #d7cce8);
+  border-radius: 14px;
+  background: #faf8ff;
+  scroll-margin-top: 24px;
+}
+.supplementNote {
+  padding: 14px 16px;
+  border-left: 3px solid #b48b2c;
+  background: #fff9e7;
+}
+.diagnosticSubsection > summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-weight: 600;
+}
+@media (max-width: 600px) {
+  .rewriteWorkbench {
+    padding: 16px;
+  }
+}
+
+.main:has(> .documentCanvas:not([hidden]) [data-resume-focus='true']) {
+  overflow: hidden;
+}
+.main:has(> .documentCanvas:not([hidden]) [data-resume-focus='true'])
+  > :is(.topbar, .creditHint, .status:not([data-error='true'])) {
+  display: none;
+}
+.main:has(> .documentCanvas:not([hidden]) [data-resume-focus='true']) > .documentCanvas {
+  flex: 1 1 0;
+}
+.main:has(> .documentCanvas:not([hidden]) [data-resume-focus='true'])
+  .documentCanvas
+  > div
+  > header:first-child {
+  top: 0;
+}

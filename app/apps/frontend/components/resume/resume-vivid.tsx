@@ -1,6 +1,7 @@
 import React from 'react';
+import { ResumeContacts } from './resume-contacts';
 import { ResumePhoto } from './resume-photo';
-import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
+import { Github, ExternalLink } from 'lucide-react';
 import type {
   ResumeData,
   SectionMeta,
@@ -16,6 +17,7 @@ import styles from './styles/vivid.module.css';
 interface ResumeVividProps {
   data: ResumeData;
   showContactIcons?: boolean;
+  locale?: string;
   sectionHeadings?: Partial<ResumeSectionHeadings>;
   fallbackLabels?: Partial<ResumeFallbackLabels>;
 }
@@ -34,6 +36,7 @@ interface ResumeVividProps {
 export const ResumeVivid: React.FC<ResumeVividProps> = ({
   data,
   showContactIcons = false,
+  locale,
   sectionHeadings,
   fallbackLabels,
 }) => {
@@ -82,57 +85,6 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
   const nameFirst = firstSpace === -1 ? fullName : fullName.slice(0, firstSpace);
   const nameRest = firstSpace === -1 ? '' : fullName.slice(firstSpace + 1);
 
-  const contactIcons: Record<string, React.ReactNode> = {
-    Email: <Mail size={11} />,
-    Phone: <Phone size={11} />,
-    Location: <MapPin size={11} />,
-    Website: <Globe size={11} />,
-    LinkedIn: <Linkedin size={11} />,
-    GitHub: <Github size={11} />,
-  };
-
-  const renderContactDetail = (label: string, value?: string, hrefPrefix: string = '') => {
-    if (!value) return null;
-
-    let finalHrefPrefix = hrefPrefix;
-    if (
-      ['Website', 'LinkedIn', 'GitHub'].includes(label) &&
-      !value.startsWith('http') &&
-      !value.startsWith('//')
-    ) {
-      finalHrefPrefix = 'https://';
-    }
-
-    const href = finalHrefPrefix + value;
-    const isLink =
-      finalHrefPrefix.startsWith('http') ||
-      finalHrefPrefix.startsWith('mailto:') ||
-      finalHrefPrefix.startsWith('tel:');
-
-    let displayText = value;
-    if (isLink && (label === 'LinkedIn' || label === 'GitHub' || label === 'Website')) {
-      displayText = value.replace(/^https?:\/\//, '').replace(/^www\./, '');
-    }
-
-    return (
-      <span className={styles.contactChip}>
-        {showContactIcons && <span className={styles.iconCircle}>{contactIcons[label]}</span>}
-        {isLink ? (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${baseStyles['resume-link']} hover:underline`}
-          >
-            {displayText}
-          </a>
-        ) : (
-          <span>{displayText}</span>
-        )}
-      </span>
-    );
-  };
-
   const renderArrowBullets = (
     items?: string[],
     textClass: string = baseStyles['resume-text-xs'],
@@ -150,24 +102,20 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
   return (
     <>
       {/* Header */}
-      <div className={baseStyles['resume-header']}>
+      <header className={baseStyles['resume-header']}>
         <ResumePhoto photo={personalInfo?.photo} />
         <h1 className={baseStyles['resume-name']}>
           <span className={styles.nameFirst}>{nameFirst}</span>
           {nameRest && <span className={styles.nameRest}> {nameRest}</span>}
         </h1>
         {personalInfo?.title && <div className={styles.titleLine}>{personalInfo.title}</div>}
-        {personalInfo && (
-          <div className={`flex flex-wrap gap-x-4 gap-y-1 mt-2 ${styles.contactRow}`}>
-            {renderContactDetail('Website', personalInfo.website)}
-            {renderContactDetail('LinkedIn', personalInfo.linkedin)}
-            {renderContactDetail('GitHub', personalInfo.github)}
-            {renderContactDetail('Email', personalInfo.email, 'mailto:')}
-            {renderContactDetail('Phone', personalInfo.phone, 'tel:')}
-            {renderContactDetail('Location', personalInfo.location)}
-          </div>
-        )}
-      </div>
+        <ResumeContacts
+          personalInfo={personalInfo}
+          education={sortedSections.some((section) => section.key === 'education') ? education : []}
+          locale={locale}
+          showContactIcons={showContactIcons}
+        />
+      </header>
 
       {/* Two-Column Grid */}
       <div className={styles.grid}>
@@ -371,26 +319,6 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
               </ul>
             </div>
           )}
-
-          {personalInfo &&
-            (personalInfo.website || personalInfo.linkedin || personalInfo.github) && (
-              <div className={baseStyles['resume-section']}>
-                <h3 className={styles.sectionTitleSm}>{headingFallbacks.links}</h3>
-                <div
-                  className={`${baseStyles['resume-stack-tight']} ${baseStyles['resume-meta-sm']}`}
-                >
-                  {personalInfo.linkedin && (
-                    <div>{renderContactDetail('LinkedIn', personalInfo.linkedin)}</div>
-                  )}
-                  {personalInfo.github && (
-                    <div>{renderContactDetail('GitHub', personalInfo.github)}</div>
-                  )}
-                  {personalInfo.website && (
-                    <div>{renderContactDetail('Website', personalInfo.website)}</div>
-                  )}
-                </div>
-              </div>
-            )}
         </div>
       </div>
     </>

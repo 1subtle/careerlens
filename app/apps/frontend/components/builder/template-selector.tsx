@@ -59,7 +59,10 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ value, onCha
               ? 'border-blue-700 bg-white shadow-[3px_3px_0px_0px_#1D4ED8]'
               : 'border-black bg-white hover:bg-background hover:shadow-sw-sm'
           }`}
-          title={templateLabels[template.id].description}
+          title={
+            templateLabels[template.id as keyof typeof templateLabels]?.description ??
+            template.description
+          }
         >
           {/* Template Thumbnail */}
           <div className="w-16 h-20 mb-2 flex items-center justify-center">
@@ -72,7 +75,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ value, onCha
               value === template.id ? 'text-blue-700' : 'text-ink-soft'
             }`}
           >
-            {templateLabels[template.id].name}
+            {templateLabels[template.id as keyof typeof templateLabels]?.name ?? template.name}
           </span>
         </button>
       ))}

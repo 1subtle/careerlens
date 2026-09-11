@@ -9,6 +9,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 from app.services import career_ai, career_diagnosis
+from app.services.matching import requirements_from_text
 
 RESUME_TEXT = "访谈5名使用者，归纳反馈并整理问题清单。"
 JD_TEXT = "工作职责：整理用户需求。任职要求：SQL，本科。"
@@ -76,6 +77,10 @@ def assessment():
     refs = [{"evidence_id": "personalProjects:0:0", "quote": RESUME_TEXT}]
     jd_refs = [{"quote": "整理用户需求"}]
     return {
+        "requirement_matches": [{
+            "requirement_id": r["id"], "status": "missing", "reason": "简历尚未体现 SQL 应用。",
+            "resume_refs": [], "suggestion": "在项目经历中补充实际使用 SQL 的查询任务。",
+        } for r in requirements_from_text(JD_TEXT)],
         "fit_score": 55,
         "summary": "有访谈与反馈整理经验，可迁移至需求整理；当前材料未提供 SQL 应用证据。",
         "strengths": [
@@ -557,6 +562,11 @@ async def test_rewrite_returns_linked_suggestion_without_secondary_review(
             ],
         },
     )
+    if not changed:
+        with pytest.raises(career_ai.CareerAIOutputError, match="正文仍与原文一致"):
+            await career_ai.rewrite({"id": "e1", "text": original}, [], [], True, {"content": JD_TEXT})
+        assert len(calls) == 2
+        return
     result = await career_ai.rewrite(
         {"id": "e1", "text": original}, [], [], True, {"content": JD_TEXT}
     )
@@ -572,3 +582,52 @@ async def test_rewrite_returns_linked_suggestion_without_secondary_review(
     assert json.loads(calls[0])["目标JD"]["content"] == JD_TEXT
     for instruction in ("独立核验", "先核实事实", "不得补造", "编造"):
         assert instruction not in calls[0]
+
+
+@pytest.mark.parametrize('corruption', ['omitted', 'unknown_id', 'no_source', 'no_suggestion'])
+async def test_requirement_mapping_rejects_incomplete_or_unlinked_results(
+    client, materials, configured, monkeypatch, corruption
+):
+    answer = assessment()
+    item = answer['requirement_matches'][0]
+    if corruption == 'omitted':
+        answer['requirement_matches'] = []
+    elif corruption == 'unknown_id':
+        item['requirement_id'] = 'not-in-this-jd'
+    elif corruption == 'no_source':
+        item['status'] = 'partial'
+    else:
+        item['suggestion'] = ''
+    install_llm(monkeypatch, answer)
+    resume, job = materials
+    result = await client.post('/api/v1/career/matches', json={
+        'resume_id': resume['id'], 'job_id': job['job_id'], 'use_ai': True,
+    })
+    assert result.status_code == 502
+    assert (await client.get('/api/v1/career/state')).json()['matches'] == []
+
+
+async def test_requirement_mapping_links_transferable_experience_without_keyword_overlap(
+    client, materials, configured, monkeypatch
+):
+    resume, _ = materials
+    job = (await client.post('/api/v1/career/jobs', json={
+        'title': '产品调研实习生', 'text': '需求调研与功能设计',
+        'requirements': [{'id': 'transferable', 'name': '需求调研与功能设计',
+                          'source_text': '需求调研与功能设计', 'priority': 'required'}],
+    })).json()
+    answer = assessment()
+    answer['requirement_matches'] = [{
+        'requirement_id': 'transferable', 'status': 'partial',
+        'reason': '访谈与反馈归纳对应需求调研，功能设计尚未体现。',
+        'resume_refs': [{'evidence_id': 'personalProjects:0:0', 'quote': RESUME_TEXT}],
+        'suggestion': '在用户访谈项目中补充是否参与功能方案，以及实际输出的文档。',
+    }]
+    install_llm(monkeypatch, answer)
+    result = await client.post('/api/v1/career/matches', json={
+        'resume_id': resume['id'], 'job_id': job['job_id'], 'use_ai': True,
+    })
+    assert result.status_code == 200, result.text
+    saved = (await client.get('/api/v1/career/matches/' + result.json()['id'])).json()
+    assert saved['ai_analysis']['requirement_matches'] == answer['requirement_matches']
+    assert saved['score'] == 0

@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ComponentType, type PropsWithChildren } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ResumePanel } from '@/components/career/resume-panel';
 import { careerApi, type CareerResume } from '@/lib/api/career';
@@ -113,6 +113,7 @@ beforeEach(() => {
   };
 });
 afterEach(() => {
+  cleanup();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -314,8 +315,25 @@ describe('CareerLens document panel', () => {
     fireEvent.change(await screen.findByDisplayValue(data.summary!), {
       target: { value: '本次修改的经历' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /^排版$/ }));
-    fireEvent.change(await screen.findByLabelText('正文大小'), { target: { value: '5' } });
+    fireEvent.click(screen.getByRole('button', { name: /^模板与排版$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /校招清晰.*院校学历置顶/ }));
+    expect(screen.queryByRole('group', { name: '选择简历模板' })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('正文字体'), { target: { value: 'serif' } });
+    fireEvent.change(await screen.findByLabelText('字号'), { target: { value: '5' } });
+    fireEvent.click(screen.getByRole('button', { name: '收起上方工具栏' }));
+    expect(screen.getByRole('button', { name: '展开上方工具栏' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    expect(screen.getByText('纸张预览')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.getByRole('button', { name: '收起上方工具栏' })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
+    expect(screen.getByLabelText('正文字体')).toHaveValue('serif');
+    expect(screen.getByLabelText('字号')).toHaveValue('5');
+    fireEvent.click(screen.getByRole('button', { name: '更多排版' }));
     fireEvent.change(screen.getByLabelText('上边距 · mm'), { target: { value: '18' } });
     fireEvent.click(screen.getByRole('button', { name: '导出 Word' }));
     await waitFor(() => expect(word).toHaveBeenCalledWith(resume.id));
@@ -324,7 +342,8 @@ describe('CareerLens document panel', () => {
         data: expect.objectContaining({ summary: '本次修改的经历' }),
         expected_revision: 'saved-revision',
         template_settings: expect.objectContaining({
-          fontSize: expect.objectContaining({ base: 5 }),
+          template: 'campus',
+          fontSize: expect.objectContaining({ base: 5, bodyFont: 'serif' }),
           margins: expect.objectContaining({ top: 18 }),
         }),
       }),

@@ -802,6 +802,7 @@ async def review_match(match_id: str, request: ReviewInput) -> dict[str, Any]:
             if request.status in ("supported", "mentioned")
             else [],
             reason="用户核对原始材料后确认；此判断保存在独立版本中。",
+            confirmed_by="user",
         )
         record = MatchRecord(
             id=str(uuid4()),

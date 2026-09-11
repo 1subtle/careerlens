@@ -12,7 +12,12 @@ export type TemplateType =
   | 'modern-two-column'
   | 'latex'
   | 'clean'
-  | 'vivid';
+  | 'vivid'
+  | 'campus'
+  | 'ledger'
+  | 'timeline'
+  | 'fresh'
+  | 'sidebar';
 
 export type PageSize = 'A4' | 'LETTER';
 
@@ -158,7 +163,7 @@ const cjkVars = (locale?: string): string => {
 // Header font family mapping. Exported as functions of the locale; the eager
 // maps below preserve the previous default-ordering API for existing callers.
 export const buildHeaderFontMap = (locale?: string): Record<HeaderFontFamily, string> => ({
-  serif: `ui-serif, Georgia, Cambria, "Times New Roman", ${cjkVars(locale)}, Times, serif`,
+  serif: `ui-serif, Georgia, Cambria, "Times New Roman", ${!locale || locale.startsWith('zh') ? 'var(--font-noto-serif-sc), ' : ''}${cjkVars(locale)}, Times, serif`,
   'sans-serif': `ui-sans-serif, system-ui, ${cjkVars(locale)}, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"`,
   mono: `ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, ${cjkVars(locale)}, monospace`,
 });
@@ -278,6 +283,11 @@ export const TEMPLATE_OPTIONS: TemplateInfo[] = [
     name: 'Vivid',
     description: 'Colorful two-column layout with accent headers and arrow bullets',
   },
+  { id: 'campus', name: 'Campus', description: 'Education-led Chinese resume' },
+  { id: 'ledger', name: 'Ledger', description: 'Structured table-style sections' },
+  { id: 'timeline', name: 'Timeline', description: 'Colored header and vertical timeline' },
+  { id: 'fresh', name: 'Fresh', description: 'Teal frame and compact section labels' },
+  { id: 'sidebar', name: 'Sidebar', description: 'Profile rail with a wide content column' },
 ];
 
 /**
@@ -293,6 +303,11 @@ export const TEMPLATE_FONT_PRESETS: Partial<
 > = {
   latex: { headerFont: 'serif', bodyFont: 'serif' },
   clean: { headerFont: 'sans-serif', bodyFont: 'sans-serif' },
+  campus: { headerFont: 'sans-serif', bodyFont: 'sans-serif' },
+  ledger: { headerFont: 'sans-serif', bodyFont: 'serif' },
+  timeline: { headerFont: 'sans-serif', bodyFont: 'sans-serif' },
+  fresh: { headerFont: 'serif', bodyFont: 'sans-serif' },
+  sidebar: { headerFont: 'sans-serif', bodyFont: 'sans-serif' },
 };
 
 /**

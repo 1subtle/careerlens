@@ -230,11 +230,13 @@ describe('CareerLens enhancements', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: /问卷研究/ }));
     fireEvent.click(screen.getByRole('button', { name: '保存为新的诊断记录' }));
     await waitFor(() => expect(review).toHaveBeenCalledWith('m1', 'q1', 'supported', ['p1']));
-    await waitFor(() => expect(within(table).getByText('100.0')).toBeVisible());
+    await waitFor(() => expect(within(table).getByText(/100.0/)).toBeInTheDocument());
+    within(table).getByText(/100.0/).closest('details')!.open = true;
+    expect(within(table).getByText(/100.0/)).toBeVisible();
     fireEvent.click(within(table).getAllByRole('button', { name: '查看证据' })[1]);
     await waitFor(() => expect(getMatch).toHaveBeenLastCalledWith('m2'));
     await waitFor(() => expect(screen.getByLabelText('核对后的状态')).toHaveValue('pending'));
-    expect(within(table).getByText('100.0')).toBeVisible();
+    expect(within(table).getByText(/100.0/)).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: '导出比较结果' }));
     expect(exported).toHaveBeenCalledWith(
       expect.objectContaining({

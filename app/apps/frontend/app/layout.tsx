@@ -1,5 +1,12 @@
 import type { Metadata } from 'next';
-import { Geist, Noto_Sans_JP, Noto_Sans_KR, Noto_Sans_SC, Space_Grotesk } from 'next/font/google';
+import {
+  Geist,
+  Noto_Sans_JP,
+  Noto_Sans_KR,
+  Noto_Sans_SC,
+  Noto_Serif_SC,
+  Space_Grotesk,
+} from 'next/font/google';
 import './(default)/css/globals.css';
 import { AuthProvider } from '@/components/auth/auth-provider';
 import { LanguageProvider } from '@/lib/context/language-context';
@@ -38,6 +45,12 @@ const notoSansSC = Noto_Sans_SC({
   preload: false,
 });
 
+const notoSerifSC = Noto_Serif_SC({
+  variable: '--font-noto-serif-sc',
+  display: 'swap',
+  preload: false,
+});
+
 const notoSansKR = Noto_Sans_KR({
   variable: '--font-noto-sans-kr',
   display: 'swap',
@@ -65,7 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="zh-CN" className="h-full" suppressHydrationWarning>
       <body
-        className={`${geist.variable} ${spaceGrotesk.variable} ${notoSansSC.variable} ${notoSansKR.variable} ${notoSansJP.variable} antialiased bg-background text-ink-soft min-h-full`}
+        className={`${geist.variable} ${spaceGrotesk.variable} ${notoSansSC.variable} ${notoSerifSC.variable} ${notoSansKR.variable} ${notoSansJP.variable} antialiased bg-background text-ink-soft min-h-full`}
       >
         <AuthProvider>
           <LanguageProvider>{children}</LanguageProvider>
